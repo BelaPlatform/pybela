@@ -11,6 +11,7 @@ pyserial = "*"
 bitarray = "*"
 notebook = "*"
 websockets = "*"
+bokeh = "*"
 
 [dev-packages]
 
