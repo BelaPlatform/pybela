@@ -2,3 +2,5 @@
 notes.md
 .ipynb_checkpoints
 dev/
+*.err
+flowcharts/pdf
