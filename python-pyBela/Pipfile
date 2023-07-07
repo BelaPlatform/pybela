@@ -12,6 +12,7 @@ bitarray = "*"
 notebook = "*"
 websockets = "*"
 bokeh = "*"
+ipykernel = "*"
 
 [dev-packages]
 
