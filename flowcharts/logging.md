@@ -9,13 +9,16 @@
 
 flowchart TD
 
-	classDef c_st fill:#F20505,color:white,stroke-width:0
-	classDef c_io fill:#0DF205,color:white,stroke-width:0
-	classDef c_p fill:yellow,stroke-width:0
-	classDef c_con fill:#0511F2,color:white,stroke-width:0
+	classDef c_st fill:indianred,stroke-width:0
+	classDef c_io fill:lawngreen,stroke-width:0
+	classDef c_p fill:sandybrown,stroke-width:0
+	classDef c_msg fill:lightgreen,stroke-width:0
+	classDef c_con fill:cornflowerblue,stroke-width:0
 	classDef c_bela fill:magenta,stroke-width:0
-	style bela fill:pink,stroke-width:0
-	style host fill:lightblue,stroke-width:0
+	style host fill:beige,stroke-width:0
+	style bela fill:paleturquoise,stroke-width:0
+	style setup fill:peachpuff,stroke-width:0
+	style render fill:thistle,stroke-width:0
 
 	subgraph host
 		direction TB
@@ -24,71 +27,70 @@ flowchart TD
 		c_all_good{"Is connection 
 		with Bela 
 		successful?"}:::c_con
-		io_name[/"Give logging session 
-		a name / unique id"/]:::c_io
-		p_send_inst["Send instructions
-		to run in Bela"]:::c_p
-		c_is_stopped{"Stop 
-		Bela program?"}:::c_con
-		
+		io_name[/"Init logging session and
+		give it a name / unique id
+		start_log(project_name, log_file_name)"/]:::c_io
+
 		subgraph bela
-			c_comp_needed{"Is compilation 
-			needed?"}:::c_con
-			
-			p_compile["Compile"]:::c_p
-			p_run["Run passing the
-			log file name"]:::c_p
-			
-			io_create[/"Create log file with
-			given name"/]:::c_io
-			subgraph render
-				n1["in _setup()_: 
-				attach vars to logging channel
-				in _render()_
-				log var to file if condition is satisfied"]
-				io_log[/"log variable 
-				into log file
-				(if given condition)"/]:::c_io
+
+			subgraph setup
+				p_logch_setup["Setup logger channel \n logCh1 = logger.setupChannel(idx = 1, type = int"]:::c_p
 			end
 
-			c_int{"Is Bela program
-			interrupted?"}:::c_con
+			subgraph render
+				io_create[/"Create log file withgiven name 
+				configure_file(file_name)"/]:::c_io
+
+				c_mode{"Stream n_frames 
+				or until interrupted?"}:::c_con
+
+				c_while{" 
+				Logged frames 
+				< requested frames 
+				to log (n_frames) ?"}:::c_con
+		
+				io_log[/"log variable into log file
+				logCh1.log(variable)"/]:::c_io
+			end
+			c_stop{"Bela stopped?"}:::c_con
+
 			
 		end
+
+		msg_start[/"msg: ''Logging started''"/]:::c_msg
+		msg_e[/"msg: ''Logging finished''"/]:::c_msg
+
 
 		c_copy{"Does user 
 		want to copy 
 		log to the 
 		laptop
 		?"}:::c_con
-		p_copy["Copy files to laptop"]:::c_p
+		p_copy["Copy files to laptop (scp)"]:::c_p
 		p_load["Decode and load 
 		in Jupyter Notebook"]:::c_p
 
 		st-->c_all_good
 		c_all_good--yes-->io_name
-		io_name-->p_send_inst
-		p_send_inst-->c_is_stopped
 
-		p_send_inst-->c_comp_needed
-		c_comp_needed--yes-->p_compile
-		c_comp_needed--no-->p_run
-		p_compile-->p_run
+		io_name-->io_create
+		io_create-->msg_start
+		io_create-->c_mode
+		c_mode--n_frames-->c_while
+		c_mode--inf-->c_stop
+		c_stop--no-->io_log
+		c_stop--yes-->msg_e
 
+		c_while--yes-->io_log
+		io_log-->c_while
+		c_while--no-->msg_e
+		msg_e-->c_copy
 
-		io_create-->render
-
+		setup-->render
 	
-		p_run-->io_create
-		render-->c_int
-		c_is_stopped--yes-->c_int
 		e("end"):::c_st
 		
-
-		
-		c_int--yes-->c_copy
-		c_copy--no-->e
-		c_copy--yes-->p_copy--->p_load--->e
+		c_copy--yes-->p_copy--->p_load
 	end
 ```
 
