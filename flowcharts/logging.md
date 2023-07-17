@@ -31,6 +31,9 @@ flowchart TD
 		give it a name / unique id
 		start_log(project_name, log_file_name)"/]:::c_io
 
+		io_stop[/"In python, stop logging
+		logger.stop()"/]:::c_io
+
 		subgraph bela
 
 			subgraph setup
@@ -51,6 +54,8 @@ flowchart TD
 		
 				io_log[/"log variable into log file
 				logCh1.log(variable)"/]:::c_io
+
+				p_finish["Finish logging"]:::c_p
 			end
 			c_stop{"Bela stopped?"}:::c_con
 
@@ -78,12 +83,13 @@ flowchart TD
 		io_create-->c_mode
 		c_mode--n_frames-->c_while
 		c_mode--inf-->c_stop
-		c_stop--no-->io_log
-		c_stop--yes-->msg_e
+		c_stop--yes-->p_finish
+		p_finish-->msg_e
+		io_stop-->p_finish
 
 		c_while--yes-->io_log
 		io_log-->c_while
-		c_while--no-->msg_e
+		c_while--no-->p_finish
 		msg_e-->c_copy
 
 		setup-->render
