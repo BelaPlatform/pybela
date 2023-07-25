@@ -13,6 +13,7 @@ notebook = "*"
 websockets = "*"
 bokeh = "*"
 ipykernel = "*"
+nest-asyncio = "*"
 
 [dev-packages]
 
