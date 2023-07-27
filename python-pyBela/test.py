@@ -1,5 +1,6 @@
 import unittest
 import asyncio
+import os
 from pyBela import Watcher, Streamer
 
 class test_Watcher(unittest.TestCase):
@@ -58,7 +59,24 @@ class test_Streamer(unittest.TestCase):
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.async_streamed_variables())
         
+    async def async_save(self):
+        streamer = Streamer()
+        streamer.streaming_buffer_size = 10000
+        streamer.start_streaming(variables=streamer.watcher_vars, saving_enabled=True, saving_filename="test_save.pkl")
+        await asyncio.sleep(2)
+        streamer.stop_streaming(variables=streamer.watcher_vars)
+        loaded = streamer.load_data_from_file("test_save.pkl")
+        print(len(loaded["myvar"]), len(loaded["myvar2"]))
+        print(len(streamer.streaming_buffer["myvar"]), len(streamer.streaming_buffer["myvar2"]))
+        self.assertTrue(os.path.exists("test_save.pkl"), "The saved file should exist")
     
+    def test_save(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.async_save())
+        
+    # TODO add test for starting streaming and starting save after a while
+            
 if __name__ == '__main__':
     # begin the unittest.main()
     unittest.main()

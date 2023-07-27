@@ -4,3 +4,6 @@ notes.md
 dev/
 *.err
 flowcharts/pdf
+.vscode/
+__pycache__/
+*.pkl
