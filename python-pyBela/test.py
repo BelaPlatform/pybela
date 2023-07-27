@@ -63,12 +63,17 @@ class test_Streamer(unittest.TestCase):
         streamer = Streamer()
         streamer.streaming_buffer_size = 10000
         streamer.start_streaming(variables=streamer.watcher_vars, saving_enabled=True, saving_filename="test_save.pkl")
-        await asyncio.sleep(2)
+        os.remove("myvar_test_save.pkl")
+        os.remove("myvar2_test_save.pkl")
+        await asyncio.sleep(3 )
         streamer.stop_streaming(variables=streamer.watcher_vars)
-        loaded = streamer.load_data_from_file("test_save.pkl")
-        print(len(loaded["myvar"]), len(loaded["myvar2"]))
+        await asyncio.sleep(10)
+        loaded_1 = streamer.load_data_from_file("myvar_test_save.pkl")
+        loaded_2 = streamer.load_data_from_file("myvar2_test_save.pkl")
+
+        print(len(loaded_1),len(loaded_2), streamer._saved_var1, streamer._saved_var2)
         print(len(streamer.streaming_buffer["myvar"]), len(streamer.streaming_buffer["myvar2"]))
-        self.assertTrue(os.path.exists("test_save.pkl"), "The saved file should exist")
+        self.assertTrue(os.path.exists("myvar_test_save.pkl"), "The saved file should exist")
     
     def test_save(self):
         loop = asyncio.new_event_loop()

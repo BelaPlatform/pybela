@@ -1,8 +1,11 @@
 import asyncio
 import array
 import pickle
+import traceback
+import os
 from collections import deque  # circular buffers
 from .Watcher import Watcher
+import copy 
 
 class Streamer(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
@@ -26,6 +29,8 @@ class Streamer(Watcher):
         self._saving_filename = None
         self._saving_task = None
         self._active_saving_tasks = []
+        self._saved_var1 = 0
+        self._saved_var2 = 0
 
     @property
     def streaming_buffer_size(self):
@@ -55,8 +60,8 @@ class Streamer(Watcher):
             variables = self.watcher_vars
         variables = variables if isinstance(variables, list) else [variables]
             
-        self.start()
         self._streaming_mode = "FOREVER"
+        self.start()
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "watch", "watchers": variables}]})
 
@@ -114,11 +119,11 @@ class Streamer(Watcher):
         return asyncio.run(self.async_stream_n_frames(variables, n_frames, saving_enabled, filename))
     
     def is_streaming(self):
-        return True if self.streaming_mode != "OFF" else False
+        return True if self._streaming_mode != "OFF" else False
 
         
     def _parse_data_message(self, msg):
-        global _type, _channel 
+        global _type, _channel
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
@@ -127,32 +132,33 @@ class Streamer(Watcher):
                 _msg = array.array(_type, msg).tolist()
                 self._streaming_buffer[self._watcher_vars[_channel]].extend(
                     _msg)  #FIXME this does not truncate once buffer size is reached 
-                _save_obj = dict({self._watcher_vars[_channel]: _msg})
-                
                 if self._saving_enabled:
+                    _save_var = copy.copy(_msg) # avoid racing conditions
+                    if _channel == 0:
+                        self._saved_var1 += len(_msg)
+                    if _channel==1:
+                        self._saved_var2 += len(_msg)
                     # Save the data asynchronously
-                    saving_task = asyncio.create_task(self._save_data_to_file(self._saving_filename, _save_obj))
-                    saving_task.add_done_callback(self._remove_finished_task)
-                    self._active_saving_tasks.append(saving_task) # FIXME racing conditions?
+                    saving_task = asyncio.create_task(self._save_data_to_file(f"{self._watcher_vars[_channel]}_{self._saving_filename}", _save_var))
+                    saving_task.add_done_callback(lambda task: self._active_saving_tasks.remove(task))
+                    self._active_saving_tasks.append(saving_task) 
 
                 if self._streaming_mode == "N_FRAMES" and all(len(self._streaming_buffer[var]) == self._streaming_buffer_size for var in self._watcher_vars):
                     self._streaming_mode = "OFF"
                     self._streaming_buffer_available.set()
                     
-    async def _save_data_to_file(self, filename, data_obj):
+    async def _save_data_to_file(self, filename, data_var):
         # TODO warning if file already exists
         try:
             while self._saving_enabled:
-                data_to_save = dict(data_obj)
-
-                with open(filename, "ab+") as f:  # Open the file in binary append mode
-                    # Serialize the data and append it to the file using the highest protocol
+                data_to_save = copy.copy(data_var)
+                with open(filename, "ab") as f:  # Open the file in binary append mode
                     pickle.dump(data_to_save, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-                # Wait for a short interval before writing the next update
-                await asyncio.sleep(0.1)
+                    # Wait for a short interval before writing the next update
+                    await asyncio.sleep(0.1)
         except Exception as e:
             print(f"Error while saving data to file: {e}")
+            traceback.print_exc()
             
     
     # TODO test -- start saving but streaming is running already 
@@ -166,15 +172,14 @@ class Streamer(Watcher):
         
     def load_data_from_file(self, filename):
         try:
-            data = {}
+            data = []
             with open(filename, "rb") as f:  # Open the file in binary read mode
                 while True:
                     try:
                         # Load the next object from the file
-                        data_obj = pickle.load(f)
+                        data_list = pickle.load(f)
 
-                        # Update the data dictionary with the contents of the loaded object
-                        data.update(data_obj)
+                        data.append(data_list)
                     except EOFError:
                         # Reached the end of the file
                         break
@@ -183,7 +188,4 @@ class Streamer(Watcher):
         except Exception as e:
             print(f"Error while loading data from file: {e}")
             return None
-
-    def _remove_finished_task(self, task):
-        self._active_saving_tasks.remove(task)
 
