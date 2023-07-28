@@ -6,4 +6,4 @@ dev/
 flowcharts/pdf
 .vscode/
 __pycache__/
-*.pkl
+*.txt
