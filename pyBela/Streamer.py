@@ -25,7 +25,7 @@ class Streamer(Watcher):
 
         self._streaming_buffer_size = 1000
         self._streaming_buffer = None
-        self._streaming_mode = None  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
+        self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
 
         self._saving_enabled = False
@@ -69,6 +69,10 @@ class Streamer(Watcher):
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
         """
+        
+        if self.is_streaming():
+            self.stop_streaming() # stop any previous streaming
+        
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(saving_filename) if saving_enabled else None
 
@@ -96,6 +100,7 @@ class Streamer(Watcher):
         return asyncio.run(self.async_stop_streaming(variables))
 
     async def async_stop_streaming(self, variables=[]):
+        
         self.stop()
         self._streaming_mode = "OFF"
 
@@ -117,6 +122,11 @@ class Streamer(Watcher):
 
     def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
         """
+        Note: This function will block the main thread until n_frames have been streamed. To avoid blocking, use the async version of this function:
+            stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
+        and retrieve the streaming buffer using:
+             streaming_buffer = await stream_task
+        
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
             n_frames (int, optional): Number of frames to stream. Defaults to 1000.
@@ -127,12 +137,33 @@ class Streamer(Watcher):
         Returns:
             streaming_buffer (dict): Dict containing the streaming buffers for each streamed variable.
         """
+        # blocks thread until n_frames are streamed -- to avoid blocking, use async version
+        
         # TODO implement delay once data comes timestamped
         return asyncio.run(self.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
 
-    async def async_stream_n_frames(self, variables, n_frames, saving_enabled=False, saving_filename="var_stream.txt"):
+    async def async_stream_n_frames(self, variables=[], n_frames=1000, delay=None, saving_enabled=False,saving_filename="var_stream.txt"):
+        """ Asynchronous version of stream_n_frames(). Usage: 
+            stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
+        and retrieve the streaming buffer using:
+             streaming_buffer = await stream_task
+        
+
+        Args:
+            variables (list, optional): List of variables to be streamed. Defaults to [].
+            n_frames (int, optional): Number of frames to stream. Defaults to 1000.
+            delay (int, optional): _description_. Defaults to 0.
+            saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
+            saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         # resizes the streaming buffer size to n_frames and returns it when full
 
+        if self.is_streaming():
+            self.stop_streaming() # stop any previous streaming
+        
         # using setter to automatically resize buffer
         self.streaming_buffer_size = n_frames
 
