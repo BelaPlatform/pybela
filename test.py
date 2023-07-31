@@ -3,13 +3,13 @@ import asyncio
 import os
 from pyBela import Watcher, Streamer
 
+# all tests should be run with Bela connected and the watcher project running on the board
 
 class test_Watcher(unittest.TestCase):
 
     print("test_Watcher...")
 
     def test_list(self):
-        # to be run with bela connected and running
         watcher = Watcher()
         watcher.start()
         self.assertEqual(len(watcher.list()), len(watcher.watcher_vars),
@@ -72,8 +72,8 @@ class test_Streamer(unittest.TestCase):
         saving_filename = "test_save.txt"
 
         for var in streamer.watcher_vars:
-            if os.path.exists(f"{var}_test_save.txt"):
-                os.remove(f"{var}_test_save.txt")
+            if os.path.exists(f"{var}_{saving_filename}"):
+                os.remove(f"{var}_{saving_filename}")
 
         streamer.start_streaming(variables=streamer.watcher_vars,
                                  saving_enabled=True, saving_filename=saving_filename)
@@ -82,14 +82,14 @@ class test_Streamer(unittest.TestCase):
 
         loaded = {}
         for var in streamer.watcher_vars:
-            loaded[var] = streamer.load_data_from_file(f"{var}_test_save.txt")
+            loaded[var] = streamer.load_data_from_file(f"{var}_{saving_filename}")
 
         self.assertTrue(all(len(streamer.streaming_buffer[var]) == len(loaded[var]) for var in streamer.watcher_vars),
                         "The loaded data should have the same length as the streamed data (considering the buffer size is large enough)")
         
         for var in streamer.watcher_vars:
-            if os.path.exists(f"{var}_test_save.txt"):
-                os.remove(f"{var}_test_save.txt")
+            if os.path.exists(f"{var}_{saving_filename}"):
+                os.remove(f"{var}_{saving_filename}")
 
     def test_save(self):
         loop = asyncio.new_event_loop()
