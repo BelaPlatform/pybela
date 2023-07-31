@@ -46,10 +46,11 @@ class test_Streamer(unittest.TestCase):
 
     def test_stream_n_frames(self):
         streamer = Streamer()
+        n_frames = 100
         streaming_buffer = streamer.stream_n_frames(
-            variables=streamer.watcher_vars, n_frames=100)
-        self.assertTrue(all(len(var_buffer) == streamer.streaming_buffer_size for var_buffer in streaming_buffer.values(
-        )), "All streamed variables should have the same length")
+            variables=streamer.watcher_vars, n_frames=n_frames)
+        self.assertTrue(all(len(var_buffer) == n_frames for var_buffer in streaming_buffer.values(
+        )), "All streamed variables should have the same length as the requested number of frames")
 
     async def async_streamed_variables(self):
         streamer = Streamer()
@@ -67,7 +68,7 @@ class test_Streamer(unittest.TestCase):
 
     async def async_save(self):
         streamer = Streamer()
-        streamer.streaming_buffer_size = 10000
+        streamer.streaming_buffer_size = 100000
         saving_filename = "test_save.txt"
 
         for var in streamer.watcher_vars:
@@ -76,7 +77,7 @@ class test_Streamer(unittest.TestCase):
 
         streamer.start_streaming(variables=streamer.watcher_vars,
                                  saving_enabled=True, saving_filename=saving_filename)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(2) # wait for some data to be streamed
         streamer.stop_streaming(variables=streamer.watcher_vars)
 
         loaded = {}
