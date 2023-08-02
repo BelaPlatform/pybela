@@ -232,12 +232,19 @@ class Streamer(Watcher):
     # --- private methods --- #
 
     def _parse_data_message(self, msg):
-        global _type, _channel
+        
+        global _channel, _type
+        try:
+            _, __ = _channel, _type
+        except NameError: # initialise global variables to None 
+            _channel = None
+            _type = None
+            
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
                 _type = str(msg)[4]
-            elif len(msg) > 3:
+            elif len(msg) > 3 and _channel is not None and _type is not None:
                 # every buffer has a timestamp at the beginning
                 timestamp, * \
                     _msg = struct.unpack('Q' + 'f'*((len(msg)-8)//4), msg)
@@ -248,7 +255,7 @@ class Streamer(Watcher):
                     _saving_var_filename = f"{self._watcher_vars[_channel]}_{self._saving_filename}"
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
-                        self._save_data_to_file(_saving_var_filename,   {"frame": timestamp, "data": _msg}))
+                        self._save_data_to_file(_saving_var_filename, {"frame": timestamp, "data": _msg}))
                     self._active_saving_tasks.append(saving_task)
 
                 # if streaming buffer is full for watched variables and streaming mode is N_FRAMES

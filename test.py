@@ -6,8 +6,6 @@ from pyBela import Watcher, Streamer
 
 # all tests should be run with Bela connected and the watcher project running on the board
 
-
-
 class test_Watcher(unittest.TestCase):
 
     print("test_Watcher...")
@@ -88,9 +86,9 @@ class test_Streamer(unittest.TestCase):
                         "The loaded data should have the same length as the streamed data (considering the buffer size is large enough)")
         
 
-        # for var in streamer.watcher_vars:
-        #     if os.path.exists(f"{var}_{saving_filename}"):
-        #         os.remove(f"{var}_{saving_filename}")
+        for var in streamer.watcher_vars:
+            if os.path.exists(f"{var}_{saving_filename}"):
+                os.remove(f"{var}_{saving_filename}")
         
         # TODO test timeframes is the same in both variables
 
