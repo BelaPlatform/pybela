@@ -58,15 +58,22 @@ class Watcher:
             self.start_data_listener()
         
         self._watcher_vars = [var["name"] for var in self.list()] # refresh watcher vars in case new project has been loaded in Bela
-
-    def stop(self):
+    
+    async def async_stop(self):
         if self._ctrl_listener is not None:
             self._ctrl_listener.cancel()
+            if self.ws_control is not None:
+                await self.ws_control.close()
             self._ctrl_listener = None  # empty the listener
         if self._data_listener is not None:
             self._data_listener.cancel()
+            if self.ws_data is not None:
+                await self.ws_data.close()
             self._data_listener = None
-
+            
+    def stop(self):
+        return asyncio.run(self.async_stop())
+    
     def list(self):
         async def async_list():
             if self._ctrl_listener is None:  # start listener if listener is not running

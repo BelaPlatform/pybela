@@ -1,10 +1,10 @@
 import asyncio
-import array
 import aiofiles  # async file i/o
 import json
 import copy
 import os
 import glob
+import struct
 from collections import deque  # circular buffers
 
 from .Watcher import Watcher
@@ -23,7 +23,7 @@ class Streamer(Watcher):
 
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
-        self._streaming_buffer_size = 1000
+        self._streaming_buffer_size = 1000 # number of streaming buffers (not of data points!)
         self._streaming_buffer = None
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
@@ -69,12 +69,15 @@ class Streamer(Watcher):
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
         """
-        
+
         if self.is_streaming():
-            self.stop_streaming() # stop any previous streaming
-        
+            self.stop_streaming()  # stop any previous streaming
+
+        self.start() # start before setting saving enabled to ensure streaming buffer is initialised properly
+
         self._saving_enabled = True if saving_enabled else False
-        self._saving_filename = self._generate_filename(saving_filename) if saving_enabled else None
+        self._saving_filename = self._generate_filename(
+            saving_filename) if saving_enabled else None
 
         if len(variables) == 0:
             # if no variables are specified, stream all watcher variables (default)
@@ -85,7 +88,6 @@ class Streamer(Watcher):
 
         self._streaming_mode = "FOREVER"
 
-        self.start()
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "watch", "watchers": variables}]})
 
@@ -100,7 +102,7 @@ class Streamer(Watcher):
         return asyncio.run(self.async_stop_streaming(variables))
 
     async def async_stop_streaming(self, variables=[]):
-        
+
         self.stop()
         self._streaming_mode = "OFF"
 
@@ -126,7 +128,7 @@ class Streamer(Watcher):
             stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffer = await stream_task
-        
+
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
             n_frames (int, optional): Number of frames to stream. Defaults to 1000.
@@ -138,16 +140,16 @@ class Streamer(Watcher):
             streaming_buffer (dict): Dict containing the streaming buffers for each streamed variable.
         """
         # blocks thread until n_frames are streamed -- to avoid blocking, use async version
-        
-        # TODO implement delay once data comes timestamped
-        return asyncio.run(self.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
 
-    async def async_stream_n_frames(self, variables=[], n_frames=1000, delay=None, saving_enabled=False,saving_filename="var_stream.txt"):
+        # TODO implement delay once data comes timestamped
+        return asyncio.run(self.async_stream_n_frames(variables, n_frames, delay, saving_enabled, saving_filename))
+
+    async def async_stream_n_frames(self, variables=[], n_frames=1000, delay=None, saving_enabled=False, saving_filename="var_stream.txt"):
         """ Asynchronous version of stream_n_frames(). Usage: 
             stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffer = await stream_task
-        
+
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
@@ -159,16 +161,20 @@ class Streamer(Watcher):
         Returns:
             _type_: _description_
         """
+        
+        #FIXME divide n_frames by the bela buffer size to get the number of bela buffers to stream
+        
         # resizes the streaming buffer size to n_frames and returns it when full
 
         if self.is_streaming():
-            self.stop_streaming() # stop any previous streaming
-        
+            self.stop_streaming()  # stop any previous streaming
+
         # using setter to automatically resize buffer
         self.streaming_buffer_size = n_frames
 
         self._saving_enabled = True if saving_enabled else False
-        self._saving_filename = self._generate_filename(saving_filename) if saving_enabled else None
+        self._saving_filename = self._generate_filename(
+            saving_filename) if saving_enabled else None
 
         if len(variables) == 0:
             # if no variables are specified, stream all watched variables
@@ -214,7 +220,7 @@ class Streamer(Watcher):
                     if not line:
                         break
                     try:
-                        data.extend(json.loads(line))
+                        data.append(json.loads(line))
                     except EOFError:  # reached end of file
                         break
         except Exception as e:
@@ -232,16 +238,17 @@ class Streamer(Watcher):
                 _channel = int(str(msg)[2])
                 _type = str(msg)[4]
             elif len(msg) > 3:
-                _msg = array.array(_type, msg).tolist()
-                self._streaming_buffer[self._watcher_vars[_channel]].extend(
-                    _msg)
+                # every buffer has a timestamp at the beginning
+                timestamp, * \
+                    _msg = struct.unpack('Q' + 'f'*((len(msg)-8)//4), msg)
+                self._streaming_buffer[self._watcher_vars[_channel]].append(
+                    {"frame": timestamp, "data": _msg})
+
                 if self._saving_enabled:
-                    # avoid racing conditions by copying into new variable
-                    _save_msg = copy.copy(_msg)
                     _saving_var_filename = f"{self._watcher_vars[_channel]}_{self._saving_filename}"
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
-                        self._save_data_to_file(_saving_var_filename, _save_msg))
+                        self._save_data_to_file(_saving_var_filename,   {"frame": timestamp, "data": _msg}))
                     self._active_saving_tasks.append(saving_task)
 
                 # if streaming buffer is full for watched variables and streaming mode is N_FRAMES
@@ -250,19 +257,15 @@ class Streamer(Watcher):
                     self._streaming_buffer_available.set()
 
     async def _save_data_to_file(self, filename, msg):
-        # TODO warning if file already exists
         try:
             if self._saving_enabled:
-                # avoid racing conditions by copying into new variable
-                _msg = copy.copy(msg)
-
                 if filename not in self._file_locks.keys():  # make sure there are not two processes writing to the same file
                     # create lock for file if it does not exist
                     self._file_locks[filename] = asyncio.Lock()
 
                 async with self._file_locks[filename]:
                     async with aiofiles.open(filename, "a") as f:
-                        _json = json.dumps(_msg)
+                        _json = json.dumps(copy.copy(msg))
                         await f.write(_json+"\n")
 
         except Exception as e:
@@ -270,15 +273,17 @@ class Streamer(Watcher):
 
     def _generate_filename(self, saving_filename):
         # adds a number to the end of the filename if it already exists to avoid overwriting saved data files
-        # naming convention is varname_filename__idx.ext    
-        
+        # naming convention is varname_filename__idx.ext
+
         filename_wo_ext, filename_ext = os.path.splitext(saving_filename)
-        matching_files = [os.path.splitext(file)[0].split("__")[0] for file in glob.glob(f"*{filename_wo_ext}*{filename_ext}")] # files that follow naming convention, returns list of varname_filename (no __idx.ext)
+        # files that follow naming convention, returns list of varname_filename (no __idx.ext)
+        matching_files = [os.path.splitext(file)[0].split(
+            "__")[0] for file in glob.glob(f"*{filename_wo_ext}*{filename_ext}")]
 
         if not matching_files:
             return saving_filename
 
-        idx = max([matching_files.count(item) for item in set(matching_files)]) # counts files with the same varname_filename
-        
-        return  f"{filename_wo_ext}__{idx}{filename_ext}"
+        # counts files with the same varname_filename
+        idx = max([matching_files.count(item) for item in set(matching_files)])
 
+        return f"{filename_wo_ext}__{idx}{filename_ext}"
