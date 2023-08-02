@@ -1,9 +1,12 @@
 import unittest
 import asyncio
 import os
+
 from pyBela import Watcher, Streamer
 
 # all tests should be run with Bela connected and the watcher project running on the board
+
+
 
 class test_Watcher(unittest.TestCase):
 
@@ -40,9 +43,7 @@ class test_Streamer(unittest.TestCase):
                          "Streaming mode should be OFF after stop_streaming")
 
     def test_stream_forever_modes(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.async_stream_forever_modes())
+        asyncio.run(self.async_stream_forever_modes())
 
     def test_stream_n_frames(self):
         streamer = Streamer()
@@ -62,13 +63,11 @@ class test_Streamer(unittest.TestCase):
             streamer.streaming_buffer[streamer.watcher_vars[-1]]), 0, "The streamed variable buffer should not be empty")
 
     def test_streamed_variables(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.async_streamed_variables())
+        asyncio.run(self.async_streamed_variables())
 
     async def async_save(self):
         streamer = Streamer()
-        streamer.streaming_buffer_size = 100000
+        streamer.streaming_buffer_size = 1000
         saving_filename = "test_save.txt"
 
         for var in streamer.watcher_vars:
@@ -77,26 +76,26 @@ class test_Streamer(unittest.TestCase):
 
         streamer.start_streaming(variables=streamer.watcher_vars,
                                  saving_enabled=True, saving_filename=saving_filename)
-        await asyncio.sleep(2) # wait for some data to be streamed
+        await asyncio.sleep(0.8) # wait for some data to be streamed
         streamer.stop_streaming(variables=streamer.watcher_vars)
 
         loaded = {}
         for var in streamer.watcher_vars:
             loaded[var] = streamer.load_data_from_file(f"{var}_{saving_filename}")
 
+
         self.assertTrue(all(len(streamer.streaming_buffer[var]) == len(loaded[var]) for var in streamer.watcher_vars),
                         "The loaded data should have the same length as the streamed data (considering the buffer size is large enough)")
         
-        for var in streamer.watcher_vars:
-            if os.path.exists(f"{var}_{saving_filename}"):
-                os.remove(f"{var}_{saving_filename}")
+
+        # for var in streamer.watcher_vars:
+        #     if os.path.exists(f"{var}_{saving_filename}"):
+        #         os.remove(f"{var}_{saving_filename}")
+        
+        # TODO test timeframes is the same in both variables
 
     def test_save(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.async_save())
-
-    # TODO add test for starting streaming and starting save after a while
+        asyncio.run(self.async_save())
 
 
 if __name__ == '__main__':
