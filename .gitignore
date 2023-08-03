@@ -7,3 +7,5 @@ flowcharts/pdf
 .vscode/
 __pycache__/
 *.txt
+build/
+*.egg-info

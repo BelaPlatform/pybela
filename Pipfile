@@ -15,6 +15,7 @@ bokeh = "*"
 ipykernel = "*"
 nest-asyncio = "*"
 aiofiles = "*"
+pybela = {editable = true, path = "."}
 
 [dev-packages]
 

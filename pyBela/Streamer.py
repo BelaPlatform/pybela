@@ -69,7 +69,7 @@ class Streamer(Watcher):
         super(Streamer, self).start()
         self._streaming_buffers_queue = {var: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
-    
+
     @property
     def streaming_buffer_data(self):
         """Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
@@ -82,11 +82,11 @@ class Streamer(Watcher):
             for buffer in self.streaming_buffers_queue[var]:
                 data[var].extend(buffer["data"])
         return data
-        
 
     # - streaming methods
 
     # stream forever until stopped
+
     def start_streaming(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt"):
         """
         Args:
@@ -150,7 +150,7 @@ class Streamer(Watcher):
     def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
         """
         Note: This function will block the main thread until n_frames have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_frames, unless n_frames is a multiple of the block size (streamer._streaming_block_size).
-        
+
         To avoid blocking, use the async version of this function:
             stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
@@ -188,8 +188,9 @@ class Streamer(Watcher):
         Returns:
             _type_: _description_
         """
-        
-        n_buffers = -(-n_frames // self._streaming_buffer_size)  # ceiling division
+
+        # ceiling division
+        n_buffers = -(-n_frames // self._streaming_buffer_size)
 
         # resizes the streaming buffer size to n_frames and returns it when full
 
@@ -269,11 +270,12 @@ class Streamer(Watcher):
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
-                _type = str(msg)[4] 
+                _type = str(msg)[4]
             elif len(msg) > 3 and _channel is not None and _type is not None:
                 # every buffer has a timestamp at the beginning
                 timestamp, * \
-                    _msg = struct.unpack('Q' + f"{_type}"*((len(msg)-8)//4), msg) # TODO for now the watcher only supports floats. update this when adding support for other types
+                    _msg = struct.unpack(
+                        'Q' + f"{_type}"*((len(msg)-8)//4), msg)  # TODO for now the watcher only supports floats. update this when adding support for other types
                 # append message to the streaming buffers queue
                 self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
                     {"frame": timestamp, "data": _msg})
