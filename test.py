@@ -84,9 +84,8 @@ class test_Streamer(unittest.TestCase):
         for var in streaming_vars:
             for buffer in streamer.streaming_buffers_queue[var]:
                 self.assertEqual(buffer["frame"], buffer["data"][0], "The frame and the first item of data buffer should be the same")
-                self.assertEqual(buffer["frame"]+streamer._streaming_buffer_size-1, buffer["data"][-1], "The last data item should be equal to the frame plus the length of the buffer minus one.")
+                self.assertEqual(buffer["frame"]+streamer._streaming_buffer_size, buffer["data"][-1], "The last data item should be equal to the frame plus the length of the buffer")
         
-        delete saved files        
         for var in streaming_vars:
             if os.path.exists(f"{var}_{saving_filename}"):
                 os.remove(f"{var}_{saving_filename}")
