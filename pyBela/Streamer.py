@@ -12,7 +12,7 @@ from .Watcher import Watcher
 
 class Streamer(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
-        """ Streamer class __summary__.
+        """ Streamer class
 
             Args:
                 ip (str, optional): Remote address IP. Defaults to "192.168.7.2".
@@ -23,8 +23,12 @@ class Streamer(Watcher):
 
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
-        self._streaming_buffer_size = 1000 # number of streaming buffers (not of data points!)
-        self._streaming_buffer = None
+        # number of data points per buffer -- this depends on the Bela Watcher
+        self._streaming_buffer_size = 1024
+        # number of streaming buffers (not of data points!)
+        self._streaming_buffers_queue_length = 1000
+        self._streaming_buffers_queue = None
+
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
 
@@ -32,32 +36,53 @@ class Streamer(Watcher):
         self._saving_filename = None
         self._saving_task = None
         self._active_saving_tasks = []
-
-        self._file_locks = {}
+        self._saving_file_locks = {}
 
     # --- public methods --- #
 
     # - setters & getters
 
     @property
-    def streaming_buffer_size(self):
-        return self._streaming_buffer_size
+    def streaming_buffers_queue_length(self):
+        """Returns the maximum number of streaming buffers allowed in self.streaming_buffers_queue"""
+        return self._streaming_buffers_queue_length
 
-    @streaming_buffer_size.setter
-    def streaming_buffer_size(self, value):
-        self._streaming_buffer_size = value
-        self._streaming_buffer = {var: deque(
-            maxlen=self._streaming_buffer_size) for var in self.watcher_vars}  # resize streaming buffer
+    @streaming_buffers_queue_length.setter
+        """Sets the maximum number of streaming buffers allowed in self.streaming_buffers_queue. Warning: setting the streaming buffer value will result in deleting the current streaming buffer queue.
+        """
+    def streaming_buffers_queue_length(self, value):
+        self._streaming_buffers_queue_length = value
+        self._streaming_buffers_queue = {var: deque(
+            maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}  # resize streaming buffer
 
     @property
-    def streaming_buffer(self):
-        # convert dict of deque to dict of list
-        return {key: list(value) for key, value in self._streaming_buffer.items()}
+    def streaming_buffers_queue(self):
+        """Returns a dict where each key corresponds to a variable and each item to the variable's buffer queue. The queue has maximum length determined by streamer.streaming_buffers_queue_length. Each item of the queue is a received buffer of the form {"frame: int, "data": {"var1": [val1, val2, ...], "var2": [val1, val2, ...], ...} }
+
+        Returns:
+            dict: streaming buffers queue
+        """
+        # returns a dict of lists instead of a dict of dequeues
+        return {key: list(value) for key, value in self._streaming_buffers_queue.items()}
 
     def start(self):
         super(Streamer, self).start()
-        self._streaming_buffer = {var: deque(
-            maxlen=self._streaming_buffer_size) for var in self.watcher_vars}
+        self._streaming_buffers_queue = {var: deque(
+            maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
+    
+    @property
+    def streaming_buffer_data(self):
+        """Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
+        Returns:
+            dict: Dict of flat lists of streamed values.
+        """
+        data = {}
+        for var in self.streaming_buffers_queue:
+            data[var] = []
+            for buffer in self.streaming_buffers_queue[var]:
+                data[var].extend(buffer["data"])
+        return data
+        
 
     # - streaming methods
 
@@ -73,7 +98,7 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        self.start() # start before setting saving enabled to ensure streaming buffer is initialised properly
+        self.start()  # start before setting saving enabled to ensure streaming buffer is initialised properly
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
@@ -97,7 +122,7 @@ class Streamer(Watcher):
             variables (list, optional): List of variables to stop streaming. Defaults to [].
 
         Returns:
-            streaming_buffer (dict): Dict containing the streaming buffers for each streamed variable.
+            streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
         return asyncio.run(self.async_stop_streaming(variables))
 
@@ -120,14 +145,14 @@ class Streamer(Watcher):
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
 
-        return self.streaming_buffer
+        return self.streaming_buffers_queue
 
     def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
         """
         Note: This function will block the main thread until n_frames have been streamed. To avoid blocking, use the async version of this function:
             stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
-             streaming_buffer = await stream_task
+             streaming_buffers_queue = await stream_task
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
@@ -137,7 +162,7 @@ class Streamer(Watcher):
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
 
         Returns:
-            streaming_buffer (dict): Dict containing the streaming buffers for each streamed variable.
+            streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
         # blocks thread until n_frames are streamed -- to avoid blocking, use async version
 
@@ -148,7 +173,7 @@ class Streamer(Watcher):
         """ Asynchronous version of stream_n_frames(). Usage: 
             stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
-             streaming_buffer = await stream_task
+             streaming_buffers_queue = await stream_task
 
 
         Args:
@@ -161,16 +186,16 @@ class Streamer(Watcher):
         Returns:
             _type_: _description_
         """
-        
-        #FIXME divide n_frames by the bela buffer size to get the number of bela buffers to stream
-        
+
+        # FIXME divide n_frames by the bela buffer size to get the number of bela buffers to stream
+
         # resizes the streaming buffer size to n_frames and returns it when full
 
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
         # using setter to automatically resize buffer
-        self.streaming_buffer_size = n_frames
+        self.streaming_buffers_queue_length = n_frames
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
@@ -197,7 +222,7 @@ class Streamer(Watcher):
         # turns off listener, unwatches variables
         self.stop_streaming(variables)
 
-        return self.streaming_buffer
+        return self.streaming_buffers_queue
 
     # - utils
 
@@ -232,14 +257,13 @@ class Streamer(Watcher):
     # --- private methods --- #
 
     def _parse_data_message(self, msg):
-        
         global _channel, _type
         try:
             _, __ = _channel, _type
-        except NameError: # initialise global variables to None 
+        except NameError:  # initialise global variables to None
             _channel = None
             _type = None
-            
+
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
@@ -248,7 +272,8 @@ class Streamer(Watcher):
                 # every buffer has a timestamp at the beginning
                 timestamp, * \
                     _msg = struct.unpack('Q' + 'f'*((len(msg)-8)//4), msg)
-                self._streaming_buffer[self._watcher_vars[_channel]].append(
+                # append message to the streaming buffers queue
+                self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
                     {"frame": timestamp, "data": _msg})
 
                 if self._saving_enabled:
@@ -258,19 +283,20 @@ class Streamer(Watcher):
                         self._save_data_to_file(_saving_var_filename, {"frame": timestamp, "data": _msg}))
                     self._active_saving_tasks.append(saving_task)
 
-                # if streaming buffer is full for watched variables and streaming mode is N_FRAMES
-                if self._streaming_mode == "N_FRAMES" and all(len(self._streaming_buffer[var]) == self._streaming_buffer_size for var in self._watcher_vars):
+                # if streaming buffers queue is full for watched variables and streaming mode is N_FRAMES
+                if self._streaming_mode == "N_FRAMES" and all(len(self._streaming_buffers_queue[var]) == self._streaming_buffers_queue_length for var in self._watcher_vars):
                     self._streaming_mode = "OFF"
                     self._streaming_buffer_available.set()
 
     async def _save_data_to_file(self, filename, msg):
         try:
             if self._saving_enabled:
-                if filename not in self._file_locks.keys():  # make sure there are not two processes writing to the same file
+                # make sure there are not two processes writing to the same file
+                if filename not in self._saving_file_locks.keys():
                     # create lock for file if it does not exist
-                    self._file_locks[filename] = asyncio.Lock()
+                    self._saving_file_locks[filename] = asyncio.Lock()
 
-                async with self._file_locks[filename]:
+                async with self._saving_file_locks[filename]:
                     async with aiofiles.open(filename, "a") as f:
                         _json = json.dumps(copy.copy(msg))
                         await f.write(_json+"\n")

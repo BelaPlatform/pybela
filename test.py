@@ -30,70 +30,67 @@ class test_Streamer(unittest.TestCase):
 
     print("test_Streamer...")
 
-    async def async_stream_forever_modes(self):
-        streamer = Streamer()
-        streamer.start_streaming(variables=streamer.watcher_vars)
-        self.assertEqual(streamer._streaming_mode, "FOREVER",
-                         "Streaming mode should be FOREVER after start_streaming")
-        await asyncio.sleep(0.5)
-        streamer.stop_streaming(variables=streamer.watcher_vars)
-        self.assertEqual(streamer._streaming_mode, "OFF",
-                         "Streaming mode should be OFF after stop_streaming")
-
-    def test_stream_forever_modes(self):
-        asyncio.run(self.async_stream_forever_modes())
-
     def test_stream_n_frames(self):
         streamer = Streamer()
         n_frames = 100
         streaming_buffer = streamer.stream_n_frames(
             variables=streamer.watcher_vars, n_frames=n_frames)
+
         self.assertTrue(all(len(var_buffer) == n_frames for var_buffer in streaming_buffer.values(
         )), "All streamed variables should have the same length as the requested number of frames")
 
-    async def async_streamed_variables(self):
+    async def async_test_buffers(self):
         streamer = Streamer()
-        # stream only the last variable
-        streamer.start_streaming(variables=streamer.watcher_vars[-1])
-        await asyncio.sleep(0.5)
-        streamer.stop_streaming(variables=streamer.watcher_vars[-1])
-        self.assertNotEqual(len(
-            streamer.streaming_buffer[streamer.watcher_vars[-1]]), 0, "The streamed variable buffer should not be empty")
-
-    def test_streamed_variables(self):
-        asyncio.run(self.async_streamed_variables())
-
-    async def async_save(self):
-        streamer = Streamer()
-        streamer.streaming_buffer_size = 1000
+        streamer.streaming_buffers_queue_length = 1000
         saving_filename = "test_save.txt"
+        
+        streaming_vars = ["myvar", "myvar2"]
 
-        for var in streamer.watcher_vars:
+        # delete any existing test files
+        for var in streaming_vars:
             if os.path.exists(f"{var}_{saving_filename}"):
                 os.remove(f"{var}_{saving_filename}")
 
-        streamer.start_streaming(variables=streamer.watcher_vars,
+        streamer.start_streaming(variables=streaming_vars,
                                  saving_enabled=True, saving_filename=saving_filename)
-        await asyncio.sleep(0.8) # wait for some data to be streamed
-        streamer.stop_streaming(variables=streamer.watcher_vars)
+        
+        # check streaming mode is FOREVER after start_streaming is called
+        self.assertEqual(streamer._streaming_mode, "FOREVER",
+                         "Streaming mode should be FOREVER after start_streaming")
+        
+        await asyncio.sleep(5) # wait for some data to be streamed
+        
+        streamer.stop_streaming(variables=streaming_vars)
+        
+        # check streaming mode is OFF after stop_streaming
+        self.assertEqual(streamer._streaming_mode, "OFF",
+                         "Streaming mode should be OFF after stop_streaming")
 
         loaded = {}
-        for var in streamer.watcher_vars:
+        for var in streaming_vars:
+            # check buffers in streaming_buffers_queue have the right length
+            self.assertTrue(all(len(buffer["data"]) == streamer._streaming_buffer_size for buffer in streamer.streaming_buffers_queue[var]), "All buffers in streamer.streaming_buffers_queue should have a length equal to the buffer size")
             loaded[var] = streamer.load_data_from_file(f"{var}_{saving_filename}")
-
-
-        self.assertTrue(all(len(streamer.streaming_buffer[var]) == len(loaded[var]) for var in streamer.watcher_vars),
-                        "The loaded data should have the same length as the streamed data (considering the buffer size is large enough)")
+            # check that the loader buffers have the right length
+            self.assertTrue(all(len(buffer["data"]) == streamer._streaming_buffer_size for buffer in loaded[var]), "All loaded buffers should have a length equal to the buffer size")
+            
+        # check that the number of buffers saved is the same as the number of buffers in streamer.streaming_buffers_queue
+        self.assertTrue(all(len(streamer.streaming_buffers_queue[var]) == len(loaded[var]) for var in streaming_vars),
+                        "The number of buffers saved should be equal to the number of buffers in streamer.streaming_buffers_queue (considering the queue length is long enough)")
+        # list of frames for each variable     
+        frames = {var: [buffer["frame"] for buffer in streamer.streaming_buffers_queue[var]] for var in streamer.streaming_buffers_queue}
+        # check the frames are the same for all variables 
+        self.assertTrue(frames[streaming_vars[0]] == frames[streaming_vars[1]], "The frames in the buffers should be the same for all variables") 
         
+        # TODO test for continuity of frames
 
-        for var in streamer.watcher_vars:
+        # delete saved files        
+        for var in streaming_vars:
             if os.path.exists(f"{var}_{saving_filename}"):
                 os.remove(f"{var}_{saving_filename}")
         
-        # TODO test timeframes is the same in both variables
-
     def test_save(self):
-        asyncio.run(self.async_save())
+        asyncio.run(self.async_test_buffers())
 
 
 if __name__ == '__main__':
