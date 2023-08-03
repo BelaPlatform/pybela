@@ -48,9 +48,9 @@ class Streamer(Watcher):
         return self._streaming_buffers_queue_length
 
     @streaming_buffers_queue_length.setter
+    def streaming_buffers_queue_length(self, value):
         """Sets the maximum number of streaming buffers allowed in self.streaming_buffers_queue. Warning: setting the streaming buffer value will result in deleting the current streaming buffer queue.
         """
-    def streaming_buffers_queue_length(self, value):
         self._streaming_buffers_queue_length = value
         self._streaming_buffers_queue = {var: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}  # resize streaming buffer
@@ -149,7 +149,9 @@ class Streamer(Watcher):
 
     def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
         """
-        Note: This function will block the main thread until n_frames have been streamed. To avoid blocking, use the async version of this function:
+        Note: This function will block the main thread until n_frames have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_frames, unless n_frames is a multiple of the block size (streamer._streaming_block_size).
+        
+        To avoid blocking, use the async version of this function:
             stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffers_queue = await stream_task
@@ -186,8 +188,8 @@ class Streamer(Watcher):
         Returns:
             _type_: _description_
         """
-
-        # FIXME divide n_frames by the bela buffer size to get the number of bela buffers to stream
+        
+        n_buffers = -(-n_frames // self._streaming_buffer_size)  # ceiling division
 
         # resizes the streaming buffer size to n_frames and returns it when full
 
@@ -195,7 +197,7 @@ class Streamer(Watcher):
             self.stop_streaming()  # stop any previous streaming
 
         # using setter to automatically resize buffer
-        self.streaming_buffers_queue_length = n_frames
+        self.streaming_buffers_queue_length = n_buffers
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
@@ -267,11 +269,11 @@ class Streamer(Watcher):
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
-                _type = str(msg)[4]
+                _type = str(msg)[4] 
             elif len(msg) > 3 and _channel is not None and _type is not None:
                 # every buffer has a timestamp at the beginning
                 timestamp, * \
-                    _msg = struct.unpack('Q' + 'f'*((len(msg)-8)//4), msg)
+                    _msg = struct.unpack('Q' + f"{_type}"*((len(msg)-8)//4), msg) # TODO for now the watcher only supports floats. update this when adding support for other types
                 # append message to the streaming buffers queue
                 self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
                     {"frame": timestamp, "data": _msg})

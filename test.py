@@ -8,8 +8,6 @@ from pyBela import Watcher, Streamer
 
 class test_Watcher(unittest.TestCase):
 
-    print("test_Watcher...")
-
     def test_list(self):
         watcher = Watcher()
         watcher.start()
@@ -28,15 +26,15 @@ class test_Watcher(unittest.TestCase):
 
 class test_Streamer(unittest.TestCase):
 
-    print("test_Streamer...")
-
     def test_stream_n_frames(self):
         streamer = Streamer()
-        n_frames = 100
+        n_frames = 2000
         streaming_buffer = streamer.stream_n_frames(
             variables=streamer.watcher_vars, n_frames=n_frames)
+        
+        n_buffers = -(-n_frames // streamer._streaming_buffer_size)
 
-        self.assertTrue(all(len(var_buffer) == n_frames for var_buffer in streaming_buffer.values(
+        self.assertTrue(all(len(var_buffer_queue) == n_buffers for var_buffer_queue in streaming_buffer.values(
         )), "All streamed variables should have the same length as the requested number of frames")
 
     async def async_test_buffers(self):
@@ -80,19 +78,22 @@ class test_Streamer(unittest.TestCase):
         # list of frames for each variable     
         frames = {var: [buffer["frame"] for buffer in streamer.streaming_buffers_queue[var]] for var in streamer.streaming_buffers_queue}
         # check the frames are the same for all variables 
-        self.assertTrue(frames[streaming_vars[0]] == frames[streaming_vars[1]], "The frames in the buffers should be the same for all variables") 
+        self.assertTrue(frames[streaming_vars[0]] == frames[streaming_vars[1]], "The frames in the buffers should be the same for all variables")
         
-        # TODO test for continuity of frames
-
-        # delete saved files        
+        # check continuity of frames
+        for var in streaming_vars:
+            for buffer in streamer.streaming_buffers_queue[var]:
+                self.assertEqual(buffer["frame"], buffer["data"][0], "The frame and the first item of data buffer should be the same")
+                self.assertEqual(buffer["frame"]+streamer._streaming_buffer_size-1, buffer["data"][-1], "The last data item should be equal to the frame plus the length of the buffer minus one.")
+        
+        delete saved files        
         for var in streaming_vars:
             if os.path.exists(f"{var}_{saving_filename}"):
                 os.remove(f"{var}_{saving_filename}")
         
-    def test_save(self):
+    def test_buffers(self):
         asyncio.run(self.async_test_buffers())
 
 
 if __name__ == '__main__':
-    # begin the unittest.main()
-    unittest.main()
+    unittest.main(verbosity=2)
