@@ -270,13 +270,16 @@ class Streamer(Watcher):
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
-                _type = str(msg)[4]
+                _type = str(msg)[4] # for now supports int, unsigned int and float
+                _type = 'i' if _type == 'j' else _type # convert unsigned int to int -- struct does not support unsigned ints
+
             elif len(msg) > 3 and _channel is not None and _type is not None:
                 # every buffer has a timestamp at the beginning
                 timestamp, * \
                     _msg = struct.unpack(
-                        'Q' + f"{_type}"*((len(msg)-8)//4), msg)  # TODO for now the watcher only supports floats. update this when adding support for other types
+                        'Q' + f"{_type}"*((len(msg)-struct.calcsize('Q'))//struct.calcsize(_type)), msg)  # TODO fix this for char and double
                 # append message to the streaming buffers queue
+                _msg = [char.decode() for char in _msg] if _type == 'c' else _msg
                 self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
                     {"frame": timestamp, "data": _msg})
 
