@@ -24,7 +24,7 @@ class Streamer(Watcher):
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
         # number of data points per buffer -- this depends on the Bela Watcher
-        self._streaming_buffer_size = 1024
+        self._streaming_buffer_size = 1024  # FIXME this depends on the datatype
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 1000
         self._streaming_buffers_queue = None
@@ -190,6 +190,7 @@ class Streamer(Watcher):
         """
 
         # ceiling division
+        # FIXME streaming buffer size depends on the datatype
         n_buffers = -(-n_frames // self._streaming_buffer_size)
 
         # resizes the streaming buffer size to n_frames and returns it when full
@@ -270,16 +271,20 @@ class Streamer(Watcher):
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
-                _type = str(msg)[4] # for now supports int, unsigned int and float
-                _type = 'i' if _type == 'j' else _type # convert unsigned int to int -- struct does not support unsigned ints
+                # for now supports int, unsigned int and float # FIXME add support for 8-bit types
+                _type = str(msg)[4]
+                # convert unsigned int to int -- struct does not support unsigned ints
+                _type = 'i' if _type == 'j' else _type
 
             elif len(msg) > 3 and _channel is not None and _type is not None:
                 # every buffer has a timestamp at the beginning
-                timestamp, * \
-                    _msg = struct.unpack(
-                        'Q' + f"{_type}"*((len(msg)-struct.calcsize('Q'))//struct.calcsize(_type)), msg)  # TODO fix this for char and double
+                _format = 'Q' + \
+                    f"{_type}"*((len(msg)-struct.calcsize('Q')) //
+                                struct.calcsize(_type))
+                timestamp, *_msg = struct.unpack(_format, msg)
+                # _msg = [char.decode()
+                #         for char in _msg] if _type == 'c' else _msg
                 # append message to the streaming buffers queue
-                _msg = [char.decode() for char in _msg] if _type == 'c' else _msg
                 self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
                     {"frame": timestamp, "data": _msg})
 
