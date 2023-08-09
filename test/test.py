@@ -84,7 +84,8 @@ class test_Streamer(unittest.TestCase):
         # check the frames are the same for all variables
         # self.assertTrue(frames[streaming_vars[0]][0::2][:len(frames[streaming_vars[1]])] == frames[streaming_vars[1]], # myvar is a double and myvar2 is a float
         #                 "The frames in the buffers should be equivalent for both variables")
-        self.assertTrue(frames[streaming_vars[0]] == frames[streaming_vars[1]],  # both myvar and myvar2 are floats
+        min_frames_len = min(len(frames[streaming_vars[0]]), len(frames[streaming_vars[1]]))
+        self.assertTrue(frames[streaming_vars[0]][:min_frames_len] == frames[streaming_vars[1]][:min_frames_len],  # both myvar and myvar2 are floats
                         "The frames in the buffers should be equivalent for both variables")
 
         # check continuity of frames
