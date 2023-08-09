@@ -265,7 +265,8 @@ class Streamer(Watcher):
 
         return data
 
-    # --- plotting methods --- #
+    # - plotting
+    
     def _data_plot(self, 
                    data,
                    x_var,
