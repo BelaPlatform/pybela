@@ -7,6 +7,12 @@ import glob
 import struct
 from collections import deque  # circular buffers
 
+import bokeh.plotting
+import bokeh.io
+import bokeh.driving
+from bokeh.resources import INLINE
+
+
 from .Watcher import Watcher
 
 
@@ -24,10 +30,12 @@ class Streamer(Watcher):
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
         # number of data points per buffer -- this depends on the Bela Watcher
-        self._streaming_buffer_size = 1024  # FIXME this depends on the datatype, 1024 for 4-bits and 512 for 8-bits
+        # FIXME this depends on the datatype, 1024 for 4-bits and 512 for 8-bits
+        self._streaming_buffer_size = 1024
         # number of streaming buffers (not of data points!)
-        self._streaming_buffers_queue_length = 1000
+        self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
+        self.last_streamed_buffer_data = {}  # FIXME populate at start
 
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
@@ -69,6 +77,7 @@ class Streamer(Watcher):
         super(Streamer, self).start()
         self._streaming_buffers_queue = {var: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
+        self.last_streamed_buffer_data = {var: [] for var in self.watcher_vars}
 
     @property
     def streaming_buffer_data(self):
@@ -144,8 +153,6 @@ class Streamer(Watcher):
 
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
-
-        return self.streaming_buffers_queue
 
     def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
         """
@@ -258,6 +265,57 @@ class Streamer(Watcher):
 
         return data
 
+    # --- plotting methods --- #
+    def _data_plot(self, 
+                   data,
+                   x_var,
+                   y_vars,
+                   rollover=None,
+                   plot_update_delay=90):
+        """Return a function defining a Bokeh app for streaming. A maximum of `rollover`
+        data points are shown at a time.
+        """
+        # TODO add variable checkers
+
+        def _app(doc):
+            # Instatiate figures
+            p = bokeh.plotting.figure(
+                frame_width=500,
+                frame_height=175,
+                x_axis_label=x_var,
+                y_axis_label="value",
+                # y_range=[-0.2, 5.2],
+            )
+
+            # No padding on x_range makes data flush with end of plot
+            p.x_range.range_padding = 0
+
+            # Create a dictionary to store ColumnDataSource instances for each y_var
+            template = {var: [] for var in data}
+            source = bokeh.models.ColumnDataSource(template)
+
+            # Create line glyphs for each y_var
+            for y_var in y_vars:
+                p.line(source=source, x=x_var, y=y_var, legend_label=y_var)
+
+            @bokeh.driving.linear()
+            def update(step):
+                # Update plot by streaming in data
+                new_data = {x_var: data[x_var]}
+                for y_var in y_vars:
+                    new_data[y_var] = data[y_var]
+                source.stream(new_data, rollover)
+
+            doc.add_root(p)
+            pc = doc.add_periodic_callback(update, plot_update_delay)
+
+        return _app
+
+    def plot_data(self, x_var, y_vars, plot_update_delay=100, rollover=1000):
+        bokeh.io.output_notebook(INLINE)
+        bokeh.io.show(self._data_plot(data=self.last_streamed_buffer_data, x_var=x_var,
+                      y_vars=y_vars, plot_update_delay=plot_update_delay, rollover=rollover))
+
     # --- private methods --- #
 
     def _parse_data_message(self, msg):
@@ -287,6 +345,8 @@ class Streamer(Watcher):
                 # append message to the streaming buffers queue
                 self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
                     {"frame": timestamp, "data": _msg})
+                # needed for streaming plots
+                self.last_streamed_buffer_data[self._watcher_vars[_channel]] = _msg
 
                 if self._saving_enabled:
                     _saving_var_filename = f"{self._watcher_vars[_channel]}_{self._saving_filename}"
