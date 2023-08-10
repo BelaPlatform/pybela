@@ -94,7 +94,7 @@ class test_Streamer(unittest.TestCase):
 
         # check the frames are equivalent for all variables, taking into account that myvar is a double (8-bit) and myvar2 is a float (4-bit)
         self.assertTrue(frames["myvar"][0::2][:len(frames["myvar2"])] == frames["myvar2"],
-                        "The frames in the buffers should be equivalent for both variables")
+                        "The frames in the buffers should be equivalent for both variables") # FIXME known issue: this test doesn't pass if the start streaming command is received between variable assignments in the cpp code
 
         # check continuity of frames
         types = [var["type"]

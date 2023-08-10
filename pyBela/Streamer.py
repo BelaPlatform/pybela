@@ -218,7 +218,7 @@ class Streamer(Watcher):
         # TODO add a warning when there's different buffer sizes ?
 
         # ceiling division
-        n_buffers = -(-n_frames // min(buffer_sizes))  # TODO test this
+        n_buffers = -(-n_frames // min(buffer_sizes))  
 
         # using setter to automatically resize buffer
         self.streaming_buffers_queue_length = n_buffers
@@ -333,15 +333,22 @@ class Streamer(Watcher):
         except NameError:  # initialise global variables to None
             _channel = None
             _type = None
+            
+        _saving_enabled = copy.copy(self._saving_enabled) # in case buffer is received whilst streaming mode is one but parsed after streaming_enabled has changed 
 
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
                 # for now supports int, unsigned int and float # FIXME add support for 8-bit types
                 _type = str(msg)[4]
+                
+                assert _type in ['i', 'j', 'd', 'c'], f"Unsupported type: {_type}"
+                
+                assert _type == self._watcher_vars[_channel]['type'], f"Type mismatch: {_type} != {self._watcher_vars[_channel]['type']}"
+                
                 # convert unsigned int to int -- struct does not support unsigned ints
                 _type = 'i' if _type == 'j' else _type
-
+                
                 # TODO add an assert here to check if the type is the same as the specified in list?
 
             elif len(msg) > 3 and _channel is not None and _type is not None:
@@ -359,7 +366,7 @@ class Streamer(Watcher):
                 self.last_streamed_buffer_data[self._watcher_vars[_channel]
                                                ['name']] = _msg
 
-                if self._saving_enabled:
+                if _saving_enabled:
                     _saving_var_filename = f"{self._watcher_vars[_channel]['name']}_{self._saving_filename}"
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
