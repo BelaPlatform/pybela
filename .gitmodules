@@ -1,3 +1,0 @@
-[submodule "test/bela-watcher"]
-	path = test/bela-watcher
-	url = https://github.com/BelaPlatform/watcher
