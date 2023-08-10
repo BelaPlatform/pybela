@@ -30,8 +30,7 @@ class Streamer(Watcher):
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
         # number of data points per buffer -- this depends on the Bela Watcher
-        # FIXME this depends on the datatype, 1024 for 4-bits and 512 for 8-bits
-        self._streaming_buffer_size = 1024
+
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
@@ -60,7 +59,7 @@ class Streamer(Watcher):
         """Sets the maximum number of streaming buffers allowed in self.streaming_buffers_queue. Warning: setting the streaming buffer value will result in deleting the current streaming buffer queue.
         """
         self._streaming_buffers_queue_length = value
-        self._streaming_buffers_queue = {var: deque(
+        self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}  # resize streaming buffer
 
     @property
@@ -75,12 +74,13 @@ class Streamer(Watcher):
 
     def start(self):
         super(Streamer, self).start()
-        self._streaming_buffers_queue = {var: deque(
+        self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
-        self.last_streamed_buffer_data = {var: [] for var in self.watcher_vars}
+        self.last_streamed_buffer_data = {
+            var["name"]: [] for var in self.watcher_vars}
 
     @property
-    def streaming_buffer_data(self):
+    def streaming_buffers_data(self):
         """Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
         Returns:
             dict: Dict of flat lists of streamed values.
@@ -115,7 +115,7 @@ class Streamer(Watcher):
 
         if len(variables) == 0:
             # if no variables are specified, stream all watcher variables (default)
-            variables = self.watcher_vars
+            variables = [var["name"] for var in self.watcher_vars]
 
         variables = variables if isinstance(variables, list) else [
             variables]  # variables should be a list of strings
@@ -149,7 +149,7 @@ class Streamer(Watcher):
 
         if variables == []:
             # if no variables specified, stop streaming all watcher variables (default)
-            variables = self.watched_vars
+            variables = [var["name"] for var in self.watcher_vars]
 
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
@@ -195,15 +195,30 @@ class Streamer(Watcher):
         Returns:
             _type_: _description_
         """
-
-        # ceiling division
-        # FIXME streaming buffer size depends on the datatype
-        n_buffers = -(-n_frames // self._streaming_buffer_size)
-
         # resizes the streaming buffer size to n_frames and returns it when full
 
+        # start watcher and populate watcher vars
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
+
+        self.start()
+
+        if len(variables) == 0:
+            # if no variables are specified, stream all watched variables
+            variables = [var["name"] for var in self.watcher_vars]
+
+        variables = variables if isinstance(variables, list) else [
+            variables]  # variables should be a list of strings
+
+        # variables might have different buffer sizes -- the code below finds the minimum number of buffers needed to stream n_frames for all variables
+        types = [var["type"]
+                 for var in self.watcher_vars if var["name"] in variables]
+
+        buffer_sizes = [self.get_buffer_size(_type) for _type in types]
+        # TODO add a warning when there's different buffer sizes ?
+
+        # ceiling division
+        n_buffers = -(-n_frames // min(buffer_sizes))  # TODO test this
 
         # using setter to automatically resize buffer
         self.streaming_buffers_queue_length = n_buffers
@@ -212,19 +227,11 @@ class Streamer(Watcher):
         self._saving_filename = self._generate_filename(
             saving_filename) if saving_enabled else None
 
-        if len(variables) == 0:
-            # if no variables are specified, stream all watched variables
-            variables = self.watcher_vars
-
-        variables = variables if isinstance(variables, list) else [
-            variables]  # variables should be a list of strings
-
-        self.start()
         self._streaming_mode = "N_FRAMES"  # flag cleared in __rec_msg_callback
 
         # watch only the variables specified
         self.send_ctrl_msg(
-            {"watcher": [{"cmd": "unwatch", "watchers": self.watched_vars}, {"cmd": "watch", "watchers": variables}]})
+            {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
 
         # await until streaming buffer is full
         await self._streaming_buffer_available.wait()
@@ -266,8 +273,8 @@ class Streamer(Watcher):
         return data
 
     # - plotting
-    
-    def _data_plot(self, 
+
+    def _data_plot(self,
                    data,
                    x_var,
                    y_vars,
@@ -335,6 +342,8 @@ class Streamer(Watcher):
                 # convert unsigned int to int -- struct does not support unsigned ints
                 _type = 'i' if _type == 'j' else _type
 
+                # TODO add an assert here to check if the type is the same as the specified in list?
+
             elif len(msg) > 3 and _channel is not None and _type is not None:
                 # every buffer has a timestamp at the beginning
                 _format = 'Q' + \
@@ -344,20 +353,21 @@ class Streamer(Watcher):
                 # _msg = [char.decode()
                 #         for char in _msg] if _type == 'c' else _msg
                 # append message to the streaming buffers queue
-                self._streaming_buffers_queue[self._watcher_vars[_channel]].append(
+                self._streaming_buffers_queue[self._watcher_vars[_channel]['name']].append(
                     {"frame": timestamp, "data": _msg})
                 # needed for streaming plots
-                self.last_streamed_buffer_data[self._watcher_vars[_channel]] = _msg
+                self.last_streamed_buffer_data[self._watcher_vars[_channel]
+                                               ['name']] = _msg
 
                 if self._saving_enabled:
-                    _saving_var_filename = f"{self._watcher_vars[_channel]}_{self._saving_filename}"
+                    _saving_var_filename = f"{self._watcher_vars[_channel]['name']}_{self._saving_filename}"
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
                         self._save_data_to_file(_saving_var_filename, {"frame": timestamp, "data": _msg}))
                     self._active_saving_tasks.append(saving_task)
 
                 # if streaming buffers queue is full for watched variables and streaming mode is N_FRAMES
-                if self._streaming_mode == "N_FRAMES" and all(len(self._streaming_buffers_queue[var]) == self._streaming_buffers_queue_length for var in self._watcher_vars):
+                if self._streaming_mode == "N_FRAMES" and all(len(self._streaming_buffers_queue[var["name"]]) == self._streaming_buffers_queue_length for var in self.watched_vars):
                     self._streaming_mode = "OFF"
                     self._streaming_buffer_available.set()
 

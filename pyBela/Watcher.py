@@ -4,6 +4,7 @@ import websockets
 import json
 import errno
 
+
 class Watcher:
 
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
@@ -37,28 +38,31 @@ class Watcher:
 
     @property
     def watcher_vars(self):
-        if self._watcher_vars == None: # populate
-            self._watcher_vars = [var["name"] for var in self.list()]  
+        if self._watcher_vars == None:  # populate
+            self._watcher_vars = [{"name": var["name"],
+                                   "type":var["type"]} for var in self.list()]
         return self._watcher_vars   # updates every time start is called
 
     @property
     def watched_vars(self):
-        return [var["name"] for var in self.list() if var["watched"]]
+        return [{"name": var["name"], "type":var["type"]} for var in self.list() if var["watched"]]
 
     @property
     def unwatched_vars(self):
-        return [var["name"] for var in self.list() if var["unwatched"]]
+        return [{"name": var["name"], "type":var["type"]} for var in self.list() if var["unwatched"]]
 
     # public methods
 
-    def start(self):    
+    def start(self):
         if self._ctrl_listener is None:  # avoid duplicate listeners
             self.start_ctrl_listener()
         if self._data_listener is None:
             self.start_data_listener()
-        
-        self._watcher_vars = [var["name"] for var in self.list()] # refresh watcher vars in case new project has been loaded in Bela
-    
+
+        # refresh watcher vars in case new project has been loaded in Bela
+        self._watcher_vars = [{"name": var["name"],
+                               "type":var["type"]} for var in self.list()]
+
     async def async_stop(self):
         if self._ctrl_listener is not None:
             self._ctrl_listener.cancel()
@@ -70,10 +74,10 @@ class Watcher:
             if self.ws_data is not None:
                 await self.ws_data.close()
             self._data_listener = None
-            
+
     def stop(self):
         return asyncio.run(self.async_stop())
-    
+
     def list(self):
         async def async_list():
             if self._ctrl_listener is None:  # start listener if listener is not running
@@ -150,6 +154,19 @@ class Watcher:
         if "watcher" in _msg.keys() and "watchers" in _msg["watcher"].keys():
             self._list_response = _msg["watcher"]["watchers"]
             self._list_response_available.set()
+
+    # utils
+    def get_buffer_size(self,var_type):
+        buffer_size_map = {
+            "f": 1024,
+            "j": 1024,
+            "i": 1024,
+            "c": 512,
+            "d": 512,
+        }
+        return buffer_size_map.get(var_type, 0)
+
+    # destructor
 
     def __del__(self):
         self.stop()  # stop websockets

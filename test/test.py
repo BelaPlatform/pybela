@@ -30,13 +30,23 @@ class test_Streamer(unittest.TestCase):
     def test_stream_n_frames(self):
         streamer = Streamer()
         n_frames = 2000
+
+        streaming_vars = ["myvar", "myvar2"]
+
         streaming_buffer = streamer.stream_n_frames(
-            variables=streamer.watcher_vars, n_frames=n_frames)
+            variables=streaming_vars, n_frames=n_frames)
 
-        n_buffers = -(-n_frames // streamer._streaming_buffer_size)
+        types = [var["type"]
+                 for var in streamer.watcher_vars if var["name"] in streaming_vars]
+        min_buffer_size = min([streamer.get_buffer_size(_type)
+                              for _type in types])
+        n_buffers = -(-n_frames // min_buffer_size)
 
-        self.assertTrue(all(len(var_buffer_queue) == n_buffers for var_buffer_queue in streaming_buffer.values(
-        )), "All streamed variables should have the same length as the requested number of frames")
+        self.assertTrue(all(len(streamer.streaming_buffers_data[
+                        var]) > n_frames for var in streaming_vars), "The streamed flat buffers for every variable should have at least n_frames")
+
+        self.assertTrue(all(len(streaming_buffer[
+                        var]) == n_buffers for var in streaming_vars), "The streaming buffers queue should have at least n_frames/buffer_size buffers for every variable")
 
     async def async_test_buffers(self):
         streamer = Streamer()
@@ -81,20 +91,20 @@ class test_Streamer(unittest.TestCase):
         # list of frames for each variable
         frames = {var: [buffer["frame"] for buffer in streamer.streaming_buffers_queue[var]]
                   for var in streamer.streaming_buffers_queue}
-        # check the frames are the same for all variables
-        # self.assertTrue(frames[streaming_vars[0]][0::2][:len(frames[streaming_vars[1]])] == frames[streaming_vars[1]], # myvar is a double and myvar2 is a float
-        #                 "The frames in the buffers should be equivalent for both variables")
-        min_frames_len = min(len(frames[streaming_vars[0]]), len(frames[streaming_vars[1]]))
-        self.assertTrue(frames[streaming_vars[0]][:min_frames_len] == frames[streaming_vars[1]][:min_frames_len],  # both myvar and myvar2 are floats
+
+        # check the frames are equivalent for all variables, taking into account that myvar is a double (8-bit) and myvar2 is a float (4-bit)
+        self.assertTrue(frames["myvar"][0::2][:len(frames["myvar2"])] == frames["myvar2"],
                         "The frames in the buffers should be equivalent for both variables")
 
         # check continuity of frames
-        for var in streaming_vars:
+        types = [var["type"]
+                 for var in streamer.watcher_vars if var["name"] in streaming_vars]
+        for var, typ in zip(streaming_vars, types):
             for buffer in streamer.streaming_buffers_queue[var]:
                 self.assertEqual(buffer["frame"], buffer["data"][0],
                                  "The frame and the first item of data buffer should be the same")
-                self.assertEqual(buffer["frame"]+streamer._streaming_buffer_size-1, buffer["data"][-1],
-                                 "The last data item should be equal to the frame plus the length of the buffer")
+                self.assertEqual(buffer["frame"]+streamer.get_buffer_size(typ)-1, buffer["data"][-1],
+                                 "The last data item should be equal to the frame plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
 
         for var in streaming_vars:
             if os.path.exists(f"{var}_{saving_filename}"):
