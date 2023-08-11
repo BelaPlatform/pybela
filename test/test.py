@@ -2,7 +2,7 @@ import unittest
 import asyncio
 import os
 
-from pyBela import Watcher, Streamer
+from pyBela import Watcher, Streamer, Logger
 
 # all tests should be run with Bela connected and the bela-watcher project running on the board
 
@@ -106,6 +106,24 @@ class test_Streamer(unittest.TestCase):
     def test_buffers(self):
         asyncio.run(self.async_test_buffers())
 
+class test_Logger(unittest.TestCase):
+    async def async_test_logged_files(self):
+        logger = Logger()
+        logger.start_logging(variables=["myvar"], transfer=True)
+        await asyncio.sleep(2)
+        logger.stop_logging()
+        self.assertTrue(os.path.exists("local.bin"), "The logged file should exist after logging")
+        
+        logger.copy_file_from_bela( "/root/Bela/projects/watcher/myvar.bin", "test_myvar.bin")
+        
+        
+        
+    
+    def test_logged_files(self):
+        asyncio.run(self.async_test_logged_files())
 
+        
+        
+    
 if __name__ == '__main__':
     unittest.main(verbosity=2)

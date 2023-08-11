@@ -15,6 +15,7 @@ ipykernel = "*"
 nest-asyncio = "*"
 aiofiles = "*"
 pybela = {editable = true, path = "."}
+paramiko = "*"
 
 [dev-packages]
 

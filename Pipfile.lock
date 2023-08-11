@@ -1048,6 +1048,14 @@
             "markers": "python_version >= '2.7'",
             "version": "==1.13.0"
         },
+        "paramiko": {
+            "hashes": [
+                "sha256:6a3777a961ac86dbef375c5f5b8d50014a1a96d0fd7f054a43bc880134b0ff77",
+                "sha256:b7bc5340a43de4287bbe22fe6de728aa2c22468b2a849615498dd944c2f275eb"
+            ],
+            "index": "pypi",
+            "version": "==3.3.1"
+        },
         "parso": {
             "hashes": [
                 "sha256:8c07be290bb59f03588915921e29e8a50002acaf2cdc5fa0e0114f91709fafa0",
