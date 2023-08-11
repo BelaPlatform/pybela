@@ -16,6 +16,9 @@ class Watcher:
             data_add (str, optional): Data endpoint. Defaults to "gui_data".
             control_add (str, optional): Control endpoint. Defaults to "gui_control".
         """
+
+        self.project_name = None
+
         self.ip = ip
         self.port = port
         self.data_add = data_add
@@ -150,13 +153,20 @@ class Watcher:
 
     def _parse_control_message(self, msg):
         _msg = json.loads(msg)
+
         # list cmd
         if "watcher" in _msg.keys() and "watchers" in _msg["watcher"].keys():
             self._list_response = _msg["watcher"]["watchers"]
             self._list_response_available.set()
 
+        # connection event
+        # if "event" in _msg.keys() and _msg["event"] == "connection":
+        #     print("Connection successful")  # FIXME this message is sent many times
+        if "projectName" in _msg.keys():
+            self._project_name = _msg["projectName"]
+
     # utils
-    def get_buffer_size(self,var_type):
+    def get_buffer_size(self, var_type):
         buffer_size_map = {
             "f": 1024,
             "j": 1024,
@@ -165,6 +175,16 @@ class Watcher:
             "d": 512,
         }
         return buffer_size_map.get(var_type, 0)
+    
+    def get_data_size(self, var_type):
+        data_size_map = {
+            "f": 4,
+            "j": 4,
+            "i": 4,
+            "c": 8,
+            "d": 8,
+        }
+        return data_size_map.get(var_type, 0)
 
     # destructor
 

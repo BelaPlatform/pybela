@@ -1,9 +1,15 @@
 # pyBela
 
 ```bash
-git clone --recurse-submodules -j8 https://github.com/BelaPlatform/pyBela
+git clone https://github.com/BelaPlatform/pyBela
 ```
 
 ```bash
+cd pyBela
 pipenv install -e .
+```
+
+testing
+```
+pipenv run python test/test.py
 ```

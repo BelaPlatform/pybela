@@ -29,8 +29,6 @@ class Streamer(Watcher):
 
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
-        # number of data points per buffer -- this depends on the Bela Watcher
-
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
