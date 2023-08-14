@@ -1,7 +1,9 @@
 #include <Watcher.h>
 Watcher<double> myvar("myvar");
 Watcher<unsigned int> myvar2("myvar2");
-Watcher<int> myvar3("myvar3");
+Watcher<unsigned int> myvar3("myvar3", WatcherManager::kTimestampSample);
+Watcher<double> myvar4("myvar4", WatcherManager::kTimestampSample);
+
 
 #include <Bela.h>
 #include <cmath>
@@ -20,12 +22,11 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	Bela_getDefaultWatcherManager()->tickBlock(context->audioFramesElapsed);
 
 	static size_t count = 0;
 	if(count++ >= context->audioSampleRate * 0.6 / context->audioFrames)
 	{
-		rt_printf("%.5f %.5f\n\r", float(myvar), float(myvar2));
+		//rt_printf("%.5f %.5f\n\r", float(myvar), float(myvar2));
 		static int pastC = -1;
 		int c = gui.numConnections();
 		if(c != pastC)
@@ -35,10 +36,16 @@ void render(BelaContext *context, void *userData)
 	}
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		uint64_t frames = context->audioFramesElapsed + n;
+		Bela_getDefaultWatcherManager()->tick(frames);
+
+		myvar = frames;
+		myvar2 = frames; // log a dense variable densely: good
 		
-		myvar = context->audioFramesElapsed + n;
-		myvar2 = context->audioFramesElapsed + n;
-		myvar3 = context->audioFramesElapsed + n;
+		if(frames % 12 == 0){ // log a sparse variable sparsely: good
+			myvar3 = frames;
+			myvar4 = frames;
+		}
 
 		float out = 0.8 * sinf(gPhase);
 		gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
