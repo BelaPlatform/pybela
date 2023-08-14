@@ -36,11 +36,11 @@ class test_Streamer(unittest.TestCase):
         streaming_buffer = streamer.stream_n_frames(
             variables=streaming_vars, n_frames=n_frames)
 
-        types = [var["type"]
-                 for var in streamer.watcher_vars if var["name"] in streaming_vars]
-        min_buffer_size = min([streamer.get_buffer_size(_type)
-                              for _type in types])
-        n_buffers = -(-n_frames // min_buffer_size)
+        buffer_sizes = [
+            streamer.get_data_length(var["type"], var["timestamp_mode"])
+            for var in streamer.watcher_vars if var["name"] in streaming_vars]
+
+        n_buffers = -(-n_frames // min(buffer_sizes))
 
         self.assertTrue(all(len(streamer.streaming_buffers_data[
                         var]) > n_frames for var in streaming_vars), "The streamed flat buffers for every variable should have at least n_frames")
@@ -53,7 +53,12 @@ class test_Streamer(unittest.TestCase):
         streamer.streaming_buffers_queue_length = 1000
         saving_filename = "test_save.txt"
 
-        streaming_vars = ["myvar", "myvar2"]
+        streaming_vars = [
+            "myvar",  # dense double
+            "myvar2",  # dense uint
+            "myvar3",  # sparse uint
+            "myvar4"  # sparse double
+        ]
 
         # delete any existing test files
         for var in streaming_vars:
@@ -76,28 +81,30 @@ class test_Streamer(unittest.TestCase):
                          "Streaming mode should be OFF after stop_streaming")
 
         loaded = {}
-        for var in streaming_vars:
+        for var in [v for v in streamer.watcher_vars if v["name"] in streaming_vars]:
+
             # check buffers in streaming_buffers_queue have the right length
-            self.assertTrue(all(len(buffer["data"]) % 256 == 0 for buffer in streamer.streaming_buffers_queue[var]),
-                            "All buffers in streamer.streaming_buffers_queue should have a length multiple of 256")
-            loaded[var] = streamer.load_data_from_file(
-                f"{var}_{saving_filename}")
+            self.assertTrue(all(len(buffer["data"]) == var["data_length"] for buffer in streamer.streaming_buffers_queue[var["name"]]),
+                            f"The data buffers in streamer.streaming_buffers_queue should have a length of {var['data_length']} for a variable of type {var['type']} ")
+            loaded[var["name"]] = streamer.load_data_from_file(
+                f"{var['name']}_{saving_filename}")
             # check that the loader buffers have the right length
-            self.assertTrue(all(len(buffer["data"]) % 256 == 0 for buffer in loaded[var]),
-                            "All loaded buffers should have a length multiple of 256")
+            self.assertTrue(all(len(buffer["data"]) == var["data_length"] for buffer in loaded[var['name']]),
+                            "The loaded data buffers should have a length of {var['data_length']} for a variable of type {var['type']} ")
             # check that the number of buffers saved is the same as the number of buffers in streamer.streaming_buffers_queue
-            self.assertTrue(len(streamer.streaming_buffers_queue[var]) == len(loaded[var]),
+            self.assertTrue(len(streamer.streaming_buffers_queue[var['name']]) == len(loaded[var['name']]),
                             "The number of buffers saved should be equal to the number of buffers in streamer.streaming_buffers_queue (considering the queue length is long enough)")
 
-        # check continuity of frames
+        # check continuity of frames (only works for dense variables)
+        dense_vars = ["myvar", "myvar2"]
         types = [var["type"]
-                 for var in streamer.watcher_vars if var["name"] in streaming_vars]
-        for var, typ in zip(streaming_vars, types):
-            for buffer in streamer.streaming_buffers_queue[var]:
-                self.assertEqual(buffer["frame"], buffer["data"][0],
-                                 "The frame and the first item of data buffer should be the same")
-                self.assertEqual(buffer["frame"]+streamer.get_buffer_size(typ)-1, buffer["data"][-1],
-                                 "The last data item should be equal to the frame plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
+                 for var in streamer.watcher_vars if var["name"] in dense_vars]
+        for var in [v for v in streamer.watcher_vars if v["name"] in dense_vars]:
+            for buffer in streamer.streaming_buffers_queue[var["name"]]:
+                self.assertEqual(buffer["ref_timestamp"], buffer["data"][0],
+                                 "The ref_timestamp and the first item of data buffer should be the same")
+                self.assertEqual(buffer["ref_timestamp"]+var["data_length"]-1, buffer["data"][-1],
+                                 "The last data item should be equal to the ref_timestamp plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
 
         for var in streaming_vars:
             if os.path.exists(f"{var}_{saving_filename}"):
@@ -105,6 +112,20 @@ class test_Streamer(unittest.TestCase):
 
     def test_buffers(self):
         asyncio.run(self.async_test_buffers())
+
+# class test_Logger(unittest.TestCase):
+#     async def async_test_logged_files(self):
+#         logger = Logger()
+#         logger.start_logging(variables=["myvar"], transfer=True)
+#         await asyncio.sleep(2)
+#         logger.stop_logging()
+#         self.assertTrue(os.path.exists("local.bin"), "The logged file should exist after logging")
+
+#         logger.copy_file_from_bela( "/root/Bela/projects/watcher/myvar.bin", "test_myvar.bin")
+
+
+#     def test_logged_files(self):
+#         asyncio.run(self.async_test_logged_files())
 
 
 if __name__ == '__main__':

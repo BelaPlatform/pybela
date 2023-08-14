@@ -209,14 +209,14 @@ class Streamer(Watcher):
             variables]  # variables should be a list of strings
 
         # variables might have different buffer sizes -- the code below finds the minimum number of buffers needed to stream n_frames for all variables
-        types = [var["type"]
-                 for var in self.watcher_vars if var["name"] in variables]
+        buffer_sizes = [
+            self.get_data_length(var["type"], var["timestamp_mode"])
+            for var in self.watcher_vars if var["name"] in variables]
 
-        buffer_sizes = [self.get_buffer_size(_type) for _type in types]
         # TODO add a warning when there's different buffer sizes ?
 
         # ceiling division
-        n_buffers = -(-n_frames // min(buffer_sizes))  
+        n_buffers = -(-n_frames // min(buffer_sizes))
 
         # using setter to automatically resize buffer
         self.streaming_buffers_queue_length = n_buffers
@@ -331,44 +331,62 @@ class Streamer(Watcher):
         except NameError:  # initialise global variables to None
             _channel = None
             _type = None
-            
-        _saving_enabled = copy.copy(self._saving_enabled) # in case buffer is received whilst streaming mode is one but parsed after streaming_enabled has changed 
+
+        # in case buffer is received whilst streaming mode is one but parsed after streaming_enabled has changed
+        _saving_enabled = copy.copy(self._saving_enabled)
 
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 _channel = int(str(msg)[2])
-                # for now supports int, unsigned int and float # FIXME add support for 8-bit types
                 _type = str(msg)[4]
-                
-                assert _type in ['i', 'j', 'd', 'c'], f"Unsupported type: {_type}"
-                
-                assert _type == self._watcher_vars[_channel]['type'], f"Type mismatch: {_type} != {self._watcher_vars[_channel]['type']}"
-                
+
+                assert _type in ['i', 'j', 'd',
+                                 'c'], f"Unsupported type: {_type}"
+
+                assert _type == self._watcher_vars[_channel][
+                    'type'], f"Type mismatch: {_type} != {self._watcher_vars[_channel]['type']}"
+
                 # convert unsigned int to int -- struct does not support unsigned ints
                 _type = 'i' if _type == 'j' else _type
-                
-                # TODO add an assert here to check if the type is the same as the specified in list?
 
             elif len(msg) > 3 and _channel is not None and _type is not None:
-                # every buffer has a timestamp at the beginning
-                _format = 'Q' + \
-                    f"{_type}"*((len(msg)-struct.calcsize('Q')) //
-                                struct.calcsize(_type))
-                timestamp, *_msg = struct.unpack(_format, msg)
-                # _msg = [char.decode()
-                #         for char in _msg] if _type == 'c' else _msg
+
+                # sparse mode
+                if self._watcher_vars[_channel]["timestamp_mode"] == "sparse":
+
+                    len_data = self.get_data_length(_type, "sparse")
+
+                    ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * len_data
+                                                            + 'I'*((len(msg)-len_data*struct.calcsize(_type)-struct.calcsize('Q'))//struct.calcsize('I')), msg)
+                    data = _buffer[:len_data]
+                    # remove padding
+                    rel_timestamps = _buffer[len_data:][:len_data]
+
+                    parsed_buffer = {"ref_timestamp": ref_timestamp,
+                                     "data": data, "rel_timestamps": rel_timestamps}
+
+                else:  # dense mode
+                    _format = 'Q' + \
+                        f"{_type}"*((len(msg)-struct.calcsize('Q')) //
+                                    struct.calcsize(_type))
+
+                    ref_timestamp, *data = struct.unpack(_format, msg)
+
+                    parsed_buffer = {
+                        "ref_timestamp": ref_timestamp, "data": data}
+
                 # append message to the streaming buffers queue
                 self._streaming_buffers_queue[self._watcher_vars[_channel]['name']].append(
-                    {"frame": timestamp, "data": _msg})
+                    parsed_buffer)
                 # needed for streaming plots
                 self.last_streamed_buffer_data[self._watcher_vars[_channel]
-                                               ['name']] = _msg
+                                               ['name']] = data  # TODO what to do with timestamps here?
 
                 if _saving_enabled:
                     _saving_var_filename = f"{self._watcher_vars[_channel]['name']}_{self._saving_filename}"
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
-                        self._save_data_to_file(_saving_var_filename, {"frame": timestamp, "data": _msg}))
+                        self._save_data_to_file(_saving_var_filename, parsed_buffer))
                     self._active_saving_tasks.append(saving_task)
 
                 # if streaming buffers queue is full for watched variables and streaming mode is N_FRAMES

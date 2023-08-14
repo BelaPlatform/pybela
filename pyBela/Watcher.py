@@ -36,23 +36,25 @@ class Watcher:
         self._list_response_available = asyncio.Event()
         self._list_response = None
 
+        # debug
+        self._printall_responses = False
+
         # event loop needs to be nested - otherwise it conflicts with jupyter's event loop
         nest_asyncio.apply()
 
     @property
     def watcher_vars(self):
         if self._watcher_vars == None:  # populate
-            self._watcher_vars = [{"name": var["name"],
-                                   "type":var["type"]} for var in self.list()]
+            self._watcher_vars = self._filtered_vars(lambda var: True)
         return self._watcher_vars   # updates every time start is called
 
     @property
     def watched_vars(self):
-        return [{"name": var["name"], "type":var["type"]} for var in self.list() if var["watched"]]
+        return self._filtered_vars(lambda var: var["watched"])
 
     @property
     def unwatched_vars(self):
-        return [{"name": var["name"], "type":var["type"]} for var in self.list() if var["unwatched"]]
+        return self._filtered_vars(lambda var: not var["watched"])
 
     # public methods
 
@@ -63,8 +65,7 @@ class Watcher:
             self.start_data_listener()
 
         # refresh watcher vars in case new project has been loaded in Bela
-        self._watcher_vars = [{"name": var["name"],
-                               "type":var["type"]} for var in self.list()]
+        self._watcher_vars = self._filtered_vars(lambda var: True)
 
     async def async_stop(self):
         if self._ctrl_listener is not None:
@@ -139,6 +140,8 @@ class Watcher:
             async with websockets.connect(ws_address) as ws:
                 while True:
                     msg = await ws.recv()
+                    if self._printall_responses:
+                        print(msg)
                     if ws_address == self.ws_data_add:
                         self._parse_data_message(msg)
                     elif ws_address == self.ws_control_add:
@@ -165,26 +168,51 @@ class Watcher:
         if "projectName" in _msg.keys():
             self._project_name = _msg["projectName"]
 
-    # utils
-    def get_buffer_size(self, var_type):
-        buffer_size_map = {
-            "f": 1024,
-            "j": 1024,
-            "i": 1024,
-            "c": 512,
-            "d": 512,
+    def _filtered_vars(self, filter_func):
+        return [{
+            "name": var["name"],
+            "type": var["type"],
+            "timestamp_mode":"sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
+            "log_filename": var["logFileName"],
+            "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
-        return buffer_size_map.get(var_type, 0)
-    
-    def get_data_size(self, var_type):
-        data_size_map = {
+            for var in self.list() if filter_func(var)]
+
+    # utils
+
+    def get_data_byte_size(self, var_type):
+        data_byte_size_map = {
             "f": 4,
             "j": 4,
             "i": 4,
             "c": 8,
             "d": 8,
         }
-        return data_size_map.get(var_type, 0)
+        return data_byte_size_map.get(var_type, 0)
+
+    def get_data_length(self, var_type, timestamp_mode):
+        dense_map = {
+            "f": 1024,
+            "j": 1024,
+            "i": 1024,
+            "c": 512,
+            "d": 512,
+        }
+        sparse_map = {
+            "f": 512,
+            "j": 512,
+            "i": 512,
+            "c": 341,
+            "d": 341,
+        }
+        if timestamp_mode == "dense":
+            return dense_map.get(var_type, 0)
+        if timestamp_mode == "sparse":
+            return sparse_map.get(var_type, 0)
+
+        else:
+            # return error message
+            return 0
 
     # destructor
 
