@@ -113,23 +113,33 @@ class test_Streamer(unittest.TestCase):
     def test_buffers(self):
         asyncio.run(self.async_test_buffers())
 
-# class test_Logger(unittest.TestCase):
-#     async def async_test_logged_files(self):
-#         logger = Logger()
-#         logger.start_logging(variables=["myvar"], transfer=True)
-#         await asyncio.sleep(2)
-#         logger.stop_logging()
-#         self.assertTrue(os.path.exists("local.bin"), "The logged file should exist after logging")
 
-#         logger.copy_file_from_bela( "/root/Bela/projects/watcher/myvar.bin", "test_myvar.bin")
+class test_Logger(unittest.TestCase):
+    async def async_test_logged_files(self):
+        logger = Logger()
+
+        local_paths = logger.start_logging(variables=["myvar"], transfer=True)
+
+        await asyncio.sleep(2)
+        logger.stop_logging()
+        self.assertTrue(os.path.exists(
+            local_paths["myvar"]), "The logged file should exist after logging")
+
+        # logger.copy_file_from_bela( "/root/Bela/projects/watcher/myvar.bin", "test_myvar.bin")
+
+        for var in local_paths:
+            if os.path.exists(local_paths[var]):
+                os.remove(local_paths[var])
+
+        # test log
+
+    def test_logged_files(self):
+        asyncio.run(self.async_test_logged_files())
 
 
-#     def test_logged_files(self):
-#         asyncio.run(self.async_test_logged_files())
-
-
-        
-        
-    
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    # unittest.main(verbosity=2)
+    suite = unittest.TestSuite()
+    suite.addTest(test_Logger('test_logged_files'))
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)
