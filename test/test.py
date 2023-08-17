@@ -1,6 +1,7 @@
 import unittest
 import asyncio
 import os
+import json
 
 from pyBela import Watcher, Streamer, Logger
 
@@ -119,14 +120,17 @@ class test_Logger(unittest.TestCase):
         logger = Logger()
 
         local_paths = logger.start_logging(variables=["myvar"], transfer=True)
-
         await asyncio.sleep(2)
         logger.stop_logging()
         self.assertTrue(os.path.exists(
             local_paths["myvar"]), "The logged file should exist after logging")
 
-        # logger.copy_file_from_bela( "/root/Bela/projects/watcher/myvar.bin", "test_myvar.bin")
-
+        data = logger.read_binary_file(
+            local_paths["myvar"], timestamp_mode=logger.watcher_vars[0]["timestamp_mode"])
+        
+        # with open('test.json', 'w') as f:
+        #     json.dump(data, f)
+        
         for var in local_paths:
             if os.path.exists(local_paths[var]):
                 os.remove(local_paths[var])

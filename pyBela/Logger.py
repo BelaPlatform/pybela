@@ -2,6 +2,7 @@ import paramiko
 import aiofiles
 import asyncio
 import os
+import struct
 from .Watcher import Watcher
 
 
@@ -27,7 +28,7 @@ class Logger(Watcher):
 
         self._active_copying_tasks = []
 
-    def start_logging(self, variables=[], transfer=True, saving_filename="var_logging.txt"):
+    def start_logging(self, variables=[], transfer=True):
 
         # TODO allow custom filenaming?
 
@@ -111,8 +112,14 @@ class Logger(Watcher):
         return self._logging
 
     async def async_copy_file_in_chunks(self, remote_path, local_path, chunk_size=2**12):
+
+        # wait for the first buffers to be written into the remote file
+        await asyncio.sleep(0.5)
+
         try:
             remote_file = self.sftp_client.open(remote_path, 'rb')
+            # remote_file_size = self.sftp_client.stat(remote_path).st_size # debugging
+
         except FileNotFoundError:
             print(f"Remote file '{remote_path}' does not exist.")
             return
@@ -127,14 +134,13 @@ class Logger(Watcher):
                 while True:
                     chunk = remote_file.read(chunk_size)
                     if not chunk:
-                        print("\nTransfer successful")
                         break
                     await local_file.write(chunk)
                     print(
                         f"\rTransferring {remote_path}-->{local_path}... ", end="", flush=True)
-
                 remote_file.close()
                 self.sftp_client.close()
+                print("Done.")
 
         except Exception as e:
             print(f"Error while transferring file: {e}")
@@ -147,3 +153,73 @@ class Logger(Watcher):
         if self.sftp_client is None:
             self.connect_ssh()
         self.sftp_client.get(remote_path, local_path)
+
+    def read_binary_file(self, file_path, timestamp_mode):
+        # TODO update when timestamp_mode is part of the file header
+
+        file_size = os.path.getsize(file_path)
+        assert file_size != 0, "Error: The file size is 0."
+
+        def _parse_null_terminated_string(file):
+            result = ""
+            while True:
+                char = file.read(1).decode('utf-8')
+                if char == '\0':
+                    break
+                result += char
+            return result
+
+        with open(file_path, "rb") as file:
+
+            name = _parse_null_terminated_string(file)
+            var_name = _parse_null_terminated_string(file)
+            _type = _parse_null_terminated_string(file)
+            pid = struct.unpack("I", file.read(struct.calcsize("I")))[0]
+            pid_id = struct.unpack("I", file.read(struct.calcsize("I")))[0]
+
+            # if header size is not a multiple of 4, we need to add padding
+            header_size = len(name) + len(var_name) + len(_type) + \
+                3 + struct.calcsize("I") + struct.calcsize("I")
+            if header_size % 4 != 0:
+                file.read(4 - header_size % 4)  # padding
+
+            data_length = self.get_data_length(_type, timestamp_mode)
+
+            parsed_buffers = []
+            while True:
+                try:
+
+                    if timestamp_mode == "dense":
+                        ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}"*data_length, file.read(
+                            struct.calcsize('Q')+data_length*struct.calcsize(_type)))
+
+                        _parsed_buffer = {
+                            "ref_timestamp": ref_timestamp,
+                            "data": _buffer
+                        }
+
+                    elif timestamp_mode == "sparse":
+                        # TODO needs testing
+                        ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
+                                                                + 'I'*data_length)//struct.calcsize('I'), file.read(struct.calcsize('Q')+2*data_length*struct.calcsize(_type))
+
+                        data = _buffer[:data_length]
+                        # remove padding
+                        rel_timestamps = _buffer[data_length:][:data_length]
+
+                        _parsed_buffer = {"ref_timestamp": ref_timestamp,
+                                          "data": data, "rel_timestamps": rel_timestamps}
+
+                    parsed_buffers.append(_parsed_buffer)
+
+                except struct.error:
+                    break  # No more data to read
+
+        return {
+            "project_name": name,
+            "var_name": var_name,
+            "type": _type,
+            "pid": pid,
+            "pid_id": pid_id,
+            "buffers": parsed_buffers
+        }
