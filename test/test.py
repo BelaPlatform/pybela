@@ -98,8 +98,7 @@ class test_Streamer(unittest.TestCase):
 
         # check continuity of frames (only works for dense variables)
         dense_vars = ["myvar", "myvar2"]
-        types = [var["type"]
-                 for var in streamer.watcher_vars if var["name"] in dense_vars]
+
         for var in [v for v in streamer.watcher_vars if v["name"] in dense_vars]:
             for buffer in streamer.streaming_buffers_queue[var["name"]]:
                 self.assertEqual(buffer["ref_timestamp"], buffer["data"][0],
@@ -120,17 +119,14 @@ class test_Logger(unittest.TestCase):
         logger = Logger()
 
         local_paths = logger.start_logging(variables=["myvar"], transfer=True)
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.5)
         logger.stop_logging()
         self.assertTrue(os.path.exists(
             local_paths["myvar"]), "The logged file should exist after logging")
 
         data = logger.read_binary_file(
             local_paths["myvar"], timestamp_mode=logger.watcher_vars[0]["timestamp_mode"])
-        
-        # with open('test.json', 'w') as f:
-        #     json.dump(data, f)
-        
+
         for var in local_paths:
             if os.path.exists(local_paths[var]):
                 os.remove(local_paths[var])
@@ -142,8 +138,8 @@ class test_Logger(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # unittest.main(verbosity=2)
-    suite = unittest.TestSuite()
-    suite.addTest(test_Logger('test_logged_files'))
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    unittest.main(verbosity=2)
+    # suite = unittest.TestSuite()
+    # suite.addTest(test_Logger('test_logged_files'))
+    # runner = unittest.TextTestRunner(verbosity=2)
+    # runner.run(suite)

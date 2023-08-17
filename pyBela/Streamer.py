@@ -1,10 +1,9 @@
-import asyncio
-import aiofiles  # async file i/o
 import json
 import copy
 import os
 import glob
-import struct
+import asyncio
+import aiofiles  # async file i/o
 from collections import deque  # circular buffers
 
 import bokeh.plotting
@@ -324,7 +323,7 @@ class Streamer(Watcher):
 
     # --- private methods --- #
 
-    def _parse_data_message(self, msg):
+    def _process_data_msg(self, msg):
         global _channel, _type
         try:
             _, __ = _channel, _type
@@ -332,11 +331,11 @@ class Streamer(Watcher):
             _channel = None
             _type = None
 
-        # in case buffer is received whilst streaming mode is one but parsed after streaming_enabled has changed
+        # in case buffer is received whilst streaming mode is on but parsed after streaming_enabled has changed
         _saving_enabled = copy.copy(self._saving_enabled)
-
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
+                # parse buffer header
                 _channel = int(str(msg)[2])
                 _type = str(msg)[4]
 
@@ -350,37 +349,16 @@ class Streamer(Watcher):
                 _type = 'i' if _type == 'j' else _type
 
             elif len(msg) > 3 and _channel is not None and _type is not None:
-
-                # sparse mode
-                if self._watcher_vars[_channel]["timestamp_mode"] == "sparse":
-
-                    len_data = self.get_data_length(_type, "sparse")
-
-                    ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * len_data
-                                                            + 'I'*((len(msg)-len_data*struct.calcsize(_type)-struct.calcsize('Q'))//struct.calcsize('I')), msg)
-                    data = _buffer[:len_data]
-                    # remove padding
-                    rel_timestamps = _buffer[len_data:][:len_data]
-
-                    parsed_buffer = {"ref_timestamp": ref_timestamp,
-                                     "data": data, "rel_timestamps": rel_timestamps}
-
-                else:  # dense mode
-                    _format = 'Q' + \
-                        f"{_type}"*((len(msg)-struct.calcsize('Q')) //
-                                    struct.calcsize(_type))
-
-                    ref_timestamp, *data = struct.unpack(_format, msg)
-
-                    parsed_buffer = {
-                        "ref_timestamp": ref_timestamp, "data": data}
+                # parse buffer body
+                parsed_buffer = self._parse_binary_data(
+                    msg, self._watcher_vars[_channel]["timestamp_mode"], _type)
 
                 # append message to the streaming buffers queue
                 self._streaming_buffers_queue[self._watcher_vars[_channel]['name']].append(
                     parsed_buffer)
                 # needed for streaming plots
                 self.last_streamed_buffer_data[self._watcher_vars[_channel]
-                                               ['name']] = data  # TODO what to do with timestamps here?
+                                               ['name']] = parsed_buffer["data"]  # TODO what to do with timestamps here?
 
                 if _saving_enabled:
                     _saving_var_filename = f"{self._watcher_vars[_channel]['name']}_{self._saving_filename}"
@@ -396,19 +374,21 @@ class Streamer(Watcher):
 
     async def _save_data_to_file(self, filename, msg):
         try:
-            if self._saving_enabled:
-                # make sure there are not two processes writing to the same file
-                if filename not in self._saving_file_locks.keys():
-                    # create lock for file if it does not exist
-                    self._saving_file_locks[filename] = asyncio.Lock()
+            # make sure there are not two processes writing to the same file
+            if filename not in self._saving_file_locks.keys():
+                # create lock for file if it does not exist
+                self._saving_file_locks[filename] = asyncio.Lock()
 
-                async with self._saving_file_locks[filename]:
-                    async with aiofiles.open(filename, "a") as f:
-                        _json = json.dumps(copy.copy(msg))
-                        await f.write(_json+"\n")
+            async with self._saving_file_locks[filename]:
+                async with aiofiles.open(filename, "a") as f:
+                    _json = json.dumps(copy.copy(msg))
+                    await f.write(_json+"\n")
 
         except Exception as e:
             print(f"Error while saving data to file: {e}")
+            
+        finally:
+            await self._remove_saving_task_from_active_list(asyncio.current_task())
 
     def _generate_filename(self, saving_filename):
         # adds a number to the end of the filename if it already exists to avoid overwriting saved data files
@@ -426,3 +406,6 @@ class Streamer(Watcher):
         idx = max([matching_files.count(item) for item in set(matching_files)])
 
         return f"{filename_wo_ext}__{idx}{filename_ext}"
+
+    async def _remove_saving_task_from_active_list(self, task):
+        self._active_saving_tasks.remove(task)

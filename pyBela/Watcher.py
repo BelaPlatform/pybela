@@ -3,6 +3,7 @@ import nest_asyncio
 import websockets
 import json
 import errno
+import struct
 
 
 class Watcher:
@@ -23,10 +24,10 @@ class Watcher:
         self.port = port
         self.data_add = data_add
         self.control_add = control_add
-        self.ws_control_add = f"ws://{self.ip}:{self.port}/{self.control_add}"
+        self.ws_ctrl_add = f"ws://{self.ip}:{self.port}/{self.control_add}"
         self.ws_data_add = f"ws://{self.ip}:{self.port}/{self.data_add}"
 
-        self.ws_control = None
+        self.ws_ctrl = None
         self.ws_data = None
 
         self._ctrl_listener = None
@@ -70,8 +71,8 @@ class Watcher:
     async def async_stop(self):
         if self._ctrl_listener is not None:
             self._ctrl_listener.cancel()
-            if self.ws_control is not None:
-                await self.ws_control.close()
+            if self.ws_ctrl is not None:
+                await self.ws_ctrl.close()
             self._ctrl_listener = None  # empty the listener
         if self._data_listener is not None:
             self._data_listener.cancel()
@@ -95,11 +96,11 @@ class Watcher:
         return asyncio.run(async_list())
 
     def send_ctrl_msg(self, msg):
-        self._send_msg(self.ws_control, self.ws_control_add, msg)
+        self._send_msg(self.ws_ctrl, self.ws_ctrl_add, msg)
 
     def start_ctrl_listener(self):
         self._ctrl_listener = self._start_listener(
-            self.ws_control, self.ws_control_add)
+            self.ws_ctrl, self.ws_ctrl_add)
 
     def start_data_listener(self):
         self._data_listener = self._start_listener(
@@ -143,18 +144,20 @@ class Watcher:
                     if self._printall_responses:
                         print(msg)
                     if ws_address == self.ws_data_add:
-                        self._parse_data_message(msg)
-                    elif ws_address == self.ws_control_add:
-                        self._parse_control_message(msg)
+                        self._process_data_msg(msg)
+                    elif ws_address == self.ws_ctrl_add:
+                        self._process_ctrl_msg(msg)
                     else:
                         print(msg)
         except Exception as e:
             handle_connection_exception(ws_address, e, "receiving message")
 
-    def _parse_data_message(self, msg):  # method overwritten by streamer
+    # process messages
+
+    def _process_data_msg(self, msg):  # method overwritten by streamer
         pass
 
-    def _parse_control_message(self, msg):
+    def _process_ctrl_msg(self, msg):
         _msg = json.loads(msg)
 
         # list cmd
@@ -166,9 +169,52 @@ class Watcher:
         # if "event" in _msg.keys() and _msg["event"] == "connection":
         #     print("Connection successful")  # FIXME this message is sent many times
         if "projectName" in _msg.keys():
-            self._project_name = _msg["projectName"]
+            self.project_name = _msg["projectName"]
+
+    def _parse_binary_data(self, binary_data, timestamp_mode, _type):
+        data_length = self.get_data_length(_type, timestamp_mode)
+        # the format is the same for both logger and streamer so the parsing method is shared
+
+        # sparse mode
+        if timestamp_mode == "sparse":
+            # TODO needs testing in logging mode
+
+            # ensure that the buffer is the correct size
+            binary_data = binary_data[:struct.calcsize("Q") + data_length*struct.calcsize(
+                _type)+data_length*struct.calcsize("I")]
+
+            ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
+                                                    + 'I'*data_length, binary_data)
+            data = _buffer[:data_length]
+            # remove padding
+            rel_timestamps = _buffer[data_length:][:data_length]
+
+            parsed_buffer = {"ref_timestamp": ref_timestamp,
+                             "data": data, "rel_timestamps": rel_timestamps}
+
+        else:  # dense mode
+            # ensure that the buffer is the correct size
+            binary_data = binary_data[:data_length *
+                                      struct.calcsize('Q')+data_length*struct.calcsize(_type)]
+            ref_timestamp, * \
+                data = struct.unpack('Q' + f"{_type}"*data_length, binary_data)
+
+            parsed_buffer = {
+                "ref_timestamp": ref_timestamp, "data": data}
+
+        return parsed_buffer
+
+    # utils
 
     def _filtered_vars(self, filter_func):
+        """Filter variables in watcher depending on condition given by filter_func
+
+        Args:
+            filter_func (function): filter function
+
+        Returns:
+            dict: Filtered variables
+        """
         return [{
             "name": var["name"],
             "type": var["type"],
@@ -177,8 +223,6 @@ class Watcher:
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
             for var in self.list() if filter_func(var)]
-
-    # utils
 
     def get_data_byte_size(self, var_type):
         data_byte_size_map = {

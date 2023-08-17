@@ -52,7 +52,7 @@ class Logger(Watcher):
         if transfer:
             local_paths = {}
             for var in [v for v in self.watcher_vars if v["name"] in variables]:
-                remote_path = f"/root/Bela/projects/{self._project_name}/{var['log_filename']}"
+                remote_path = f"/root/Bela/projects/{self.project_name}/{var['log_filename']}"
                 _local_path = var["log_filename"]
 
                 if os.path.exists(_local_path):
@@ -187,29 +187,12 @@ class Logger(Watcher):
 
             parsed_buffers = []
             while True:
+                # Read file buffer by buffer
                 try:
-
-                    if timestamp_mode == "dense":
-                        ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}"*data_length, file.read(
-                            struct.calcsize('Q')+data_length*struct.calcsize(_type)))
-
-                        _parsed_buffer = {
-                            "ref_timestamp": ref_timestamp,
-                            "data": _buffer
-                        }
-
-                    elif timestamp_mode == "sparse":
-                        # TODO needs testing
-                        ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
-                                                                + 'I'*data_length)//struct.calcsize('I'), file.read(struct.calcsize('Q')+2*data_length*struct.calcsize(_type))
-
-                        data = _buffer[:data_length]
-                        # remove padding
-                        rel_timestamps = _buffer[data_length:][:data_length]
-
-                        _parsed_buffer = {"ref_timestamp": ref_timestamp,
-                                          "data": data, "rel_timestamps": rel_timestamps}
-
+                    data = file.read(struct.calcsize('Q')+2*data_length*struct.calcsize(
+                        _type)) if timestamp_mode == "sparse" else file.read(struct.calcsize('Q')+data_length*struct.calcsize(_type))
+                    _parsed_buffer = self._parse_binary_data(
+                        data, timestamp_mode, _type)
                     parsed_buffers.append(_parsed_buffer)
 
                 except struct.error:
