@@ -117,15 +117,22 @@ class test_Streamer(unittest.TestCase):
 class test_Logger(unittest.TestCase):
     async def async_test_logged_files(self):
         logger = Logger()
-
-        local_paths = logger.start_logging(variables=["myvar"], transfer=True)
+        logging_vars = [
+            "myvar",  # dense double
+            "myvar2",  # dense uint
+            "myvar3",  # sparse uint
+            "myvar4"  # sparse double
+        ]
+        
+        local_paths = logger.start_logging(variables=logging_vars, transfer=True)
         await asyncio.sleep(0.5)
         logger.stop_logging()
-        self.assertTrue(os.path.exists(
-            local_paths["myvar"]), "The logged file should exist after logging")
-
-        data = logger.read_binary_file(
-            local_paths["myvar"], timestamp_mode=logger.watcher_vars[0]["timestamp_mode"])
+        
+        for var in logging_vars:
+            self.assertTrue(os.path.exists(
+                local_paths[var]), "The logged file should exist after logging")
+            data = logger.read_binary_file(
+                local_paths[var], timestamp_mode=logger.watcher_vars[0]["timestamp_mode"])
 
         for var in local_paths:
             if os.path.exists(local_paths[var]):
@@ -138,8 +145,8 @@ class test_Logger(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
-    # suite = unittest.TestSuite()
-    # suite.addTest(test_Logger('test_logged_files'))
-    # runner = unittest.TextTestRunner(verbosity=2)
-    # runner.run(suite)
+    # unittest.main(verbosity=2)
+    suite = unittest.TestSuite()
+    suite.addTest(test_Logger('test_logged_files'))
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)

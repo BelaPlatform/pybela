@@ -5,6 +5,9 @@ import os
 import struct
 from .Watcher import Watcher
 
+# TODO add logging for a fixed period of time
+# TODO check available space in Bela
+
 
 class Logger(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
@@ -89,6 +92,8 @@ class Logger(Watcher):
         await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
         self._active_copying_tasks.clear()
 
+        self.sftp_client.close()
+
         self.stop()
 
     def stop_logging(self, variables=[]):
@@ -113,16 +118,19 @@ class Logger(Watcher):
 
     async def async_copy_file_in_chunks(self, remote_path, local_path, chunk_size=2**12):
 
-        # wait for the first buffers to be written into the remote file
-        await asyncio.sleep(0.5)
+        while True:
+            await asyncio.sleep(1)  # Wait for a second before checking again
 
-        try:
-            remote_file = self.sftp_client.open(remote_path, 'rb')
-            # remote_file_size = self.sftp_client.stat(remote_path).st_size # debugging
+            try:
+                remote_file = self.sftp_client.open(remote_path, 'rb')
+                remote_file_size = self.sftp_client.stat(remote_path).st_size
 
-        except FileNotFoundError:
-            print(f"Remote file '{remote_path}' does not exist.")
-            return
+                if remote_file_size > 0:  # white till first buffers are written into the file
+                    break  # Break the loop if the remote file size is non-zero
+
+            except FileNotFoundError:
+                print(f"Remote file '{remote_path}' does not exist.")
+                return None
 
         local_size = os.path.getsize(
             local_path) if os.path.exists(local_path) else 0
@@ -139,12 +147,14 @@ class Logger(Watcher):
                     print(
                         f"\rTransferring {remote_path}-->{local_path}... ", end="", flush=True)
                 remote_file.close()
-                self.sftp_client.close()
                 print("Done.")
 
         except Exception as e:
             print(f"Error while transferring file: {e}")
             return None
+
+        finally:
+            await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
     def copy_file_in_chunks(self, remote_path, local_path):
         return asyncio.run(self.async_copy_file_in_chunks(remote_path, local_path))

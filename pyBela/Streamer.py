@@ -388,7 +388,7 @@ class Streamer(Watcher):
             print(f"Error while saving data to file: {e}")
             
         finally:
-            await self._remove_saving_task_from_active_list(asyncio.current_task())
+            await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
     def _generate_filename(self, saving_filename):
         # adds a number to the end of the filename if it already exists to avoid overwriting saved data files
@@ -407,5 +407,5 @@ class Streamer(Watcher):
 
         return f"{filename_wo_ext}__{idx}{filename_ext}"
 
-    async def _remove_saving_task_from_active_list(self, task):
-        self._active_saving_tasks.remove(task)
+    async def _async_remove_item_from_list(self, _list, task):
+        _list.remove(task)

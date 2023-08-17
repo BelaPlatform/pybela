@@ -205,6 +205,8 @@ class Watcher:
         return parsed_buffer
 
     # utils
+    async def _async_remove_item_from_list(self, _list, task):
+        _list.remove(task)
 
     def _filtered_vars(self, filter_func):
         """Filter variables in watcher depending on condition given by filter_func
