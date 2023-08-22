@@ -123,16 +123,23 @@ class test_Logger(unittest.TestCase):
             "myvar3",  # sparse uint
             "myvar4"  # sparse double
         ]
-        
-        local_paths = logger.start_logging(variables=logging_vars, transfer=True)
+
+        local_paths = logger.start_logging(
+            variables=logging_vars, transfer=True)
         await asyncio.sleep(0.5)
         logger.stop_logging()
-        
+
+        data = {}
         for var in logging_vars:
+            
+            print(var, logger.get_prop_of_var(var, "timestamp_mode"))
+
             self.assertTrue(os.path.exists(
                 local_paths[var]), "The logged file should exist after logging")
-            data = logger.read_binary_file(
-                local_paths[var], timestamp_mode=logger.watcher_vars[0]["timestamp_mode"])
+
+            # FIXME data is not being read correctly
+            data[var] = logger.read_binary_file(
+                file_path = local_paths[var], timestamp_mode=logger.get_prop_of_var(var, "timestamp_mode"))
 
         for var in local_paths:
             if os.path.exists(local_paths[var]):
@@ -145,8 +152,8 @@ class test_Logger(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # unittest.main(verbosity=2)
-    suite = unittest.TestSuite()
-    suite.addTest(test_Logger('test_logged_files'))
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    unittest.main(verbosity=2)
+    # suite = unittest.TestSuite()
+    # suite.addTest(test_Logger('test_logged_files'))
+    # runner = unittest.TextTestRunner(verbosity=2)
+    # runner.run(suite)

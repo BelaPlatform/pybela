@@ -172,6 +172,9 @@ class Watcher:
             self.project_name = _msg["projectName"]
 
     def _parse_binary_data(self, binary_data, timestamp_mode, _type):
+        
+        _type = 'i' if _type == 'j' else _type
+
         data_length = self.get_data_length(_type, timestamp_mode)
         # the format is the same for both logger and streamer so the parsing method is shared
 
@@ -225,6 +228,10 @@ class Watcher:
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
             for var in self.list() if filter_func(var)]
+
+    def get_prop_of_var(self, var_name, prop):
+        return next(
+            (v[prop] for v in self.watcher_vars if v['name'] == var_name), None)
 
     def get_data_byte_size(self, var_type):
         data_byte_size_map = {
