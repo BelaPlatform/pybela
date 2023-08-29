@@ -31,7 +31,7 @@ class Streamer(Watcher):
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
-        self.last_streamed_buffer = {}  # FIXME populate at start
+        self.last_streamed_buffer = {} 
 
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
