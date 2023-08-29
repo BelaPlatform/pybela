@@ -31,7 +31,7 @@ class Streamer(Watcher):
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
-        self.last_streamed_buffer_data = {}  # FIXME populate at start
+        self.last_streamed_buffer = {}  # FIXME populate at start
 
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
@@ -73,8 +73,8 @@ class Streamer(Watcher):
         super(Streamer, self).start()
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
-        self.last_streamed_buffer_data = {
-            var["name"]: [] for var in self.watcher_vars}
+        self.last_streamed_buffer = {
+            var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
 
     @property
     def streaming_buffers_data(self):
@@ -275,6 +275,7 @@ class Streamer(Watcher):
                    data,
                    x_var,
                    y_vars,
+                   y_range=None,
                    rollover=None,
                    plot_update_delay=90):
         """Return a function defining a Bokeh app for streaming. A maximum of `rollover`
@@ -283,43 +284,45 @@ class Streamer(Watcher):
         # TODO add variable checkers
 
         def _app(doc):
-            # Instatiate figures
+            # Instantiate figures
             p = bokeh.plotting.figure(
                 frame_width=500,
                 frame_height=175,
-                x_axis_label=x_var,
+                x_axis_label="timestamps",
                 y_axis_label="value",
-                # y_range=[-0.2, 5.2],
             )
+
+            if y_range is not None:
+                p.y_range = bokeh.models.Range1d(y_range[0], y_range[1])
 
             # No padding on x_range makes data flush with end of plot
             p.x_range.range_padding = 0
 
             # Create a dictionary to store ColumnDataSource instances for each y_var
-            template = {var: [] for var in data}
+            template = {"timestamps": [], **{var: [] for var in data}}
             source = bokeh.models.ColumnDataSource(template)
 
             # Create line glyphs for each y_var
             for y_var in y_vars:
-                p.line(source=source, x=x_var, y=y_var, legend_label=y_var)
+                p.circle(source=source, x="timestamps",
+                         y=y_var, legend_label=y_var, size=1)
 
             @bokeh.driving.linear()
             def update(step):
                 # Update plot by streaming in data
-                new_data = {x_var: data[x_var]}
+                new_data = {"timestamps": data[x_var]["timestamps"]}
                 for y_var in y_vars:
-                    new_data[y_var] = data[y_var]
+                    new_data[y_var] = data[y_var]["data"]
                 source.stream(new_data, rollover)
 
             doc.add_root(p)
-            pc = doc.add_periodic_callback(update, plot_update_delay)
-
+            doc.add_periodic_callback(update, plot_update_delay)
         return _app
 
-    def plot_data(self, x_var, y_vars, plot_update_delay=100, rollover=1000):
+    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=1000):
         bokeh.io.output_notebook(INLINE)
-        bokeh.io.show(self._data_plot(data=self.last_streamed_buffer_data, x_var=x_var,
-                      y_vars=y_vars, plot_update_delay=plot_update_delay, rollover=rollover))
+        bokeh.io.show(self._data_plot(data=self.last_streamed_buffer, x_var=x_var,
+                      y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
 
     # --- private methods --- #
 
@@ -339,7 +342,7 @@ class Streamer(Watcher):
                 _channel = int(str(msg)[2])
                 _type = str(msg)[4]
 
-                assert _type in ['i', 'j', 'd',
+                assert _type in ['i', 'f', 'j', 'd',
                                  'c'], f"Unsupported type: {_type}"
 
                 assert _type == self._watcher_vars[_channel][
@@ -357,8 +360,14 @@ class Streamer(Watcher):
                 self._streaming_buffers_queue[self._watcher_vars[_channel]['name']].append(
                     parsed_buffer)
                 # needed for streaming plots
-                self.last_streamed_buffer_data[self._watcher_vars[_channel]
-                                               ['name']] = parsed_buffer["data"]  # TODO what to do with timestamps here?
+                self.last_streamed_buffer[self._watcher_vars[_channel]
+                                          ['name']]["data"] = parsed_buffer["data"]
+                if self._watcher_vars[_channel]["timestamp_mode"] == "dense":
+                    self.last_streamed_buffer[self._watcher_vars[_channel]
+                                              ['name']]["timestamps"] = [parsed_buffer["ref_timestamp"] + i for i in range(0, len(parsed_buffer["data"]))]
+                elif self._watcher_vars[_channel]["timestamp_mode"] == "sparse":  # sparse
+                    self.last_streamed_buffer[self._watcher_vars[_channel]["name"]]["timestamps"] = [
+                        parsed_buffer["ref_timestamp"] + i for i in parsed_buffer["rel_timestamps"]]
 
                 if _saving_enabled:
                     _saving_var_filename = f"{self._watcher_vars[_channel]['name']}_{self._saving_filename}"
@@ -386,7 +395,7 @@ class Streamer(Watcher):
 
         except Exception as e:
             print(f"Error while saving data to file: {e}")
-            
+
         finally:
             await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
