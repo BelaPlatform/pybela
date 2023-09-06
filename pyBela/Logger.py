@@ -154,7 +154,7 @@ class Logger(Watcher):
             return None
 
         finally:
-            await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
+            await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
 
     def copy_file_in_chunks(self, remote_path, local_path):
         return asyncio.run(self.async_copy_file_in_chunks(remote_path, local_path))
@@ -204,6 +204,8 @@ class Logger(Watcher):
                 try:
                     data = file.read(struct.calcsize('Q')+2*data_length*struct.calcsize(
                         __type)) if timestamp_mode == "sparse" else file.read(struct.calcsize('Q')+data_length*struct.calcsize(__type))
+                    if len(data) == 0:
+                        break  # No more data to read
                     _parsed_buffer = self._parse_binary_data(
                         data, timestamp_mode, __type)
                     parsed_buffers.append(_parsed_buffer)
