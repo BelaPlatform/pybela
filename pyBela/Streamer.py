@@ -14,6 +14,7 @@ from bokeh.resources import INLINE
 
 from .Watcher import Watcher
 
+# TODO refactor so that buffer testing is the same for streamer and logger 
 
 class Streamer(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):

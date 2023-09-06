@@ -172,7 +172,7 @@ class Watcher:
             self.project_name = _msg["projectName"]
 
     def _parse_binary_data(self, binary_data, timestamp_mode, _type):
-        
+
         _type = 'i' if _type == 'j' else _type
 
         data_length = self.get_data_length(_type, timestamp_mode)
@@ -182,7 +182,7 @@ class Watcher:
         if timestamp_mode == "sparse":
             # TODO needs testing in logging mode
 
-            # ensure that the buffer is the correct size
+            # ensure that the buffer is the correct size (remove padding)
             binary_data = binary_data[:struct.calcsize("Q") + data_length*struct.calcsize(
                 _type)+data_length*struct.calcsize("I")]
 
@@ -198,7 +198,7 @@ class Watcher:
         else:  # dense mode
             # ensure that the buffer is the correct size
             binary_data = binary_data[:struct.calcsize('Q')+data_length*struct.calcsize(_type)]
-            
+
             ref_timestamp, * \
                 data = struct.unpack('Q' + f"{_type}"*data_length, binary_data)
 
@@ -263,6 +263,19 @@ class Watcher:
         if timestamp_mode == "sparse":
             return sparse_map.get(var_type, 0)
 
+        else:
+            # return error message
+            return 0
+
+    def get_buffer_size(self, var_type, timestamp_mode):
+        data_length = self.get_data_length(var_type, timestamp_mode)
+        if timestamp_mode == "sparse":
+            if self.get_data_byte_size(var_type) == 4:
+                return struct.calcsize('Q')+data_length*struct.calcsize(var_type)+data_length*struct.calcsize("I")
+            elif self.get_data_byte_size(var_type) == 8:
+                return struct.calcsize('Q')+data_length*struct.calcsize(var_type)+data_length*struct.calcsize("I")+4
+        elif timestamp_mode == "dense":
+            return struct.calcsize('Q')+data_length*struct.calcsize(var_type)
         else:
             # return error message
             return 0

@@ -192,22 +192,19 @@ class Logger(Watcher):
                 3 + struct.calcsize("I") + struct.calcsize("I")
             if header_size % 4 != 0:
                 file.read(4 - header_size % 4)  # padding
-                
-            __type = 'i' if _type == 'j' else _type # struct does not understand 'j'
 
-
-            data_length = self.get_data_length(_type, timestamp_mode)
+            _parse_type = 'i' if _type == 'j' else _type  # struct does not understand 'j'
 
             parsed_buffers = []
             while True:
                 # Read file buffer by buffer
                 try:
-                    data = file.read(struct.calcsize('Q')+2*data_length*struct.calcsize(
-                        __type)) if timestamp_mode == "sparse" else file.read(struct.calcsize('Q')+data_length*struct.calcsize(__type))
+                    data = file.read(self.get_buffer_size(
+                        _parse_type, timestamp_mode))
                     if len(data) == 0:
                         break  # No more data to read
                     _parsed_buffer = self._parse_binary_data(
-                        data, timestamp_mode, __type)
+                        data, timestamp_mode, _parse_type)
                     parsed_buffers.append(_parsed_buffer)
 
                 except struct.error as e:

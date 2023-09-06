@@ -1,8 +1,6 @@
 import unittest
 import asyncio
 import os
-import json
-
 from pyBela import Watcher, Streamer, Logger
 
 # all tests should be run with Bela connected and the bela-watcher project running on the board
@@ -135,7 +133,6 @@ class test_Logger(unittest.TestCase):
             self.assertTrue(os.path.exists(
                 local_paths[var]), "The logged file should exist after logging")
 
-            # FIXME fails for double sparse 
             data[var] = logger.read_binary_file(
                 file_path = local_paths[var], timestamp_mode=logger.get_prop_of_var(var, "timestamp_mode"))
             
@@ -168,8 +165,9 @@ class test_Logger(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
-    # suite = unittest.TestSuite()
-    # suite.addTest(test_Logger('test_logged_files'))
-    # runner = unittest.TextTestRunner(verbosity=2)
-    # runner.run(suite)
+    # unittest.main(verbosity=2)
+    suite = unittest.TestSuite()
+    suite.addTest(test_Logger('test_logged_files'))
+    # suite.addTest(test_Streamer('test_buffers'))
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)
