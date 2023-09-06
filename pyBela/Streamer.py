@@ -10,11 +10,7 @@ import bokeh.plotting
 import bokeh.io
 import bokeh.driving
 from bokeh.resources import INLINE
-
-
 from .Watcher import Watcher
-
-# TODO refactor so that buffer testing is the same for streamer and logger
 
 
 class Streamer(Watcher):
@@ -22,7 +18,7 @@ class Streamer(Watcher):
         """ Streamer class
 
             Args:
-                ip (str, optional): Remote address IP. Defaults to "192.168.7.2".
+                ip (str, optional): Remote address IP. If using internet over USB, the IP won't work, pass "bela.local". Defaults to "192.168.7.2".
                 port (int, optional): Remote address port. Defaults to 5555.
                 data_add (str, optional): Data endpoint. Defaults to "gui_data".
                 control_add (str, optional): Control endpoint. Defaults to "gui_control".
@@ -50,7 +46,10 @@ class Streamer(Watcher):
 
     @property
     def streaming_buffers_queue_length(self):
-        """Returns the maximum number of streaming buffers allowed in self.streaming_buffers_queue"""
+        """
+        Returns:
+            int: maximum number of streaming buffers allowed in self.streaming_buffers_queue
+        """
         return self._streaming_buffers_queue_length
 
     @streaming_buffers_queue_length.setter
@@ -72,6 +71,8 @@ class Streamer(Watcher):
         return {key: list(value) for key, value in self._streaming_buffers_queue.items()}
 
     def start(self):
+        """Starts the websocket connection and initialises the streaming buffers queue.
+        """
         super(Streamer, self).start()
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
@@ -97,6 +98,10 @@ class Streamer(Watcher):
 
     def start_streaming(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt"):
         """
+        Starts the streaming session. The session can be stopped with stop_streaming().
+
+        If no variables are specified, all watcher variables are streamed. If saving_enabled is True, the streamed data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists. 
+
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
@@ -126,35 +131,38 @@ class Streamer(Watcher):
 
     def stop_streaming(self, variables=[]):
         """
+        Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted.
+
         Args:
             variables (list, optional): List of variables to stop streaming. Defaults to [].
 
         Returns:
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
-        return asyncio.run(self.async_stop_streaming(variables))
+        async def async_stop_streaming(variables=[]):
+            self.stop()
+            self._streaming_mode = "OFF"
 
-    async def async_stop_streaming(self, variables=[]):
+            if self._saving_enabled:
+                self._saving_enabled = False
+                self._saving_filename = None
+                # await all active saving tasks
+                await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
+                self._active_saving_tasks.clear()
 
-        self.stop()
-        self._streaming_mode = "OFF"
+            if variables == []:
+                # if no variables specified, stop streaming all watcher variables (default)
+                variables = [var["name"] for var in self.watcher_vars]
 
-        if self._saving_enabled:
-            self._saving_enabled = False
-            self._saving_filename = None
-            # await all active saving tasks
-            await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
-            self._active_saving_tasks.clear()
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
+        return asyncio.run(async_stop_streaming(variables))
 
-        if variables == []:
-            # if no variables specified, stop streaming all watcher variables (default)
-            variables = [var["name"] for var in self.watcher_vars]
-
-        self.send_ctrl_msg(
-            {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
 
     def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
         """
+        Streams a given number of frames. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
+
         Note: This function will block the main thread until n_frames have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_frames, unless n_frames is a multiple of the block size (streamer._streaming_block_size).
 
         To avoid blocking, use the async version of this function:
@@ -244,10 +252,16 @@ class Streamer(Watcher):
     # - utils
 
     def is_streaming(self):
+        """Returns True if the streamer is currently streaming, False otherwise.
+
+        Returns:
+            bool: Streaming status bool
+        """
         return True if self._streaming_mode != "OFF" else False
 
     def load_data_from_file(self, filename):
         """
+        Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_frames(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
         Args:
             filename (str): Filename
 
@@ -273,15 +287,21 @@ class Streamer(Watcher):
 
     # - plotting
 
-    def _data_plot(self,
-                   data,
-                   x_var,
-                   y_vars,
-                   y_range=None,
-                   rollover=None,
-                   plot_update_delay=90):
-        """Return a function defining a Bokeh app for streaming. A maximum of `rollover`
-        data points are shown at a time.
+    def _bokeh_plot_data_app(self,
+                             data,
+                             x_var,
+                             y_vars,
+                             y_range=None,
+                             rollover=None,
+                             plot_update_delay=90):
+        """Return a function defining a Bokeh app for streaming. The app is called in plot_data().
+        Args:
+            data (dict): Dict containing the data to be plotted. The dict should have the following structure: {"var1": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, "var2": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, ...}
+            x_var (str): Variable to be plotted on the x axis
+            y_vars (list): List of variables to be plotted on the y axis
+            y_range (tuple, optional): Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
+            rollover (int, optional): Number of data points to keep on the plot. Defaults to None.
+            plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 90.
         """
         # TODO add variable checkers
 
@@ -322,13 +342,27 @@ class Streamer(Watcher):
         return _app
 
     def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=1000):
+        """ Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.
+
+        Args:
+            x_var (str): Variable to be plotted on the x axis
+            y_vars (list of str): List of variables to be plotted on the y axis
+            y_range (float, float):  Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
+            plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 100.
+            rollover (int, optional): Number of data points to keep on the plot. Defaults to 1000.
+        """
         bokeh.io.output_notebook(INLINE)
-        bokeh.io.show(self._data_plot(data=self.last_streamed_buffer, x_var=x_var,
+        bokeh.io.show(self._bokeh_plot_data_app(data=self.last_streamed_buffer, x_var=x_var,
                       y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
 
     # --- private methods --- #
 
     def _process_data_msg(self, msg):
+        """ Process data message received from Bela. This function is called by the websocket listener when a data message is received.
+
+        Args:
+            msg (bytestring): Data message received from Bela
+        """
         global _channel, _type
         try:
             _, __ = _channel, _type
@@ -384,6 +418,12 @@ class Streamer(Watcher):
                     self._streaming_buffer_available.set()
 
     async def _save_data_to_file(self, filename, msg):
+        """ Saves data to file asynchronously. This function is called by _process_data_msg() when a buffer is received and saving is enabled.
+
+        Args:
+            filename (str): Filename to save data to
+            msg (bytestr): Data message received from Bela
+        """
         try:
             # make sure there are not two processes writing to the same file
             if filename not in self._saving_file_locks.keys():
@@ -402,8 +442,14 @@ class Streamer(Watcher):
             await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
     def _generate_filename(self, saving_filename):
-        # adds a number to the end of the filename if it already exists to avoid overwriting saved data files
-        # naming convention is varname_filename__idx.ext
+        """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_frames() when saving is enabled. 
+
+        Args:
+            saving_filename (str): Root filename
+
+        Returns:
+            str: Generated filename
+        """
 
         filename_wo_ext, filename_ext = os.path.splitext(saving_filename)
         # files that follow naming convention, returns list of varname_filename (no __idx.ext)
@@ -419,4 +465,10 @@ class Streamer(Watcher):
         return f"{filename_wo_ext}__{idx}{filename_ext}"
 
     async def _async_remove_item_from_list(self, _list, task):
+        """ Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.
+
+        Args:
+            _list (list):  A list of tasks
+            task (asyncio task): The task to be removed from _list
+        """
         _list.remove(task)

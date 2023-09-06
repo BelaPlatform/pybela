@@ -11,7 +11,7 @@ class Logger(Watcher):
         """ Logger class
 
             Args:
-                ip (str, optional): Remote address IP. Defaults to "192.168.7.2".
+                ip (str, optional): Remote address IP. If using internet over USB, the IP won't work, pass "bela.local". Defaults to "192.168.7.2".
                 port (int, optional): Remote address port. Defaults to 5555.
                 data_add (str, optional): Data endpoint. Defaults to "gui_data".
                 control_add (str, optional): Control endpoint. Defaults to "gui_control".
@@ -29,6 +29,15 @@ class Logger(Watcher):
         self._active_copying_tasks = []
 
     def start_logging(self, variables=[], transfer=True):
+        """ Starts logging session. The session can be ended by calling stop_logging().
+
+        Args:
+            variables (list of str, optional): List of variables to be logged. If no variables are passed, all variables in the watcher are logged. Defaults to [].
+            transfer (bool, optional): If True, the logged files will be transferred automatically during the logging session. Defaults to True.
+
+        Returns:
+            list of str: List of local paths to the logged files.
+        """
 
         # TODO allow custom filenaming?
 
@@ -70,33 +79,38 @@ class Logger(Watcher):
 
                 local_paths[var["name"]] = local_path
 
-                copying_task = asyncio.create_task(
-                    self.async_copy_file_in_chunks(remote_path, local_path))
+                copying_task = self.copy_file_in_chunks(remote_path, local_path)
                 self._active_copying_tasks.append(copying_task)
 
             return local_paths
 
-    async def async_stop_logging(self, variables=[]):
-
-        self._logging = False
-        if variables == []:
-            # if no variables specified, stop streaming all watcher variables (default)
-            variables = [var["name"] for var in self.watcher_vars]
-
-        self.send_ctrl_msg(
-            {"watcher": [{"cmd": "unlog", "watchers": variables}]})
-
-        await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
-        self._active_copying_tasks.clear()
-
-        self.sftp_client.close()
-
-        self.stop()
-
     def stop_logging(self, variables=[]):
-        return asyncio.run(self.async_stop_logging(variables))
+        """ Stops logging session.
+
+        Args:
+            variables (list of str, optional): List of variables to stop logging. If none is passed, logging is stopped for all variables in the watcher. Defaults to [].
+        """
+        async def async_stop_logging(variables=[]):
+            self._logging = False
+            if variables == []:
+                # if no variables specified, stop streaming all watcher variables (default)
+                variables = [var["name"] for var in self.watcher_vars]
+
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "unlog", "watchers": variables}]})
+
+            await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
+            self._active_copying_tasks.clear()
+
+            self.sftp_client.close()
+
+            self.stop()
+
+        return asyncio.run(async_stop_logging(variables))
 
     def connect_ssh(self):
+        """ Connects to Bela via ssh to transfer log files.
+        """
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -111,58 +125,88 @@ class Logger(Watcher):
         self.sftp_client = self.ssh_client.open_sftp()  # TODO handle exceptions better
 
     def is_logging(self):
+        """ Returns True if the logger is currently logging, false otherwise.
+
+        Returns:
+            bool: Logger status
+        """
         return self._logging
 
-    async def async_copy_file_in_chunks(self, remote_path, local_path, chunk_size=2**12):
+    def copy_file_in_chunks(self, remote_path, local_path,  chunk_size=2**12):
+        """ Copies a file from the remote path to the local path in chunks. This function is called by start_logging() if transfer=True.
 
-        while True:
-            await asyncio.sleep(1)  # Wait for a second before checking again
+        Args:
+            remote_path (str): Path to the file in Bela.
+            local_path (str): Path to the file in the local machine (where the file is copied to)
+            chunk_size (int, optional): Chunk size. Defaults to 2**12.
+        
+        Returns:
+            asyncio.Task: Task that copies the file in chunks.
+        """
+
+        async def async_copy_file_in_chunks(remote_path, local_path, chunk_size=2**12):
+
+            while True:
+                await asyncio.sleep(1)  # Wait for a second before checking again
+
+                try:
+                    remote_file = self.sftp_client.open(remote_path, 'rb')
+                    remote_file_size = self.sftp_client.stat(remote_path).st_size
+
+                    if remote_file_size > 0:  # white till first buffers are written into the file
+                        break  # Break the loop if the remote file size is non-zero
+
+                except FileNotFoundError:
+                    print(f"Remote file '{remote_path}' does not exist.")
+                    return None
+
+            local_size = os.path.getsize(
+                local_path) if os.path.exists(local_path) else 0
 
             try:
-                remote_file = self.sftp_client.open(remote_path, 'rb')
-                remote_file_size = self.sftp_client.stat(remote_path).st_size
+                async with aiofiles.open(local_path, 'wb') as local_file:
+                    # Move the remote file pointer to the last position read
+                    remote_file.seek(local_size)
+                    while True:
+                        chunk = remote_file.read(chunk_size)
+                        if not chunk:
+                            break
+                        await local_file.write(chunk)
+                        print(
+                            f"\rTransferring {remote_path}-->{local_path}... ", end="", flush=True)
+                    remote_file.close()
+                    print("Done.")
 
-                if remote_file_size > 0:  # white till first buffers are written into the file
-                    break  # Break the loop if the remote file size is non-zero
-
-            except FileNotFoundError:
-                print(f"Remote file '{remote_path}' does not exist.")
+            except Exception as e:
+                print(f"Error while transferring file: {e}")
                 return None
 
-        local_size = os.path.getsize(
-            local_path) if os.path.exists(local_path) else 0
-
-        try:
-            async with aiofiles.open(local_path, 'wb') as local_file:
-                # Move the remote file pointer to the last position read
-                remote_file.seek(local_size)
-                while True:
-                    chunk = remote_file.read(chunk_size)
-                    if not chunk:
-                        break
-                    await local_file.write(chunk)
-                    print(
-                        f"\rTransferring {remote_path}-->{local_path}... ", end="", flush=True)
-                remote_file.close()
-                print("Done.")
-
-        except Exception as e:
-            print(f"Error while transferring file: {e}")
-            return None
-
-        finally:
-            await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
-
-    def copy_file_in_chunks(self, remote_path, local_path):
-        return asyncio.run(self.async_copy_file_in_chunks(remote_path, local_path))
+            finally:
+                await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
+                
+        return asyncio.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
 
     def copy_file_from_bela(self, remote_path, local_path):
+        """ Copies a file from the remote path in Bela to the local path. This can be used any time to copy files from Bela to the host. 
+
+        Args:
+            remote_path (str): Path to the file in Bela.
+            local_path (str): Path to the file in the local machine (where the file is copied to)
+        """
         if self.sftp_client is None:
             self.connect_ssh()
         self.sftp_client.get(remote_path, local_path)
 
     def read_binary_file(self, file_path, timestamp_mode):
-        # TODO update when timestamp_mode is part of the file header
+        """ Reads a binary file generated by the logger and returns a dictionary with the file contents.
+
+        Args:
+            file_path (str): Path of the file to be read.
+            timestamp_mode (str): Timestamp mode of the variable. Can be "dense" or "sparse". 
+
+        Returns:
+            dict: Dictionary with the file contents.
+        """
 
         file_size = os.path.getsize(file_path)
         assert file_size != 0, "Error: The file size is 0."

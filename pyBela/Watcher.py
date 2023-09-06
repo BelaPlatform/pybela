@@ -9,13 +9,13 @@ import struct
 class Watcher:
 
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
-        """ Watcher class __summary__.
+        """ Watcher class
 
-        Args:
-            ip (str, optional): Remote address IP. Defaults to "192.168.7.2".
-            port (int, optional): Remote address port. Defaults to 5555.
-            data_add (str, optional): Data endpoint. Defaults to "gui_data".
-            control_add (str, optional): Control endpoint. Defaults to "gui_control".
+            Args:
+                ip (str, optional): Remote address IP. If using internet over USB, the IP won't work, pass "bela.local". Defaults to "192.168.7.2".
+                port (int, optional): Remote address port. Defaults to 5555.
+                data_add (str, optional): Data endpoint. Defaults to "gui_data".
+                control_add (str, optional): Control endpoint. Defaults to "gui_control".
         """
 
         self.project_name = None
@@ -45,21 +45,38 @@ class Watcher:
 
     @property
     def watcher_vars(self):
+        """Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length)
+
+        Returns:
+            list of dicts: List of variables in watcher and their properties
+        """
         if self._watcher_vars == None:  # populate
             self._watcher_vars = self._filtered_vars(lambda var: True)
         return self._watcher_vars   # updates every time start is called
 
     @property
     def watched_vars(self):
+        """Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring)
+
+        Returns:
+            list of str: List of watched variables
+        """
         return self._filtered_vars(lambda var: var["watched"])
 
     @property
     def unwatched_vars(self):
+        """Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring)
+
+        Returns:
+            list of str: List of unwatched variables
+        """
         return self._filtered_vars(lambda var: not var["watched"])
 
-    # public methods
+    # --- public methods --- #
 
     def start(self):
+        """Starts the websockets connection and listeners
+        """
         if self._ctrl_listener is None:  # avoid duplicate listeners
             self.start_ctrl_listener()
         if self._data_listener is None:
@@ -68,22 +85,26 @@ class Watcher:
         # refresh watcher vars in case new project has been loaded in Bela
         self._watcher_vars = self._filtered_vars(lambda var: True)
 
-    async def async_stop(self):
-        if self._ctrl_listener is not None:
-            self._ctrl_listener.cancel()
-            if self.ws_ctrl is not None:
-                await self.ws_ctrl.close()
-            self._ctrl_listener = None  # empty the listener
-        if self._data_listener is not None:
-            self._data_listener.cancel()
-            if self.ws_data is not None:
-                await self.ws_data.close()
-            self._data_listener = None
-
     def stop(self):
-        return asyncio.run(self.async_stop())
+        """Stops listeners and closes websockets
+        """
+        async def async_stop():
+            if self._ctrl_listener is not None:
+                self._ctrl_listener.cancel()
+                if self.ws_ctrl is not None:
+                    await self.ws_ctrl.close()
+                self._ctrl_listener = None  # empty the listener
+            if self._data_listener is not None:
+                self._data_listener.cancel()
+                if self.ws_data is not None:
+                    await self.ws_data.close()
+                self._data_listener = None
+
+        return asyncio.run(async_stop())
 
     def list(self):
+        """ Asks the watcher for the list of variables and their properties and returns it
+        """
         async def async_list():
             if self._ctrl_listener is None:  # start listener if listener is not running
                 self.start_ctrl_listener()
@@ -96,68 +117,96 @@ class Watcher:
         return asyncio.run(async_list())
 
     def send_ctrl_msg(self, msg):
+        """Send control message
+
+        Args:
+            msg (str): Message to send to the Bela watcher. Example: {"watcher": [{"cmd": "list"}]}
+        """
         self._send_msg(self.ws_ctrl, self.ws_ctrl_add, msg)
 
     def start_ctrl_listener(self):
+        """Start listener for control messages
+        """
         self._ctrl_listener = self._start_listener(
             self.ws_ctrl, self.ws_ctrl_add)
 
     def start_data_listener(self):
+        """Start listener for data messages
+        """
         self._data_listener = self._start_listener(
             self.ws_data, self.ws_data_add)
 
-    # _private methods
+    # --- private methods --- #
 
     # start listener
 
     def _start_listener(self, ws, ws_address):
+        """Start listener for messages. This method is called by start_ctrl_listener and start_data_listener.
+
+        Args:
+            ws (websocket): Websocket object
+            ws_address (str): Websocket address
+        """
+        async def _start_listener_callback(ws, ws_address):
+            async def _rec_msg_callback(ws, ws_address):
+                try:
+                    async with websockets.connect(ws_address) as ws:
+                        while True:
+                            msg = await ws.recv()
+                            if self._printall_responses:
+                                print(msg)
+                            if ws_address == self.ws_data_add:
+                                self._process_data_msg(msg)
+                            elif ws_address == self.ws_ctrl_add:
+                                self._process_ctrl_msg(msg)
+                            else:
+                                print(msg)
+                except Exception as e:
+                    handle_connection_exception(
+                        ws_address, e, "receiving message")
+            await _rec_msg_callback(ws, ws_address)
         loop = asyncio.get_event_loop()
         # create_task() is needed so that the listener runs in the background and prints messages as received without blocking the cell
         listener_task = loop.create_task(
-            self._start_listener_callback(ws, ws_address))
+            _start_listener_callback(ws, ws_address))
         return listener_task
-
-    async def _start_listener_callback(self, ws, ws_address):
-        await self._rec_msg_callback(ws, ws_address)
 
     # send message
 
     def _send_msg(self, ws, ws_address, msg):
+        """Send message to websocket
+
+        Args:
+            ws (websocket): Websocket object
+            ws_address (str): Websocket address
+            msg (str): Message to send
+        """
+        async def _send_msg_callback(ws, ws_address, msg):
+            try:
+                # here you can use the same websocket for multiple messages -- but avoid using the same one for sending and receiving
+                async with websockets.connect(ws_address) as ws:
+                    await ws.send(json.dumps(msg))
+            except Exception as e:
+                handle_connection_exception(ws_address, e, "sending message")
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._send_msg_callback(ws, ws_address, msg))
-
-    async def _send_msg_callback(self, ws, ws_address, msg):
-        try:
-            # here you can use the same websocket for multiple messages -- but avoid using the same one for sending and receiving
-            async with websockets.connect(ws_address) as ws:
-                await ws.send(json.dumps(msg))
-        except Exception as e:
-            handle_connection_exception(ws_address, e, "sending message")
-
-    # receive message
-
-    async def _rec_msg_callback(self, ws, ws_address):
-        try:
-            async with websockets.connect(ws_address) as ws:
-                while True:
-                    msg = await ws.recv()
-                    if self._printall_responses:
-                        print(msg)
-                    if ws_address == self.ws_data_add:
-                        self._process_data_msg(msg)
-                    elif ws_address == self.ws_ctrl_add:
-                        self._process_ctrl_msg(msg)
-                    else:
-                        print(msg)
-        except Exception as e:
-            handle_connection_exception(ws_address, e, "receiving message")
+        loop.run_until_complete(_send_msg_callback(ws, ws_address, msg))
 
     # process messages
 
     def _process_data_msg(self, msg):  # method overwritten by streamer
+        """Process data message. This method is overwritten by the streamer.
+
+        Args:
+            msg (str): Bytestring with data
+        """
         pass
 
     def _process_ctrl_msg(self, msg):
+        """Process control message
+
+        Args:
+            msg (str): Control message to process
+        """
         _msg = json.loads(msg)
 
         # list cmd
@@ -172,6 +221,16 @@ class Watcher:
             self.project_name = _msg["projectName"]
 
     def _parse_binary_data(self, binary_data, timestamp_mode, _type):
+        """Binary data parser. This method is used both by the streamer and the logger to parse the binary data buffers.
+
+        Args:
+            binary_data (bytestring): String of bytes to parse
+            timestamp_mode (str): Timestamp mode ("sparse" or "dense")
+            _type (str): Type of the variable ("f", "j", "i", "c", "d")
+
+        Returns:
+            dict: Dictionary with parsed buffer and timestamps
+        """
 
         _type = 'i' if _type == 'j' else _type
 
@@ -180,8 +239,6 @@ class Watcher:
 
         # sparse mode
         if timestamp_mode == "sparse":
-            # TODO needs testing in logging mode
-
             # ensure that the buffer is the correct size (remove padding)
             binary_data = binary_data[:struct.calcsize("Q") + data_length*struct.calcsize(
                 _type)+data_length*struct.calcsize("I")]
@@ -208,8 +265,15 @@ class Watcher:
 
         return parsed_buffer
 
-    # utils
+     # --- utils --- #
+
     async def _async_remove_item_from_list(self, _list, task):
+        """Remove item from list. Used to remove listeners from the list of listeners.
+
+        Args:
+            _list (list): list of tasks
+            task (asyncio.Task): task to be removed
+        """
         _list.remove(task)
 
     def _filtered_vars(self, filter_func):
@@ -231,10 +295,28 @@ class Watcher:
             for var in self.list() if filter_func(var)]
 
     def get_prop_of_var(self, var_name, prop):
+        # TODO replace get_data_length by this
+        """Get property of variable. Properties: name, type, timestamp_mode, log_filename, data_length
+
+        Args:
+            var_name (str): Variable name
+            prop (str): Requested property
+
+        Returns:
+            (type depending on prop): Requested property
+        """
         return next(
             (v[prop] for v in self.watcher_vars if v['name'] == var_name), None)
 
     def get_data_byte_size(self, var_type):
+        """Returns the byte size of the data type
+
+        Args:
+            var_type (str): Variable type
+
+        Returns:
+            int: byte size of the variable type 
+        """
         data_byte_size_map = {
             "f": 4,
             "j": 4,
@@ -245,6 +327,15 @@ class Watcher:
         return data_byte_size_map.get(var_type, 0)
 
     def get_data_length(self, var_type, timestamp_mode):
+        """Data length in the buffer
+
+        Args:
+            var_type (str): Variable type
+            timestamp_mode (str): Timestamp mode
+
+        Returns:
+            int: Data length in the buffer (number of elements) 
+        """
         dense_map = {
             "f": 1024,
             "j": 1024,
@@ -269,6 +360,15 @@ class Watcher:
             return 0
 
     def get_buffer_size(self, var_type, timestamp_mode):
+        """Returns the buffer size in bytes for buffers stored in a log file. This is the size of the buffer that is sent over websockets.
+
+        Args:
+            var_type (str): Variable type
+            timestamp_mode (str): Timestamp mode
+
+        Returns:
+            int: Buffer size in bytes
+        """
         # for logging
         data_length = self.get_data_length(var_type, timestamp_mode)
         if timestamp_mode == "sparse":
