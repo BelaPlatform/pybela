@@ -98,10 +98,10 @@ class test_Streamer(unittest.TestCase):
         dense_vars = ["myvar", "myvar2"]
 
         for var in [v for v in streamer.watcher_vars if v["name"] in dense_vars]:
-            for buffer in streamer.streaming_buffers_queue[var["name"]]:
-                self.assertEqual(buffer["ref_timestamp"], buffer["data"][0],
+            for _buffer in streamer.streaming_buffers_queue[var["name"]]:
+                self.assertEqual(_buffer["ref_timestamp"], _buffer["data"][0],
                                  "The ref_timestamp and the first item of data buffer should be the same")
-                self.assertEqual(buffer["ref_timestamp"]+var["data_length"]-1, buffer["data"][-1],
+                self.assertEqual(_buffer["ref_timestamp"]+var["data_length"]-1, _buffer["data"][-1],
                                  "The last data item should be equal to the ref_timestamp plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
 
         for var in streaming_vars:
@@ -129,45 +129,43 @@ class test_Logger(unittest.TestCase):
 
         data = {}
         for var in logging_vars:
-            
+
             self.assertTrue(os.path.exists(
                 local_paths[var]), "The logged file should exist after logging")
 
             data[var] = logger.read_binary_file(
-                file_path = local_paths[var], timestamp_mode=logger.get_prop_of_var(var, "timestamp_mode"))
-            
+                file_path=local_paths[var], timestamp_mode=logger.get_prop_of_var(var, "timestamp_mode"))
+
             # test data
             timestamp_mode = logger.get_prop_of_var(var, "timestamp_mode")
             for _buffer in data[var]["buffers"]:
                 self.assertEqual(_buffer["ref_timestamp"], _buffer["data"][0],
-                                    "The ref_timestamp and the first item of data buffer should be the same")
+                                 "The ref_timestamp and the first item of data buffer should be the same")
                 self.assertEqual(logger.get_prop_of_var(var, "data_length"), len(_buffer["data"]),
-                                    "The length of the buffer should be equal to the data_length property of the variable")
-                if _buffer["data"][-1] == 0: # buffer has padding at the end
+                                 "The length of the buffer should be equal to the data_length property of the variable")
+                if _buffer["data"][-1] == 0:  # buffer has padding at the end
                     continue
                 if timestamp_mode == "dense":
                     self.assertEqual(_buffer["ref_timestamp"]+logger.get_prop_of_var(var, "data_length")-1, _buffer["data"][-1],
-                                        "The last data item should be equal to the ref_timestamp plus the length of the buffer")
-                elif timestamp_mode == "sparse": 
-                    inferred_timestamps = [_ + _buffer["ref_timestamp"] for _ in _buffer["rel_timestamps"]]
-                    self.assertEqual(inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")              
-                    
-                    
-            
+                                     "The last data item should be equal to the ref_timestamp plus the length of the buffer")
+                elif timestamp_mode == "sparse":
+                    inferred_timestamps = [_ + _buffer["ref_timestamp"]
+                                           for _ in _buffer["rel_timestamps"]]
+                    self.assertEqual(
+                        inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")
+
         for var in local_paths:
             if os.path.exists(local_paths[var]):
                 os.remove(local_paths[var])
-
-        # test log
 
     def test_logged_files(self):
         asyncio.run(self.async_test_logged_files())
 
 
 if __name__ == '__main__':
-    # unittest.main(verbosity=2)
-    suite = unittest.TestSuite()
-    suite.addTest(test_Logger('test_logged_files'))
+    unittest.main(verbosity=2)
+    # suite = unittest.TestSuite()
+    # suite.addTest(test_Logger('test_logged_files'))
     # suite.addTest(test_Streamer('test_buffers'))
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    # runner = unittest.TextTestRunner(verbosity=2)
+    # runner.run(suite)

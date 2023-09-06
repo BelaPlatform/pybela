@@ -197,7 +197,8 @@ class Watcher:
 
         else:  # dense mode
             # ensure that the buffer is the correct size
-            binary_data = binary_data[:struct.calcsize('Q')+data_length*struct.calcsize(_type)]
+            binary_data = binary_data[:struct.calcsize(
+                'Q')+data_length*struct.calcsize(_type)]
 
             ref_timestamp, * \
                 data = struct.unpack('Q' + f"{_type}"*data_length, binary_data)
@@ -268,6 +269,7 @@ class Watcher:
             return 0
 
     def get_buffer_size(self, var_type, timestamp_mode):
+        # for logging
         data_length = self.get_data_length(var_type, timestamp_mode)
         if timestamp_mode == "sparse":
             if self.get_data_byte_size(var_type) == 4:

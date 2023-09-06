@@ -14,7 +14,8 @@ from bokeh.resources import INLINE
 
 from .Watcher import Watcher
 
-# TODO refactor so that buffer testing is the same for streamer and logger 
+# TODO refactor so that buffer testing is the same for streamer and logger
+
 
 class Streamer(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
@@ -32,7 +33,7 @@ class Streamer(Watcher):
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
-        self.last_streamed_buffer = {} 
+        self.last_streamed_buffer = {}
 
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
