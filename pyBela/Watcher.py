@@ -259,7 +259,7 @@ class Watcher:
             parsed_buffer = {"ref_timestamp": ref_timestamp,
                              "data": data, "rel_timestamps": rel_timestamps}
 
-        else:  # dense mode
+        elif timestamp_mode=="dense": 
             # ensure that the buffer is the correct size
             binary_data = binary_data[:struct.calcsize(
                 'Q')+data_length*struct.calcsize(_type)]
@@ -269,6 +269,9 @@ class Watcher:
 
             parsed_buffer = {
                 "ref_timestamp": ref_timestamp, "data": data}
+        
+        else:
+            parsed_buffer = None
 
         return parsed_buffer
 
