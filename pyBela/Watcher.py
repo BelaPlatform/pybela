@@ -73,6 +73,29 @@ class Watcher:
         return self._filtered_vars(lambda var: not var["watched"])
 
     # --- public methods --- #
+    
+    def connect(self):
+        """Attempts to establish a WebSocket connection and prints a message indicating success or failure.
+
+        """
+        async def _async_connect():
+            try:
+                async with websockets.connect(self.ws_ctrl_add) as ws_ctrl:
+                    self.ws_ctrl = ws_ctrl
+                    # Send a control message to check the connection
+                    self.send_ctrl_msg({"watcher": [{"cmd": "list"}]})
+                    # Wait for a response from the server
+                    response = json.loads(await ws_ctrl.recv())
+                    # Check if the response indicates a successful connection
+                    if "event" in response and response["event"] == "connection":
+                        self.start()
+                        return "Connection successful"
+                    else:
+                        return "Connection failed"
+            except Exception as e:
+                return f"Connection failed: {str(e)}."
+        
+        return asyncio.run(_async_connect())
 
     def start(self):
         """Starts the websockets connection and listeners
@@ -202,9 +225,6 @@ class Watcher:
             self._list_response = _msg["watcher"]["watchers"]
             self._list_response_available.set()
 
-        # connection event
-        # if "event" in _msg.keys() and _msg["event"] == "connection":
-        #     print("Connection successful")  # FIXME this message is sent many times
         if "projectName" in _msg.keys():
             self.project_name = _msg["projectName"]
 
@@ -273,6 +293,7 @@ class Watcher:
         Returns:
             dict: Filtered variables
         """
+        _list = self.list()
         return [{
             "name": var["name"],
             "type": var["type"],
@@ -280,7 +301,7 @@ class Watcher:
             "log_filename": var["logFileName"],
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
-            for var in self.list() if filter_func(var)]
+            for var in _list if filter_func(var)]
 
     def get_prop_of_var(self, var_name, prop):
         # TODO replace get_data_length by this

@@ -50,7 +50,7 @@ class Logger(Watcher):
         if self.is_logging():
             self.stop_logging()
 
-        self.start()  # start websocket connection
+        #self.start()  # start websocket connection
         self.connect_ssh()  # start ssh connection
 
         self._logging = True
@@ -104,7 +104,7 @@ class Logger(Watcher):
 
             self.sftp_client.close()
 
-            self.stop()
+            #self.stop()
 
         return asyncio.run(async_stop_logging(variables))
 

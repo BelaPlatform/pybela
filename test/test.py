@@ -10,13 +10,13 @@ class test_Watcher(unittest.TestCase):
 
     def test_list(self):
         watcher = Watcher()
-        watcher.start()
+        watcher.connect()
         self.assertEqual(len(watcher.list()), len(watcher.watcher_vars),
                          "Length of list should be equal to number of watcher variables")
 
     def test_start_stop(self):
         watcher = Watcher()
-        watcher.start()
+        watcher.connect()
         watcher.stop()
         self.assertEqual(watcher._ctrl_listener, None,
                          "Watcher ctrl listener should be None after stop")
@@ -28,6 +28,7 @@ class test_Streamer(unittest.TestCase):
 
     def test_stream_n_frames(self):
         streamer = Streamer()
+        streamer.connect()
         n_frames = 2000
 
         streaming_vars = ["myvar", "myvar2"]
@@ -49,6 +50,7 @@ class test_Streamer(unittest.TestCase):
 
     async def async_test_buffers(self):
         streamer = Streamer()
+        streamer.connect()
         streamer.streaming_buffers_queue_length = 1000
         saving_filename = "test_save.txt"
 
@@ -115,6 +117,7 @@ class test_Streamer(unittest.TestCase):
 class test_Logger(unittest.TestCase):
     async def async_test_logged_files(self):
         logger = Logger()
+        logger.connect()
         logging_vars = [
             "myvar",  # dense double
             "myvar2",  # dense uint

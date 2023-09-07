@@ -111,7 +111,7 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        self.start()  # start before setting saving enabled to ensure streaming buffer is initialised properly
+        #self.start()  # start before setting saving enabled to ensure streaming buffer is initialised properly
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
@@ -140,7 +140,7 @@ class Streamer(Watcher):
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
         async def async_stop_streaming(variables=[]):
-            self.stop()
+            #self.stop()
             self._streaming_mode = "OFF"
 
             if self._saving_enabled:
@@ -208,7 +208,7 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        self.start()
+        #self.start()
 
         if len(variables) == 0:
             # if no variables are specified, stream all watched variables
