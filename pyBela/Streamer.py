@@ -73,7 +73,7 @@ class Streamer(Watcher):
     def start(self):
         """Starts the websocket connection and initialises the streaming buffers queue.
         """
-        super(Streamer, self).start()
+        super(Streamer, self).connect()
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
@@ -111,7 +111,7 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        #self.start()  # start before setting saving enabled to ensure streaming buffer is initialised properly
+        self.start()  # start before setting saving enabled to ensure streaming buffer is initialised properly
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
@@ -208,7 +208,7 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        #self.start()
+        self.start()
 
         if len(variables) == 0:
             # if no variables are specified, stream all watched variables

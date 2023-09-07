@@ -73,11 +73,14 @@ class Watcher:
         return self._filtered_vars(lambda var: not var["watched"])
 
     # --- public methods --- #
-    
+
     def connect(self):
         """Attempts to establish a WebSocket connection and prints a message indicating success or failure.
 
         """
+        if self._ctrl_listener is not None and self._data_listener is not None:
+            return "Already connected"
+        
         async def _async_connect():
             try:
                 async with websockets.connect(self.ws_ctrl_add) as ws_ctrl:
@@ -88,27 +91,23 @@ class Watcher:
                     response = json.loads(await ws_ctrl.recv())
                     # Check if the response indicates a successful connection
                     if "event" in response and response["event"] == "connection":
-                        self.start()
+                        if self._ctrl_listener is None:  # avoid duplicate listeners
+                            self._ctrl_listener = self._start_listener(
+                                self.ws_ctrl, self.ws_ctrl_add)
+                        if self._data_listener is None:
+                            self._data_listener = self._start_listener(
+                                self.ws_data, self.ws_data_add)
+
+                        # refresh watcher vars in case new project has been loaded in Bela
+                        self._watcher_vars = self._filtered_vars(
+                            lambda var: True)
                         return "Connection successful"
                     else:
                         return "Connection failed"
             except Exception as e:
                 return f"Connection failed: {str(e)}."
-        
+
         return asyncio.run(_async_connect())
-
-    def start(self):
-        """Starts the websockets connection and listeners
-        """
-        if self._ctrl_listener is None:  # avoid duplicate listeners
-            self._ctrl_listener = self._start_listener(
-                self.ws_ctrl, self.ws_ctrl_add)
-        if self._data_listener is None:
-            self._data_listener = self._start_listener(
-                self.ws_data, self.ws_data_add)
-
-        # refresh watcher vars in case new project has been loaded in Bela
-        self._watcher_vars = self._filtered_vars(lambda var: True)
 
     def stop(self):
         """Stops listeners and closes websockets
