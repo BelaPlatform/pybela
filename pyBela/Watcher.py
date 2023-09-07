@@ -78,9 +78,11 @@ class Watcher:
         """Starts the websockets connection and listeners
         """
         if self._ctrl_listener is None:  # avoid duplicate listeners
-            self.start_ctrl_listener()
+            self._ctrl_listener = self._start_listener(
+                self.ws_ctrl, self.ws_ctrl_add)
         if self._data_listener is None:
-            self.start_data_listener()
+            self._data_listener = self._start_listener(
+                self.ws_data, self.ws_data_add)
 
         # refresh watcher vars in case new project has been loaded in Bela
         self._watcher_vars = self._filtered_vars(lambda var: True)
@@ -88,7 +90,7 @@ class Watcher:
     def stop(self):
         """Stops listeners and closes websockets
         """
-        async def async_stop():
+        async def _async_stop():
             if self._ctrl_listener is not None:
                 self._ctrl_listener.cancel()
                 if self.ws_ctrl is not None:
@@ -100,21 +102,21 @@ class Watcher:
                     await self.ws_data.close()
                 self._data_listener = None
 
-        return asyncio.run(async_stop())
+        return asyncio.run(_async_stop())
 
     def list(self):
         """ Asks the watcher for the list of variables and their properties and returns it
         """
-        async def async_list():
+        async def _async_list():
             if self._ctrl_listener is None:  # start listener if listener is not running
-                self.start_ctrl_listener()
+                self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
             self.send_ctrl_msg({"watcher": [{"cmd": "list"}]})
             # Wait for the list response to be available
             await self._list_response_available.wait()
             self._list_response_available.clear()  # Reset the event for the next call
             return self._list_response
 
-        return asyncio.run(async_list())
+        return asyncio.run(_async_list())
 
     def send_ctrl_msg(self, msg):
         """Send control message
@@ -124,51 +126,37 @@ class Watcher:
         """
         self._send_msg(self.ws_ctrl, self.ws_ctrl_add, msg)
 
-    def start_ctrl_listener(self):
-        """Start listener for control messages
-        """
-        self._ctrl_listener = self._start_listener(
-            self.ws_ctrl, self.ws_ctrl_add)
-
-    def start_data_listener(self):
-        """Start listener for data messages
-        """
-        self._data_listener = self._start_listener(
-            self.ws_data, self.ws_data_add)
-
     # --- private methods --- #
 
     # start listener
 
     def _start_listener(self, ws, ws_address):
-        """Start listener for messages. This method is called by start_ctrl_listener and start_data_listener.
+        """Start listener for messages. 
 
         Args:
             ws (websocket): Websocket object
             ws_address (str): Websocket address
         """
-        async def _start_listener_callback(ws, ws_address):
-            async def _rec_msg_callback(ws, ws_address):
-                try:
-                    async with websockets.connect(ws_address) as ws:
-                        while True:
-                            msg = await ws.recv()
-                            if self._printall_responses:
-                                print(msg)
-                            if ws_address == self.ws_data_add:
-                                self._process_data_msg(msg)
-                            elif ws_address == self.ws_ctrl_add:
-                                self._process_ctrl_msg(msg)
-                            else:
-                                print(msg)
-                except Exception as e:
-                    handle_connection_exception(
-                        ws_address, e, "receiving message")
-            await _rec_msg_callback(ws, ws_address)
+        async def _async_start_listener(ws, ws_address):
+            try:
+                async with websockets.connect(ws_address) as ws:
+                    while True:
+                        msg = await ws.recv()
+                        if self._printall_responses:
+                            print(msg)
+                        if ws_address == self.ws_data_add:
+                            self._process_data_msg(msg)
+                        elif ws_address == self.ws_ctrl_add:
+                            self._process_ctrl_msg(msg)
+                        else:
+                            print(msg)
+            except Exception as e:
+                handle_connection_exception(
+                    ws_address, e, "receiving message")
         loop = asyncio.get_event_loop()
         # create_task() is needed so that the listener runs in the background and prints messages as received without blocking the cell
         listener_task = loop.create_task(
-            _start_listener_callback(ws, ws_address))
+            _async_start_listener(ws, ws_address))
         return listener_task
 
     # send message
@@ -181,7 +169,7 @@ class Watcher:
             ws_address (str): Websocket address
             msg (str): Message to send
         """
-        async def _send_msg_callback(ws, ws_address, msg):
+        async def _async_send_msg(ws, ws_address, msg):
             try:
                 # here you can use the same websocket for multiple messages -- but avoid using the same one for sending and receiving
                 async with websockets.connect(ws_address) as ws:
@@ -189,7 +177,7 @@ class Watcher:
             except Exception as e:
                 handle_connection_exception(ws_address, e, "sending message")
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(_send_msg_callback(ws, ws_address, msg))
+        loop.run_until_complete(_async_send_msg(ws, ws_address, msg))
 
     # process messages
 
