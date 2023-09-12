@@ -27,6 +27,8 @@ class Logger(Watcher):
         self.sftp_client = None
 
         self._active_copying_tasks = []
+        
+        self._mode = "LOG"
 
     def start_logging(self, variables=[], transfer=True):
         """ Starts logging session. The session can be ended by calling stop_logging().
@@ -41,16 +43,13 @@ class Logger(Watcher):
 
         # TODO allow custom filenaming?
 
-        if len(variables) == 0:
-            # if no variables are specified, stream all watcher variables (default)
-            variables = [var["name"] for var in self.watcher_vars]
-        variables = variables if isinstance(variables, list) else [
-            variables]  # variables should be a list of strings
+        # checks types and if no variables are specified, stream all watcher variables (default)
+        variables = self._var_arg_checker(variables)
 
         if self.is_logging():
             self.stop_logging()
 
-        #self.start()  # start websocket connection
+        # self.start()  # start websocket connection
         self.connect_ssh()  # start ssh connection
 
         self._logging = True
@@ -79,7 +78,8 @@ class Logger(Watcher):
 
                 local_paths[var["name"]] = local_path
 
-                copying_task = self.copy_file_in_chunks(remote_path, local_path)
+                copying_task = self.copy_file_in_chunks(
+                    remote_path, local_path)
                 self._active_copying_tasks.append(copying_task)
 
             return local_paths
@@ -104,7 +104,7 @@ class Logger(Watcher):
 
             self.sftp_client.close()
 
-            #self.stop()
+            # self.stop()
 
         return asyncio.run(async_stop_logging(variables))
 
@@ -139,7 +139,7 @@ class Logger(Watcher):
             remote_path (str): Path to the file in Bela.
             local_path (str): Path to the file in the local machine (where the file is copied to)
             chunk_size (int, optional): Chunk size. Defaults to 2**12.
-        
+
         Returns:
             asyncio.Task: Task that copies the file in chunks.
         """
@@ -147,11 +147,13 @@ class Logger(Watcher):
         async def async_copy_file_in_chunks(remote_path, local_path, chunk_size=2**12):
 
             while True:
-                await asyncio.sleep(1)  # Wait for a second before checking again
+                # Wait for a second before checking again
+                await asyncio.sleep(1)
 
                 try:
                     remote_file = self.sftp_client.open(remote_path, 'rb')
-                    remote_file_size = self.sftp_client.stat(remote_path).st_size
+                    remote_file_size = self.sftp_client.stat(
+                        remote_path).st_size
 
                     if remote_file_size > 0:  # white till first buffers are written into the file
                         break  # Break the loop if the remote file size is non-zero
@@ -183,7 +185,7 @@ class Logger(Watcher):
 
             finally:
                 await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
-                
+
         return asyncio.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
 
     def copy_file_from_bela(self, remote_path, local_path):

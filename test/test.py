@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 import os
-from pyBela import Watcher, Streamer, Logger
+from pyBela import Watcher, Streamer, Logger, Monitor
 
 # all tests should be run with Bela connected and the bela-watcher project running on the board
 
@@ -70,9 +70,9 @@ class test_Streamer(unittest.TestCase):
             streamer.start_streaming(variables=streaming_vars,
                                      saving_enabled=True, saving_filename=saving_filename)
 
-            # check streaming mode is FOREVER after start_streaming is called
-            self.assertEqual(streamer._streaming_mode, "FOREVER",
-                             "Streaming mode should be FOREVER after start_streaming")
+            # check streaming mode is STREAM_FOREVER after start_streaming is called
+            self.assertEqual(streamer._streaming_mode, "STREAM_FOREVER",
+                             "Streaming mode should be STREAM_FOREVER after start_streaming")
 
             await asyncio.sleep(0.5)  # wait for some data to be streamed
 
@@ -165,10 +165,35 @@ class test_Logger(unittest.TestCase):
         asyncio.run(async_test_logged_files())
 
 
+class test_Monitor(unittest.TestCase):
+
+    def test_monitor(self):
+        async def async_test_monitor():
+            monitor = Monitor()
+            monitor.connect()
+            monitor.start_monitoring(
+                variables=["myvar", "myvar2"], periods=[1000, 1000])
+            await asyncio.sleep(0.5)
+            monitor.stop_monitoring()
+
+        asyncio.run(async_test_monitor())
+
+    def test_peek(self):
+        async def async_test_peek():
+            monitor = Monitor()
+            monitor.connect()
+            monitor.peek(
+                variables=["myvar", "myvar2"])
+
+        asyncio.run(async_test_peek())
+
+
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
-    # suite = unittest.TestSuite()
+    # unittest.main(verbosity=2)
+    suite = unittest.TestSuite()
     # suite.addTest(test_Logger('test_logged_files'))
-    # #suite.addTest(test_Streamer('test_buffers'))
-    # runner = unittest.TextTestRunner(verbosity=2)
-    # runner.run(suite)
+    suite.addTest(test_Monitor('test_peek'))
+    suite.addTest(test_Monitor('test_monitor'))
+    # suite.addTest(test_Streamer('test_buffers'))
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)
