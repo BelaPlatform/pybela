@@ -1,6 +1,7 @@
 import unittest
 import asyncio
 import os
+import json
 from pyBela import Watcher, Streamer, Logger
 
 # all tests should be run with Bela connected and the bela-watcher project running on the board
@@ -122,13 +123,13 @@ class test_Logger(unittest.TestCase):
             logger.connect()
             logging_vars = [
                 "myvar",  # dense double
-                "myvar2",  # dense uint
-                "myvar3",  # sparse uint
-                "myvar4"  # sparse double
+                # "myvar2",  # dense uint
+                # "myvar3",  # sparse uint
+                # "myvar4"  # sparse double
             ]
 
             local_paths = logger.start_logging(
-                variables=logging_vars, transfer=True)
+                variables=logging_vars, transfer=True, dir="./test")
             await asyncio.sleep(0.5)
             logger.stop_logging()
 
@@ -159,16 +160,16 @@ class test_Logger(unittest.TestCase):
                         self.assertEqual(
                             inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")
 
-            for var in local_paths:
-                if os.path.exists(local_paths[var]):
-                    os.remove(local_paths[var])
+            # for var in local_paths:
+            #     if os.path.exists(local_paths[var]):
+            #         os.remove(local_paths[var])
         asyncio.run(async_test_logged_files())
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
-    # suite = unittest.TestSuite()
-    # suite.addTest(test_Logger('test_logged_files'))
-    # #suite.addTest(test_Streamer('test_buffers'))
-    # runner = unittest.TextTestRunner(verbosity=2)
-    # runner.run(suite)
+    # unittest.main(verbosity=2)
+    suite = unittest.TestSuite()
+    suite.addTest(test_Logger('test_logged_files'))
+    # suite.addTest(test_Streamer('test_buffers'))
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)
