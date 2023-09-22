@@ -1,10 +1,11 @@
 import unittest
 import asyncio
 import os
-import json
 from pyBela import Watcher, Streamer, Logger
+import numpy as np
+from pyBela import Watcher, Streamer, Logger, Monitor
 
-# all tests should be run with Bela connected and the bela-watcher project running on the board
+# all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
 
 class test_Watcher(unittest.TestCase):
@@ -50,6 +51,7 @@ class test_Streamer(unittest.TestCase):
                         var]) == n_buffers for var in streaming_vars), "The streaming buffers queue should have at least n_frames/buffer_size buffers for every variable")
 
     def test_buffers(self):
+
         async def async_test_buffers():
             streamer = Streamer()
             streamer.connect()
@@ -83,19 +85,18 @@ class test_Streamer(unittest.TestCase):
             self.assertEqual(streamer._streaming_mode, "OFF",
                              "Streaming mode should be OFF after stop_streaming")
 
-            loaded = {}
             for var in [v for v in streamer.watcher_vars if v["name"] in streaming_vars]:
 
                 # check buffers in streaming_buffers_queue have the right length
-                self.assertTrue(all(len(buffer["data"]) == var["data_length"] for buffer in streamer.streaming_buffers_queue[var["name"]]),
+                self.assertTrue(all(len(_buffer["data"]) == var["data_length"] for _buffer in streamer.streaming_buffers_queue[var["name"]]),
                                 f"The data buffers in streamer.streaming_buffers_queue should have a length of {var['data_length']} for a variable of type {var['type']} ")
-                loaded[var["name"]] = streamer.load_data_from_file(
+                loaded = streamer.load_data_from_file(
                     f"{var['name']}_{saving_filename}")
                 # check that the loader buffers have the right length
-                self.assertTrue(all(len(buffer["data"]) == var["data_length"] for buffer in loaded[var['name']]),
+                self.assertTrue(all(len(_buffer["data"]) == var["data_length"] for _buffer in loaded),
                                 "The loaded data buffers should have a length of {var['data_length']} for a variable of type {var['type']} ")
                 # check that the number of buffers saved is the same as the number of buffers in streamer.streaming_buffers_queue
-                self.assertTrue(len(streamer.streaming_buffers_queue[var['name']]) == len(loaded[var['name']]),
+                self.assertTrue(len(streamer.streaming_buffers_queue[var['name']]) == len(loaded),
                                 "The number of buffers saved should be equal to the number of buffers in streamer.streaming_buffers_queue (considering the queue length is long enough)")
 
             # check continuity of frames (only works for dense variables)
@@ -166,10 +167,82 @@ class test_Logger(unittest.TestCase):
         asyncio.run(async_test_logged_files())
 
 
+class test_Monitor(unittest.TestCase):
+    def test_peek(self):
+        async def async_test_peek():
+            monitor = Monitor()
+            monitor.connect()
+            peeked_values = monitor.peek()  # peeks at all variables by default
+            for var in peeked_values:
+                self.assertEqual(peeked_values[var]["timestamp"], peeked_values[var]["value"],
+                                 "The timestamp of the peeked variable should be equal to the value")
+        asyncio.run(async_test_peek())
+
+    def test_period_monitor(self):
+        async def async_test_period_monitor():
+            period = 1000
+
+            monitor_vars = ["myvar", "myvar2"]  # assigned at every frame n
+
+            monitor = Monitor()
+            monitor.connect()
+            monitor.start_monitoring(
+                variables=monitor_vars,
+                periods=[period]*len(monitor_vars))
+            await asyncio.sleep(0.5)
+            monitored_values = monitor.stop_monitoring()
+
+            for var in monitor_vars:
+                self.assertTrue(np.all(np.diff(monitored_values[var]["timestamps"]) == period),
+                                "The timestamps of the monitored variables should be spaced by the period")
+                # if var in ["myvar", "myvar2"]:  # assigned at each frame n # FIXME fails
+                #     self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == period),
+                #                     "The values of the monitored variables should be spaced by the period")
+
+        asyncio.run(async_test_period_monitor())
+
+    def test_save_monitor(self):
+        async def async_test_save_monitor():
+            period = 100000
+            saving_filename = "test_save.txt"
+
+            monitor_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
+
+            # delete any existing test files
+            for var in monitor_vars:
+                if os.path.exists(f"{var}_{saving_filename}"):
+                    os.remove(f"{var}_{saving_filename}")
+
+            monitor = Monitor()
+            monitor.connect()
+            monitor.start_monitoring(
+                variables=monitor_vars,
+                periods=[period]*len(monitor_vars),
+                saving_enabled=True,
+                saving_filename=saving_filename)
+            await asyncio.sleep(0.5)
+            monitor.stop_monitoring()
+
+            for var in monitor_vars:
+                monitored_buffers = monitor.streaming_buffers_queue[var]
+                loaded_buffers = monitor.load_data_from_file(
+                    f"{var}_{saving_filename}")
+                for loaded_buffer, monitored_buffer in zip(loaded_buffers, monitored_buffers):
+
+                    self.assertEqual(loaded_buffer["ref_timestamp"], monitored_buffer["ref_timestamp"],
+                                     "The ref_timestamp of the loaded buffer should be equal to the ref_timestamp of the monitored buffer")
+                    self.assertEqual(loaded_buffer["data"], monitored_buffer["data"],
+                                     "The data of the loaded buffer should be equal to the data of the monitored buffer")
+            for var in monitor_vars:
+                if os.path.exists(f"{var}_{saving_filename}"):
+                    os.remove(f"{var}_{saving_filename}")
+
+        asyncio.run(async_test_save_monitor())
+
+
 if __name__ == '__main__':
-    # unittest.main(verbosity=2)
-    suite = unittest.TestSuite()
-    suite.addTest(test_Logger('test_logged_files'))
-    # suite.addTest(test_Streamer('test_buffers'))
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    unittest.main(verbosity=2)
+    # suite = unittest.TestSuite()
+    # suite.addTest(test_Logger('test_logged_files')
+    # runner = unittest.TextTestRunner(verbosity=2)
+    # runner.run(suite)

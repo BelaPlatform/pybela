@@ -37,6 +37,8 @@ class Watcher:
         self._list_response_available = asyncio.Event()
         self._list_response = None
 
+        self._mode = "WATCH"
+
         # debug
         self._printall_responses = False
 
@@ -80,7 +82,7 @@ class Watcher:
         """
         if self._ctrl_listener is not None and self._data_listener is not None:
             return "Already connected"
-        
+
         async def _async_connect():
             try:
                 async with websockets.connect(self.ws_ctrl_add) as ws_ctrl:
@@ -101,9 +103,11 @@ class Watcher:
                         # refresh watcher vars in case new project has been loaded in Bela
                         self._watcher_vars = self._filtered_vars(
                             lambda var: True)
-                        return "Connection successful"
+                        print("Connection successful")
+                        return 1
                     else:
-                        return "Connection failed"
+                        print("Connection failed")
+                        return 0
             except Exception as e:
                 return f"Connection failed: {str(e)}."
 
@@ -244,38 +248,45 @@ class Watcher:
         data_length = self.get_data_length(_type, timestamp_mode)
         # the format is the same for both logger and streamer so the parsing method is shared
 
-        # sparse mode
-        if timestamp_mode == "sparse":
-            # ensure that the buffer is the correct size (remove padding)
-            binary_data = binary_data[:struct.calcsize("Q") + data_length*struct.calcsize(
-                _type)+data_length*struct.calcsize("I")]
+        parsed_buffer = None
+        if self._mode == "STREAM" or self._mode == "LOG":
+            # sparse mode
+            if timestamp_mode == "sparse":
+                # ensure that the buffer is the correct size (remove padding)
+                binary_data = binary_data[:struct.calcsize("Q") + data_length*struct.calcsize(
+                    _type)+data_length*struct.calcsize("I")]
 
-            ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
-                                                    + 'I'*data_length, binary_data)
-            data = _buffer[:data_length]
-            # remove padding
-            rel_timestamps = _buffer[data_length:][:data_length]
+                ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
+                                                        + 'I'*data_length, binary_data)
+                data = _buffer[:data_length]
+                # remove padding
+                rel_timestamps = _buffer[data_length:][:data_length]
 
-            parsed_buffer = {"ref_timestamp": ref_timestamp,
-                             "data": data, "rel_timestamps": rel_timestamps}
+                parsed_buffer = {"ref_timestamp": ref_timestamp,
+                                 "data": data, "rel_timestamps": rel_timestamps}
 
-        elif timestamp_mode=="dense": 
-            # ensure that the buffer is the correct size
-            binary_data = binary_data[:struct.calcsize(
-                'Q')+data_length*struct.calcsize(_type)]
+            elif timestamp_mode == "dense":
+                # ensure that the buffer is the correct size
+                binary_data = binary_data[:struct.calcsize(
+                    'Q')+data_length*struct.calcsize(_type)]
 
-            ref_timestamp, * \
-                data = struct.unpack('Q' + f"{_type}"*data_length, binary_data)
+                ref_timestamp, * \
+                    data = struct.unpack(
+                        'Q' + f"{_type}"*data_length, binary_data)
 
-            parsed_buffer = {
-                "ref_timestamp": ref_timestamp, "data": data}
-        
-        else:
-            parsed_buffer = None
+                parsed_buffer = {
+                    "ref_timestamp": ref_timestamp, "data": data}
+
+        elif self._mode == "MONITOR":
+            ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * int(
+                (len(binary_data) - struct.calcsize("Q")) // struct.calcsize(_type)), binary_data)
+            # size of the buffer is not fixed as in the other modes
+
+            parsed_buffer = {"ref_timestamp": ref_timestamp, "data": _buffer[0]}
 
         return parsed_buffer
 
-     # --- utils --- #
+    # --- utils --- #
 
     async def _async_remove_item_from_list(self, _list, task):
         """Remove item from list. Used to remove listeners from the list of listeners.
@@ -304,6 +315,21 @@ class Watcher:
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
             for var in _list if filter_func(var)]
+
+    def _var_arg_checker(self, variables):
+        """ Checks if variables passed to a function are passed as names in a list. If none are passed, returns all variables in watcher.
+
+        Args:
+            variables (list of str): Variables arg passed to a function
+        """
+        if len(variables) == 0:
+            # if no variables are specified, stream all watcher variables (default)
+            variables = [var["name"] for var in self.watcher_vars]
+
+        variables = variables if isinstance(variables, list) else [
+            variables]  # variables should be a list of strings
+
+        return variables
 
     def get_prop_of_var(self, var_name, prop):
         # TODO replace get_data_length by this

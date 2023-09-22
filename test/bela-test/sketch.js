@@ -1,3 +1,9 @@
+let controlsLeft = 10;
+let controlsTop = 40;
+let vSpace = 30;
+let nameHspace = 80;
+let hSpaces = [-nameHspace, 0, 40, 80, 130, 210, 230, 370, 460, 550];
+
 function sendCommand(cmd) {
 	Bela.control.send({
 		watcher: Array.isArray(cmd) ? cmd : [ cmd ],
@@ -57,6 +63,10 @@ function watcherControlSendToBela()
 			obj.cmd = "set";
 			obj.values = [value];
 			break;
+		case "monitorPeriod":
+			obj.cmd = "monitor";
+			obj.periods = [value];
+			break;
 	}
 	console.log("Sending ", obj);
 	sendCommand(obj);
@@ -75,11 +85,6 @@ function watcherSenderInit(obj, guiKey, parser)
 
 let wGuis = {};
 function watcherUpdateLayout() {
-	let controlsLeft = 10;
-	let controlsTop = 10;
-	let vSpace = 30;
-	let nameHspace = 80;
-	let hSpaces = [-nameHspace, 0, 40, 80, 130, 280, 300 ];
 	let i = 0;
 	for(let k in wGuis) {
 		let w = wGuis[k];
@@ -100,7 +105,13 @@ function addWatcherToList(watcher) {
 		valueInput: createInput(""),
 		valueType: createElement("div", watcher.type),
 		valueDisplay: createElement("div", watcher.value),
+		monitorPeriod: createInput("0"),
+		monitorTimestamp: createElement("div", "_"),
+		monitorValue: createElement("div", "_"),
 	};
+	w.valueInput.elt.style = "width: 10ch";
+	w.monitorPeriod.elt.style = "width: 10ch";
+	w.monitorPeriod.elt.value = watcher.monitor;
 	for(let i in w)
 		watcherSenderInit(w[i], {name: watcher.name, property: i});
 	wGuis[watcher.name] = w;
@@ -114,6 +125,9 @@ function removeWatcherFromList(watcher) {
 	wGuis[watcher].valueInput.remove();
 	wGuis[watcher].valueType.remove();
 	wGuis[watcher].valueDisplay.remove();
+	wGuis[watcher].monitorPeriod.remove();
+	wGuis[watcher].monitorTimestamp.remove();
+	wGuis[watcher].monitorValue.remove();
 	delete wGuis[watcher];
 }
 
@@ -164,8 +178,14 @@ function setup() {
 	textFont('Courier New');
 	requestWatcherList();
 	Bela.control.registerCallback("controlCallback", controlCallback, { val: 1, otherval: 2});
+	let top = controlsTop - 40;
+	createElement("div", "control<br>value").position(controlsLeft + nameHspace + hSpaces[4], top);
+	createElement("div", "list<br>value").position(controlsLeft + nameHspace + hSpaces[6], top);
+	createElement("div", "monitor<br>interval").position(controlsLeft + nameHspace + hSpaces[7], top);
+	createElement("div", "monitor<br>timestamp").position(controlsLeft + nameHspace + hSpaces[8], top);
+	createElement("div", "monitor<br>value").position(controlsLeft + nameHspace + hSpaces[9], top);
 }
-setInterval(requestWatcherList, 500);
+setInterval(requestWatcherList, 2000);
 
 let pastBuffer;
 function draw() {
@@ -183,10 +203,9 @@ function draw() {
 	let keys = Object.keys(wGuis);
 	for(let k in buffers)
 	{
-		if(!wGuis[keys[k]].watched.checked())
-			continue;
 		let timestampBuf;
 		let type = Bela.data.buffers[k].type;
+		let buf;
 		switch(type)
 		{
 			case 'c':
@@ -195,29 +214,43 @@ function draw() {
 					return e.charCodeAt(0);
 				});
 				timestampBuf = new Uint8Array(intArr);
+				buf = buffers[k].slice(8);
 				break;
 			case 'j': // unsigned int
 				timestampBuf = new Uint32Array(buffers[k].slice(0, 2))
+				buf = buffers[k].slice(2);
 				break;
 			case 'i': // int
 				timestampBuf = new Int32Array(buffers[k].slice(0, 2))
+				buf = buffers[k].slice(2);
 				break;
 			case 'f': // float
 				timestampBuf = new Float32Array(buffers[k].slice(0, 2));
+				buf = buffers[k].slice(2);
 				break;
 			case 'd':
 				timestampBuf = new Float64Array(buffers[k].slice(0, 1));
+				buf = buffers[k].slice(1);
 				break;
 			default:
 				console.log("Unknown buffer type ", type);
+				continue;
 		}
 		let timestampUint32 = new Uint32Array(timestampBuf.buffer);
 		let timestamp = timestampUint32[0] * (1 << 32) + timestampUint32[1];
+		if(1 == buf.length) {
+			// "monitoring" message
+			let w = wGuis[keys[k]];
+			w.monitorTimestamp.elt.innerText = timestamp;
+			w.monitorValue.elt.innerText = buf[0];
+			continue;
+		}
+		if(!wGuis[keys[k]].watched.checked())
+			continue;
 		p.noFill();
 		var rem = k % 3;
 		p.stroke(p.color(255 * (0 == rem), 255 * (1 == rem), 255 * (2 == rem)));
 		p.beginShape();
-		let buf = buffers[k];
 		for (let i = 0; i < buf.length; i++) {
 			var y;
 			y = buf[i] * linVerScale + linVerOff;
