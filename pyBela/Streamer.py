@@ -80,7 +80,7 @@ class Streamer(Watcher):
     def start(self):
         """Starts the websocket connection and initialises the streaming buffers queue.
         """
-        super(Streamer, self).connect()
+        self.connect()
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
@@ -154,7 +154,6 @@ class Streamer(Watcher):
             # self.stop()
 
             self._streaming_mode = "OFF"
-
             if self._saving_enabled:
                 self._saving_enabled = False
                 self._saving_filename = None
@@ -172,10 +171,11 @@ class Streamer(Watcher):
             elif self._mode == "MONITOR":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
-                
+
         return asyncio.run(async_stop_streaming(variables))
 
-    def stream_n_frames(self, variables=[], n_frames=1000, delay=0, saving_enabled=False, saving_filename=None):
+    def stream_n_frames(self, variables=[], n_frames=1000, saving_enabled=False, saving_filename=None):
+        # FIXME rename to n values -- n frames is confusing since it suggest the frames are continuous
         """
         Streams a given number of frames. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
 
@@ -197,7 +197,7 @@ class Streamer(Watcher):
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
         # TODO implement delay once data comes timestamped
-        return asyncio.run(self.async_stream_n_frames(variables, n_frames, delay, saving_enabled, saving_filename))
+        return asyncio.run(self.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
 
     async def async_stream_n_frames(self, variables=[], n_frames=1000, saving_enabled=False, saving_filename="var_stream.txt"):
         """ Asynchronous version of stream_n_frames(). Usage: 
@@ -398,23 +398,23 @@ class Streamer(Watcher):
                 _type = 'i' if _type == 'j' else _type
 
             elif len(msg) > 3 and _channel is not None and _type is not None:
+                var_name = self._watcher_vars[_channel]['name']
+                var_timestamp_mode = self._watcher_vars[_channel]["timestamp_mode"]
+
                 # parse buffer body
                 parsed_buffer = self._parse_binary_data(
-                    msg, self._watcher_vars[_channel]["timestamp_mode"], _type)
+                    msg, var_timestamp_mode, _type)
 
-                # append message to the streaming buffers queue
-                self._streaming_buffers_queue[self._watcher_vars[_channel]['name']].append(
-                    parsed_buffer)
-
+                self._streaming_buffers_queue[var_name].append(
+                    parsed_buffer.copy())  # .copy() avoids data corruption
                 # populate last streamed buffer
-                self.last_streamed_buffer[self._watcher_vars[_channel]
-                                          ['name']]["data"] = parsed_buffer["data"]
+                self.last_streamed_buffer[var_name]["data"] = parsed_buffer["data"]
                 if self._mode == "STREAM":
-                    if self._watcher_vars[_channel]["timestamp_mode"] == "dense":
-                        self.last_streamed_buffer[self._watcher_vars[_channel]
-                                                  ['name']]["timestamps"] = [parsed_buffer["ref_timestamp"] + i for i in range(0, len(parsed_buffer["data"]))]
-                    elif self._watcher_vars[_channel]["timestamp_mode"] == "sparse":  # sparse
-                        self.last_streamed_buffer[self._watcher_vars[_channel]["name"]]["timestamps"] = [
+                    if var_timestamp_mode == "dense":
+                        self.last_streamed_buffer[var_name]["timestamps"] = [
+                            parsed_buffer["ref_timestamp"] + i for i in range(0, len(parsed_buffer["data"]))]
+                    elif var_timestamp_mode == "sparse":  # sparse
+                        self.last_streamed_buffer[var_name]["timestamps"] = [
                             parsed_buffer["ref_timestamp"] + i for i in parsed_buffer["rel_timestamps"]]
                 elif self._mode == "MONITOR":
                     self.last_streamed_buffer[self._watcher_vars[_channel]
@@ -422,12 +422,13 @@ class Streamer(Watcher):
 
                 # save data to file if saving is enabled
                 if _saving_enabled:
-                    _saving_var_filename = f"{self._watcher_vars[_channel]['name']}_{self._saving_filename}"
+                    _saving_var_filename = f"{var_name}_{self._saving_filename}"
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
                         self._save_data_to_file(_saving_var_filename, parsed_buffer))
                     self._active_saving_tasks.append(saving_task)
 
+                # response to .peek() call
                 if self._mode == "MONITOR" and self._peek_response is not None:
                     # check that all the watched variables have been received
                     self._peek_response[self._watcher_vars[_channel]["name"]] = {

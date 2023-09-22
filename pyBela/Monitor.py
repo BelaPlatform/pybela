@@ -1,5 +1,6 @@
 from .Streamer import Streamer
 import asyncio
+# TODO check saving
 
 
 class Monitor(Streamer):
@@ -16,18 +17,18 @@ class Monitor(Streamer):
         super(Monitor, self).__init__(ip, port, data_add, control_add)
 
         # longer queue for monitor since each buffer has only one value
-        self._streaming_buffers_queue_length = 2000
+        self.streaming_buffers_queue_length = 2000
         self._mode = "MONITOR"
 
     @property
-    def data(self):
-        data = {}
+    def values(self):
+        values = {}
         for var in self.streaming_buffers_queue:
-            data[var] = {"timestamps": [], "values": []}
-            for buffer in self.streaming_buffers_queue[var]:
-                data[var]["timestamps"].append(buffer["ref_timestamp"])
-                data[var]["values"].append(buffer["data"])
-        return data
+            values[var] = {"timestamps": [], "values": []}
+            for _buffer in self.streaming_buffers_queue[var]:
+                values[var]["timestamps"].append(_buffer["ref_timestamp"])
+                values[var]["values"].append(_buffer["data"])
+        return values
 
     @property
     def monitored_vars(self):
@@ -58,7 +59,7 @@ class Monitor(Streamer):
             return peeked_values
 
         return asyncio.run(_async_peek(variables))
-    
+
         # using list
         # res = self.list()
         # return {var: next(r["value"] for r in res if r["name"] == var) for var in variables}
@@ -82,4 +83,4 @@ class Monitor(Streamer):
     def stop_monitoring(self, variables=[]):
         self.stop_streaming(variables)
         # return only nonempty variables
-        return {var: self.data[var] for var in self.data if self.data[var]["timestamps"] != []}
+        return {var: self.values[var] for var in self.values if self.values[var]["timestamps"] != []}

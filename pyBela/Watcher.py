@@ -103,9 +103,11 @@ class Watcher:
                         # refresh watcher vars in case new project has been loaded in Bela
                         self._watcher_vars = self._filtered_vars(
                             lambda var: True)
-                        return "Connection successful"
+                        print("Connection successful")
+                        return 1
                     else:
-                        return "Connection failed"
+                        print("Connection failed")
+                        return 0
             except Exception as e:
                 return f"Connection failed: {str(e)}."
 
@@ -284,7 +286,7 @@ class Watcher:
 
         return parsed_buffer
 
-     # --- utils --- #
+    # --- utils --- #
 
     async def _async_remove_item_from_list(self, _list, task):
         """Remove item from list. Used to remove listeners from the list of listeners.
