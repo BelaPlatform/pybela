@@ -27,9 +27,9 @@ class Logger(Watcher):
 
         self.ssh_client = None
         self.sftp_client = None
-        
+
         self._active_copying_tasks = []
-        
+
         self._mode = "LOG"
 
     def start_logging(self, variables=[], transfer=True, dir="./"):
@@ -45,7 +45,6 @@ class Logger(Watcher):
 
         # TODO allow custom filenaming?
 
- 
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
@@ -53,43 +52,47 @@ class Logger(Watcher):
         if not os.path.exists(dir):
             # If it doesn't exist, create it
             os.makedirs(dir)
-                
+
         if self.is_logging():
             self.stop_logging()
-        
-
 
         # self.start()  # start websocket connection
         self.connect_ssh()  # start ssh connection
 
         self._logging = True
 
-        self.send_ctrl_msg(
-            {"watcher": [{"cmd": "log", "watchers": variables}]})
+        async def _async_send_logging_cmd_and_wait_for_response():
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "log", "watchers": variables}]})
+            await self._log_response_available.wait()
+            self._log_response_available.clear()
+            return self._log_response
+
+        remote_file = asyncio.run(_async_send_logging_cmd_and_wait_for_response())[
+            "logFileName"]  # FIXME this should be a list of files
 
         if transfer:
             local_paths = {}
             for var in [v for v in self.watcher_vars if v["name"] in variables]:
-                remote_path = f"/root/Bela/projects/{self.project_name}/{var['log_filename']}"
-                _local_path = os.path.join(dir,var["log_filename"])
+                remote_path = f"/root/Bela/projects/{self.project_name}/{remote_file}"
+                local_path = os.path.join(dir, remote_file)
 
-                if os.path.exists(_local_path):
-                    local_dir = os.path.dirname(_local_path)
-                    local_base = os.path.basename(_local_path)
-                    base_name, ext = os.path.splitext(local_base)
-                    local_path = os.path.join(local_dir, f"{base_name}_2{ext}")
-                    counter = 2
-                    while os.path.exists(local_path):
-                        counter += 1
-                        local_path = os.path.join(
-                            local_dir, f"{base_name}_{counter}{ext}")
-                else:
-                    local_path = _local_path
+                # if os.path.exists(_local_path): # TODO what if file exists locally
+                #     local_dir = os.path.dirname(_local_path)
+                #     local_base = os.path.basename(_local_path)
+                #     base_name, ext = os.path.splitext(local_base)
+                #     local_path = os.path.join(local_dir, f"{base_name}_2{ext}")
+                #     counter = 2
+                #     while os.path.exists(local_path):
+                #         counter += 1
+                #         local_path = os.path.join(
+                #             local_dir, f"{base_name}_{counter}{ext}")
+                # else:
+                #     local_path = _local_path
 
                 local_paths[var["name"]] = local_path
 
-                copying_task = self.copy_file_in_chunks(var["name"], 
-                    remote_path, local_path)
+                copying_task = self.copy_file_in_chunks(remote_path, local_path)
                 self._active_copying_tasks.append(copying_task)
 
             return local_paths
@@ -113,7 +116,7 @@ class Logger(Watcher):
             self._active_copying_tasks.clear()
 
             self.sftp_client.close()
-            
+
             # self.stop()
 
         return asyncio.run(async_stop_logging(variables))
@@ -142,7 +145,7 @@ class Logger(Watcher):
         """
         return self._logging
 
-    def copy_file_in_chunks(self, var, remote_path, local_path,  chunk_size=2**12):
+    def copy_file_in_chunks(self, remote_path, local_path,  chunk_size=2**12):
         """ Copies a file from the remote path to the local path in chunks. This function is called by start_logging() if transfer=True.
 
         Args:
@@ -154,7 +157,7 @@ class Logger(Watcher):
             asyncio.Task: Task that copies the file in chunks.
         """
 
-        async def async_copy_file_in_chunks(var, remote_path, local_path, chunk_size=2**12):
+        async def async_copy_file_in_chunks(remote_path, local_path, chunk_size=2**12):
 
             while True:
                 # Wait for a second before checking again
@@ -171,30 +174,11 @@ class Logger(Watcher):
                 except FileNotFoundError:
                     print(f"Remote file '{remote_path}' does not exist.")
                     return None
-                
-            # local_size = os.path.getsize(
-            #     local_path) if os.path.exists(local_path) else 0
-            
-            # print(local_path, local_size, remote_file_size)
-            
 
-            base = re.split(r'_(\d+)\.bin', os.path.basename(local_path))[0]
-            files = find_matching_files(os.path.dirname(local_path), f"{base}*")
-            
-            
-            current_size = 0
-            for file in files:
-                current_size += os.path.getsize(file)
-                
-            print(current_size, remote_file_size)
-            
             try:
                 async with aiofiles.open(local_path, 'wb') as local_file:
-                    # Move the remote file pointer to the last position read
-                    remote_file.seek(current_size)
                     while True:
                         chunk = remote_file.read(chunk_size)
-                        print("chunk")
                         if not chunk:
                             break
                         await local_file.write(chunk)
@@ -202,8 +186,6 @@ class Logger(Watcher):
                             f"\rTransferring {remote_path}-->{local_path}... ", end="", flush=True)
                     remote_file.close()
                     print("Done.")
-                                
-
 
             except Exception as e:
                 print(f"Error while transferring file: {e}")
@@ -212,7 +194,7 @@ class Logger(Watcher):
             finally:
                 await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
 
-        return asyncio.create_task(async_copy_file_in_chunks(var, remote_path, local_path, chunk_size))
+        return asyncio.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
 
     def copy_file_from_bela(self, remote_path, local_path):
         """ Copies a file from the remote path in Bela to the local path. This can be used any time to copy files from Bela to the host. 
@@ -289,6 +271,7 @@ class Logger(Watcher):
             # "pid_id": pid_id,
             "buffers": parsed_buffers
         }
+
 
 def find_matching_files(folder, pattern):
     """

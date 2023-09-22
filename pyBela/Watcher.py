@@ -36,6 +36,8 @@ class Watcher:
         self._watcher_vars = None
         self._list_response_available = asyncio.Event()
         self._list_response = None
+        self._log_response_available = asyncio.Event()
+        self._log_response = None
 
         self._mode = "WATCH"
 
@@ -223,10 +225,13 @@ class Watcher:
         """
         _msg = json.loads(msg)
 
-        # list cmd
-        if "watcher" in _msg.keys() and "watchers" in _msg["watcher"].keys():
-            self._list_response = _msg["watcher"]["watchers"]
-            self._list_response_available.set()
+        if "watcher" in _msg.keys():
+            if "logFileName" in _msg["watcher"].keys():  # response to log cmd
+                self._log_response = _msg["watcher"]
+                self._log_response_available.set()
+            elif "sampleRate" in _msg["watcher"].keys():  # response to list cmd
+                self._list_response = _msg["watcher"]["watchers"]
+                self._list_response_available.set()
 
         if "projectName" in _msg.keys():
             self.project_name = _msg["projectName"]
@@ -282,7 +287,8 @@ class Watcher:
                 (len(binary_data) - struct.calcsize("Q")) // struct.calcsize(_type)), binary_data)
             # size of the buffer is not fixed as in the other modes
 
-            parsed_buffer = {"ref_timestamp": ref_timestamp, "data": _buffer[0]}
+            parsed_buffer = {
+                "ref_timestamp": ref_timestamp, "data": _buffer[0]}
 
         return parsed_buffer
 
@@ -311,7 +317,7 @@ class Watcher:
             "name": var["name"],
             "type": var["type"],
             "timestamp_mode":"sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
-            "log_filename": var["logFileName"],
+            # "log_filename": var["logFileName"], # FIXME this is updated every time log is called so better not to store it?
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
             for var in _list if filter_func(var)]

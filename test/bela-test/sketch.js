@@ -3,6 +3,7 @@ let controlsTop = 40;
 let vSpace = 30;
 let nameHspace = 80;
 let hSpaces = [-nameHspace, 0, 40, 80, 130, 210, 230, 370, 460, 550];
+let sampleRateDiv;
 
 function sendCommand(cmd) {
 	Bela.control.send({
@@ -144,8 +145,9 @@ function updateWatcherGuis(w) {
 	watcherGuiUpdatingFromBackend = false;
 }
 
-function updateWatcherList(newList) {
-	console.log(newList);
+function updateWatcherList(data) {
+	sampleRateDiv.elt.innerText = data.sampleRate + "Hz";
+	let newList = data.watchers;
 	for(let n = 0; n < newList.length; ++n) {
 		if(!(newList[n].name in wGuis)) {
 			addWatcherToList(newList[n]);
@@ -166,8 +168,10 @@ function updateWatcherList(newList) {
 }
 
 let controlCallback = (data) => {
-	if(data.watcher.watchers)
-		updateWatcherList(data.watcher.watchers);
+	if(data.watcher && data.watcher.watchers)
+		updateWatcherList(data.watcher);
+	else
+		console.log(data.watcher);
 }
 
 function setup() {
@@ -184,6 +188,7 @@ function setup() {
 	createElement("div", "monitor<br>interval").position(controlsLeft + nameHspace + hSpaces[7], top);
 	createElement("div", "monitor<br>timestamp").position(controlsLeft + nameHspace + hSpaces[8], top);
 	createElement("div", "monitor<br>value").position(controlsLeft + nameHspace + hSpaces[9], top);
+	sampleRateDiv = createElement("div", "").position(controlsLeft, top);
 }
 setInterval(requestWatcherList, 2000);
 

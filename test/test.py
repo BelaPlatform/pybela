@@ -123,10 +123,10 @@ class test_Logger(unittest.TestCase):
             logger = Logger()
             logger.connect()
             logging_vars = [
-                "myvar",  # dense double
+                # "myvar",  # dense double
                 # "myvar2",  # dense uint
                 # "myvar3",  # sparse uint
-                # "myvar4"  # sparse double
+                "myvar4"  # sparse double
             ]
 
             local_paths = logger.start_logging(
@@ -161,9 +161,9 @@ class test_Logger(unittest.TestCase):
                         self.assertEqual(
                             inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")
 
-            # for var in local_paths:
-            #     if os.path.exists(local_paths[var]):
-            #         os.remove(local_paths[var])
+            for var in local_paths:
+                if os.path.exists(local_paths[var]):
+                    os.remove(local_paths[var])
         asyncio.run(async_test_logged_files())
 
 
@@ -195,9 +195,9 @@ class test_Monitor(unittest.TestCase):
             for var in monitor_vars:
                 self.assertTrue(np.all(np.diff(monitored_values[var]["timestamps"]) == period),
                                 "The timestamps of the monitored variables should be spaced by the period")
-                # if var in ["myvar", "myvar2"]:  # assigned at each frame n # FIXME fails
-                #     self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == period),
-                #                     "The values of the monitored variables should be spaced by the period")
+                if var in ["myvar", "myvar2"]:  # assigned at each frame n # FIXME fails
+                    self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == period),
+                                    "The values of the monitored variables should be spaced by the period")
 
         asyncio.run(async_test_period_monitor())
 
@@ -243,6 +243,6 @@ class test_Monitor(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main(verbosity=2)
     # suite = unittest.TestSuite()
-    # suite.addTest(test_Logger('test_logged_files')
+    # suite.addTest(test_Logger('test_logged_files'))
     # runner = unittest.TextTestRunner(verbosity=2)
     # runner.run(suite)

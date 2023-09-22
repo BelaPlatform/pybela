@@ -3,6 +3,8 @@
 #include <string>
 #include <new> // for std::bad_alloc
 #include <unistd.h>
+#include <atomic>
+#include <libraries/Pipe/Pipe.h>
 
 class WatcherManager;
 class WatcherBase {
@@ -112,6 +114,9 @@ class WatcherManager
 	typedef uint64_t AbsTimestamp;
 	typedef uint32_t RelTimestamp;
 	AbsTimestamp timestamp = 0;
+	size_t pipeReceivedRt = 0;
+	size_t pipeSentNonRt = 0;
+	Pipe pipe;
 	static constexpr size_t kMsgHeaderLength = sizeof(timestamp);
 	static_assert(0 == kMsgHeaderLength % sizeof(float), "has to be multiple");
 	static constexpr size_t kBufSize = 4096 + kMsgHeaderLength;
@@ -124,12 +129,17 @@ class WatcherManager
 		return offset;
 	}
 public:
-	WatcherManager(Gui& gui) : gui(gui) {
+	WatcherManager(Gui& gui) : pipe("watcherManager", 65536, true, true), gui(gui)
+	{
 		gui.setControlDataCallback([this](JSONObject& json, void*) {
 			this->controlCallback(json);
 			return true;
 		});
 	};
+	void setup(float sampleRate)
+	{
+		this->sampleRate = sampleRate;
+	}
 	class Details;
 	enum TimestampMode {
 		kTimestampBlock,
@@ -143,12 +153,14 @@ public:
 			.count = 0,
 			.name = name,
 			.guiBufferId = gui.setBuffer(*typeid(T).name(), kBufSize),
+			.logger = nullptr,
 			.type = typeid(T).name(),
 			.timestampMode = timestampMode,
 			.firstTimestamp = 0,
 			.relTimestampsOffset = getRelTimestampsOffset(sizeof(T)),
 			.countRelTimestamps = 0,
 			.monitoring = kMonitorDont,
+			.logEventTimestamp = -1u,
 			.watched = false,
 			.controlled = false,
 			.logged = kLoggedNo,
@@ -159,7 +171,6 @@ public:
 		if(((uintptr_t)p->v.data() + kMsgHeaderLength) & (sizeof(T) - 1))
 			throw(std::bad_alloc());
 		p->maxCount = kTimestampBlock == p->timestampMode ? p->v.size() : p->relTimestampsOffset - (sizeof(T) - 1);
-		setupLogger(p);
 		return (Details*)vec.back();
 	}
 	void unreg(WatcherBase* that)
@@ -167,9 +178,7 @@ public:
 		auto it = std::find_if(vec.begin(), vec.end(), [that](decltype(vec[0])& item){
 			return item->w == that;
 		});
-		bool shouldDiscard = !(*it)->hasLogged;
-		(*it)->logger->cleanup(shouldDiscard);
-		delete (*it)->logger;
+		cleanupLogger(*it);
 		// TODO: unregister from GUI
 		delete *it;
 		vec.erase(it);
@@ -177,6 +186,28 @@ public:
 	void tick(AbsTimestamp frames)
 	{
 		timestamp = frames;
+		while(pipeReceivedRt != pipeSentNonRt)
+		{
+			Msg msg;
+			if(1 == pipe.readRt(msg))
+			{
+				pipeReceivedRt++;
+				switch(msg.cmd)
+				{
+					case Msg::kCmdStartLogging:
+						startLogging(msg.priv, msg.arg);
+						break;
+					case Msg::kCmdStopLogging:
+						stopLogging(msg.priv, msg.arg);
+						break;
+					case Msg::kCmdNone:
+						break;
+				}
+			} else {
+				rt_fprintf(stderr, "Error: missing messages in the pipe\n");
+				pipeReceivedRt = pipeSentNonRt;
+			}
+		}
 	}
 	// the relevant object is passed back here so that we don't have to waste
 	// time looking it up
@@ -186,6 +217,14 @@ public:
 		Priv* p = reinterpret_cast<Priv*>(d);
 		if(!p)
 			return;
+		if(timestamp >= p->logEventTimestamp)
+		{
+			p->logEventTimestamp = -1;
+			if(kLoggedStarting == p->logged)
+				p->logged = kLoggedYes;
+			else if(kLoggedStopping == p->logged)
+				p->logged = kLoggedLast;
+		}
 		if(kMonitorDont != p->monitoring)
 		{
 			if(p->monitoring & kMonitorChange)
@@ -216,7 +255,7 @@ public:
 					p->monitoringNext = timestamp + p->monitoring;
 			}
 		}
-		if(p->watched || kLoggedNo != p->logged)
+		if(p->watched || isLogging(p))
 		{
 			if(0 == p->count)
 			{
@@ -241,9 +280,9 @@ public:
 				// only one array of type T starting at
 				// kMsgHeaderLength
 			}
-			if(full || kLoggedStopping == p->logged)
+			if(full || kLoggedLast == p->logged)
 			{
-				if(kLoggedStopping == p->logged && !full)
+				if(kLoggedLast == p->logged && !full)
 				{
 					// when logging stops, we need to fill
 					// up all the remaining space with zeros
@@ -265,7 +304,7 @@ public:
 				// header
 
 				send<T>(p);
-				if(kLoggedStopping == p->logged)
+				if(kLoggedLast == p->logged)
 				{
 					p->logger->requestFlush();
 					p->logged = kLoggedNo;
@@ -277,8 +316,10 @@ public:
 private:
 	enum Logged {
 		kLoggedNo,
+		kLoggedStarting,
 		kLoggedYes,
 		kLoggedStopping,
+		kLoggedLast,
 	};
 	struct Priv {
 		WatcherBase* w;
@@ -295,18 +336,32 @@ private:
 		size_t countRelTimestamps;
 		size_t maxCount;
 		uint32_t monitoring;
-		uint64_t monitoringNext;
+		AbsTimestamp monitoringNext;
+		AbsTimestamp logEventTimestamp;
 		bool watched;
 		bool controlled;
 		Logged logged;
 		bool hasLogged;
 	};
+	struct Msg {
+		Priv* priv;
+		enum Cmd {
+			kCmdNone,
+			kCmdStartLogging,
+			kCmdStopLogging,
+		} cmd;
+		uint64_t arg;
+	};
+	bool isLogging(const Priv* p) const
+	{
+		return p->logger && (kLoggedYes == p->logged || kLoggedStopping == p->logged || kLoggedLast == p->logged);
+	}
 	template <typename T>
 	void send(Priv* p) {
 		size_t size = p->v.size(); // TODO: customise this for smaller frames
 		if(p->watched)
 			gui.sendBuffer(p->guiBufferId, (T*)p->v.data(), size / sizeof(T));
-		if((p->logged != kLoggedNo) && p->logger)
+		if(isLogging(p))
 			p->logger->log((float*)p->v.data(), size / sizeof(float));
 	}
 	void startWatching(Priv* p) {
@@ -334,21 +389,24 @@ private:
 		p->controlled = false;
 		p->w->localControl(true);
 	}
-	void startLogging(Priv* p) {
+	void startLogging(Priv* p, AbsTimestamp timestamp) {
 		if(kLoggedNo != p->logged)
 			return;
-		p->logged = kLoggedYes;
+		p->logged = kLoggedStarting;
+		p->logEventTimestamp = timestamp;
 		p->hasLogged = true;
 	}
-	void stopLogging(Priv* p) {
+	void stopLogging(Priv* p, AbsTimestamp timestamp) {
 		if(kLoggedNo == p->logged)
 			return;
 		p->logged = kLoggedStopping;
+		p->logEventTimestamp = timestamp;
 	}
 	void setMonitoring(Priv* p, size_t period) {
 		p->monitoring = (kMonitorChange | period);
 	}
 	void setupLogger(Priv* p) {
+		delete p->logger;
 		p->logger = new WriteFile((p->name + ".bin").c_str(), false, false);
 		p->logger->setFileType(kBinary);
 		p->logFileName = p->logger->getName();
@@ -373,6 +431,15 @@ private:
 		p->logger->log((float*)(header.data()), header.size() / sizeof(float));
 	}
 
+	void cleanupLogger(Priv* p) {
+		if(!p || !p->logger)
+			return;
+		bool shouldDiscard = !p->hasLogged;
+		p->logger->cleanup(shouldDiscard);
+		delete p->logger;
+		p->logger = nullptr;
+	}
+
 	Priv* findPrivByName(const std::string& str) {
 		auto it = std::find_if(vec.begin(), vec.end(), [&str](decltype(vec[0])& item) {
 			return item->name == str;
@@ -381,6 +448,14 @@ private:
 			return *it;
 		else
 			return nullptr;
+	}
+	void sendJsonResponse(JSONValue* watcher)
+	{
+		// should be called from the controlCallback() thread
+		JSONObject root;
+		root[L"watcher"] = watcher;
+		JSONValue value(root);
+		gui.sendControl(&value, WSServer::kThreadCallback);
 	}
 	bool controlCallback(JSONObject& root) {
 		auto watcher = JSONGetArray(root, "watcher");
@@ -410,13 +485,14 @@ private:
 				}
 				JSONObject watcher;
 				watcher[L"watchers"] = new JSONValue(watchers);
-				JSONObject root;
-				root[L"watcher"] = new JSONValue(watcher);
-				JSONValue value(root);
-				gui.sendControl(&value, WSServer::kThreadCallback);
+				watcher[L"sampleRate"] = new JSONValue(float(sampleRate));
+				sendJsonResponse(new JSONValue(watcher));
 			}
 			if("watch" == cmd || "unwatch" == cmd || "control" == cmd || "uncontrol" == cmd || "log" == cmd || "unlog" == cmd || "monitor" == cmd) {
 				const JSONArray& watchers = JSONGetArray(el, "watchers");
+				const JSONArray& periods = JSONGetArray(el, "periods"); // used only by 'monitor'
+				const JSONArray& timestamps = JSONGetArray(el, "timestamps"); // used only by some commands
+				size_t numSent = 0;
 				for(size_t n = 0; n < watchers.size(); ++n)
 				{
 					std::string str = JSONGetAsString(watchers[n]);
@@ -424,6 +500,13 @@ private:
 					printf("%s {'%s', %p}, ", cmd.c_str(), str.c_str(), p);
 					if(p)
 					{
+						AbsTimestamp timestamp = 0;
+						Msg msg {
+							.priv = p,
+							.cmd = Msg::kCmdNone,
+						};
+						if(n < timestamps.size())
+							timestamp = JSONGetAsNumber(timestamps[n]);
 						if("watch" == cmd)
 							startWatching(p);
 						else if("unwatch" == cmd)
@@ -432,18 +515,45 @@ private:
 							startControlling(p);
 						else if("uncontrol" == cmd)
 							stopControlling(p);
-						else if("log" == cmd)
-							startLogging(p);
-						else if("unlog" == cmd)
-							stopLogging(p);
-						else if ("monitor" == cmd) {
-							const JSONArray& periods = JSONGetArray(el, "periods");
-							size_t period = JSONGetAsNumber(periods[n]);
-							setMonitoring(p, period);
+						else if("log" == cmd) {
+							msg.cmd = Msg::kCmdStartLogging;
+							msg.arg = timestamp;
+							cleanupLogger(p);
+							setupLogger(p);
+							JSONObject watcher;
+							watcher[L"watcher"] = new JSONValue(JSON::s2ws(str));
+							watcher[L"logFileName"] = new JSONValue(JSON::s2ws(p->logFileName));
+							sendJsonResponse(new JSONValue(watcher));
+						} else if("unlog" == cmd) {
+							msg.cmd = Msg::kCmdStopLogging;
+							msg.arg = timestamp;
+						} else if ("monitor" == cmd) {
+							if(n < periods.size())
+							{
+								size_t period = JSONGetAsNumber(periods[n]);
+								setMonitoring(p, period);
+							} else {
+								fprintf(stderr, "monitor cmd with not enough elements in periods: %u instead of %u\n", periods.size(), watchers.size());
+								break;
+							}
+						}
+						if(Msg::kCmdNone != msg.cmd)
+						{
+							pipe.writeNonRt(msg);
+							numSent++;
 						}
 					}
 				}
 				printf("\n");
+				if(numSent)
+				{
+					// this full memory barrier may be
+					// unnecessary as the system calls in Pipe::writeRt()
+					// may be enough
+					// or it may be useless and still leave the problem unaddressed
+					std::atomic_thread_fence(std::memory_order_release);
+					pipeSentNonRt += numSent;
+				}
 			}
 			if("set" == cmd) {
 				const JSONArray& watchers = JSONGetArray(el, "watchers");
@@ -467,6 +577,7 @@ private:
 		return false;
 	}
 	std::vector<Priv*> vec;
+	float sampleRate = 0;
 	Gui& gui;
 };
 
