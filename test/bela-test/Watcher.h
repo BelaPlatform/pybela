@@ -516,6 +516,8 @@ private:
 						else if("uncontrol" == cmd)
 							stopControlling(p);
 						else if("log" == cmd) {
+							if(isLogging(p))
+								continue;
 							msg.cmd = Msg::kCmdStartLogging;
 							msg.arg = timestamp;
 							cleanupLogger(p);

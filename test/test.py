@@ -1,7 +1,6 @@
 import unittest
 import asyncio
 import os
-from pyBela import Watcher, Streamer, Logger
 import numpy as np
 from pyBela import Watcher, Streamer, Logger, Monitor
 
@@ -118,53 +117,100 @@ class test_Streamer(unittest.TestCase):
 
 class test_Logger(unittest.TestCase):
 
-    def test_logged_files(self):
-        async def async_test_logged_files():
+    def _test_logged_data(self, logger, logging_vars, local_paths):
+        # common routine to test the data in the logged files
+        data = {}
+        for var in logging_vars:
+
+            data[var] = logger.read_binary_file(
+                file_path=local_paths[var], timestamp_mode=logger.get_prop_of_var(var, "timestamp_mode"))
+
+            # test data
+            timestamp_mode = logger.get_prop_of_var(var, "timestamp_mode")
+            for _buffer in data[var]["buffers"]:
+                self.assertEqual(_buffer["ref_timestamp"], _buffer["data"][0],
+                                 "The ref_timestamp and the first item of data buffer should be the same")
+                self.assertEqual(logger.get_prop_of_var(var, "data_length"), len(_buffer["data"]),
+                                 "The length of the buffer should be equal to the data_length property of the variable")
+                if _buffer["data"][-1] == 0:  # buffer has padding at the end
+                    continue
+                if timestamp_mode == "dense":
+                    self.assertEqual(_buffer["ref_timestamp"]+logger.get_prop_of_var(var, "data_length")-1, _buffer["data"][-1],
+                                     "The last data item should be equal to the ref_timestamp plus the length of the buffer")
+                elif timestamp_mode == "sparse":
+                    inferred_timestamps = [_ + _buffer["ref_timestamp"]
+                                           for _ in _buffer["rel_timestamps"]]
+                    self.assertEqual(
+                        inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")
+
+    def test_logged_files_with_transfer(self):
+        async def async_test_logged_files_with_transfer():
             logger = Logger()
             logger.connect()
+
             logging_vars = [
-                # "myvar",  # dense double
-                # "myvar2",  # dense uint
-                # "myvar3",  # sparse uint
+                "myvar",  # dense double
+                "myvar2",  # dense uint
+                "myvar3",  # sparse uint
                 "myvar4"  # sparse double
             ]
 
-            local_paths = logger.start_logging(
+            file_paths = logger.start_logging(
                 variables=logging_vars, transfer=True, dir="./test")
             await asyncio.sleep(0.5)
             logger.stop_logging()
 
-            data = {}
-            for var in logging_vars:
+            self._test_logged_data(logger, logging_vars,
+                                   file_paths["local_paths"])
 
-                self.assertTrue(os.path.exists(
-                    local_paths[var]), "The logged file should exist after logging")
+            # clean local log files
+            for var in file_paths["local_paths"]:
+                if os.path.exists(file_paths["local_paths"][var]):
+                    os.remove(file_paths["local_paths"][var])
 
-                data[var] = logger.read_binary_file(
-                    file_path=local_paths[var], timestamp_mode=logger.get_prop_of_var(var, "timestamp_mode"))
+            # clean all remote log files in project
+            logger.delete_all_bin_files_in_project()
 
-                # test data
-                timestamp_mode = logger.get_prop_of_var(var, "timestamp_mode")
-                for _buffer in data[var]["buffers"]:
-                    self.assertEqual(_buffer["ref_timestamp"], _buffer["data"][0],
-                                     "The ref_timestamp and the first item of data buffer should be the same")
-                    self.assertEqual(logger.get_prop_of_var(var, "data_length"), len(_buffer["data"]),
-                                     "The length of the buffer should be equal to the data_length property of the variable")
-                    if _buffer["data"][-1] == 0:  # buffer has padding at the end
-                        continue
-                    if timestamp_mode == "dense":
-                        self.assertEqual(_buffer["ref_timestamp"]+logger.get_prop_of_var(var, "data_length")-1, _buffer["data"][-1],
-                                         "The last data item should be equal to the ref_timestamp plus the length of the buffer")
-                    elif timestamp_mode == "sparse":
-                        inferred_timestamps = [_ + _buffer["ref_timestamp"]
-                                               for _ in _buffer["rel_timestamps"]]
-                        self.assertEqual(
-                            inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")
+        asyncio.run(async_test_logged_files_with_transfer())
 
+    def test_logged_files_wo_transfer(self):
+        async def async_test_logged_files_wo_transfer():
+            logger = Logger()
+            logger.connect()
+
+            logging_vars = [
+                "myvar",  # dense double
+                "myvar2",  # dense uint
+                "myvar3",  # sparse uint
+                "myvar4"  # sparse double
+            ]
+            logging_dir = "./test"
+            file_paths = logger.start_logging(
+                variables=logging_vars, transfer=False, dir=logging_dir)
+            await asyncio.sleep(0.5)
+            logger.stop_logging()
+            local_paths = {}
+            for var in file_paths["remote_paths"]:
+                local_paths[var] = os.path.join(
+                    logging_dir, os.path.basename(file_paths["remote_paths"][var]))
+                # logger.copy_file_from_bela(
+                #     file_paths["remote_paths"][var], local_paths[var])
+
+            # copy files from remote to local
+            logger.copy_all_bin_files_in_project(dir=logging_dir)
+
+            self._test_logged_data(logger, logging_vars, local_paths)
+
+            # clean local log files
             for var in local_paths:
                 if os.path.exists(local_paths[var]):
                     os.remove(local_paths[var])
-        asyncio.run(async_test_logged_files())
+
+            # clean all remote log files in project
+            for var in file_paths["remote_paths"]:
+                logger.delete_file_from_bela(file_paths["remote_paths"][var])
+
+        asyncio.run(async_test_logged_files_wo_transfer())
 
 
 class test_Monitor(unittest.TestCase):
@@ -241,8 +287,12 @@ class test_Monitor(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    # run all tests
     unittest.main(verbosity=2)
+
+    # select which tests to run
     # suite = unittest.TestSuite()
-    # suite.addTest(test_Logger('test_logged_files'))
+    # suite.addTest(test_Logger('test_logged_files_with_transfer'))
+    # suite.addTest(test_Logger('test_logged_files_wo_transfer'))
     # runner = unittest.TextTestRunner(verbosity=2)
     # runner.run(suite)
