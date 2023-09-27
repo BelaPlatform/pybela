@@ -381,7 +381,6 @@ class Streamer(Watcher):
 
         # in case buffer is received whilst streaming mode is on but parsed after streaming_enabled has changed
         _saving_enabled = copy.copy(self._saving_enabled)
-        # FIXME fix for monitor
         if self._streaming_mode != "OFF":
             if len(msg) == 3:
                 # parse buffer header
@@ -450,6 +449,7 @@ class Streamer(Watcher):
             filename (str): Filename to save data to
             msg (bytestr): Data message received from Bela
         """
+        _msg = copy.copy(msg)
         try:
             # make sure there are not two processes writing to the same file
             if filename not in self._saving_file_locks.keys():
@@ -458,7 +458,7 @@ class Streamer(Watcher):
 
             async with self._saving_file_locks[filename]:
                 async with aiofiles.open(filename, "a") as f:
-                    _json = json.dumps(copy.copy(msg))
+                    _json = json.dumps(copy.copy(_msg))
                     await f.write(_json+"\n")
 
         except Exception as e:

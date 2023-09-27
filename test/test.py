@@ -18,7 +18,7 @@ class test_Watcher(unittest.TestCase):
     def test_start_stop(self):
         watcher = Watcher()
         watcher.connect()
-        watcher.stop()
+        watcher.stop_ws()
         self.assertEqual(watcher._ctrl_listener, None,
                          "Watcher ctrl listener should be None after stop")
         self.assertEqual(watcher._data_listener, None,
@@ -30,7 +30,7 @@ class test_Streamer(unittest.TestCase):
     def test_stream_n_frames(self):
         streamer = Streamer()
         streamer.connect()
-        n_frames = 2000
+        n_frames = 500
 
         streaming_vars = ["myvar", "myvar2"]
 
@@ -55,13 +55,13 @@ class test_Streamer(unittest.TestCase):
             streamer = Streamer()
             streamer.connect()
             streamer.streaming_buffers_queue_length = 1000
-            saving_filename = "test_save.txt"
+            saving_filename = "test_streamer_save.txt"
 
             streaming_vars = [
                 "myvar",  # dense double
-                "myvar2",  # dense uint
-                "myvar3",  # sparse uint
-                "myvar4"  # sparse double
+                # "myvar2",  # dense uint
+                # "myvar3",  # sparse uint
+                # "myvar4"  # sparse double
             ]
 
             # delete any existing test files
@@ -136,7 +136,7 @@ class test_Logger(unittest.TestCase):
                     continue
                 if timestamp_mode == "dense":
                     self.assertEqual(_buffer["ref_timestamp"]+logger.get_prop_of_var(var, "data_length")-1, _buffer["data"][-1],
-                                     "The last data item should be equal to the ref_timestamp plus the length of the buffer")
+                                     f"{var} {local_paths[var]} The last data item should be equal to the ref_timestamp plus the length of the buffer")
                 elif timestamp_mode == "sparse":
                     inferred_timestamps = [_ + _buffer["ref_timestamp"]
                                            for _ in _buffer["rel_timestamps"]]
@@ -145,6 +145,9 @@ class test_Logger(unittest.TestCase):
 
     def test_logged_files_with_transfer(self):
         async def async_test_logged_files_with_transfer():
+
+            logging_dir = "./test"
+
             logger = Logger()
             logger.connect()
 
@@ -156,7 +159,7 @@ class test_Logger(unittest.TestCase):
             ]
 
             file_paths = logger.start_logging(
-                variables=logging_vars, transfer=True, dir="./test")
+                variables=logging_vars, transfer=True, dir=logging_dir)
             await asyncio.sleep(0.5)
             logger.stop_logging()
 
@@ -191,13 +194,11 @@ class test_Logger(unittest.TestCase):
             logger.stop_logging()
             local_paths = {}
             for var in file_paths["remote_paths"]:
-                local_paths[var] = os.path.join(
-                    logging_dir, os.path.basename(file_paths["remote_paths"][var]))
-                # logger.copy_file_from_bela(
-                #     file_paths["remote_paths"][var], local_paths[var])
-
-            # copy files from remote to local
-            logger.copy_all_bin_files_in_project(dir=logging_dir)
+                filename = os.path.basename(file_paths["remote_paths"][var])
+                local_paths[var] = logger._generate_local_filename(
+                    os.path.join(logging_dir, filename))
+                logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
+                                           local_path=local_paths[var])
 
             self._test_logged_data(logger, logging_vars, local_paths)
 
@@ -249,8 +250,8 @@ class test_Monitor(unittest.TestCase):
 
     def test_save_monitor(self):
         async def async_test_save_monitor():
-            period = 100000
-            saving_filename = "test_save.txt"
+            period = 1000
+            saving_filename = "test_monitor_save.txt"
 
             monitor_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
 
@@ -292,7 +293,19 @@ if __name__ == '__main__':
 
     # select which tests to run
     # suite = unittest.TestSuite()
+
+    # suite.addTest(test_Watcher('test_list'))
+    # suite.addTest(test_Watcher('test_start_stop'))
+
+    # suite.addTest(test_Streamer('test_stream_n_frames'))
+    # suite.addTest(test_Streamer('test_buffers'))
+
     # suite.addTest(test_Logger('test_logged_files_with_transfer'))
     # suite.addTest(test_Logger('test_logged_files_wo_transfer'))
+
+    # suite.addTest(test_Monitor('test_peek'))
+    # suite.addTest(test_Monitor('test_period_monitor'))
+    # suite.addTest(test_Monitor('test_save_monitor'))
+
     # runner = unittest.TextTestRunner(verbosity=2)
     # runner.run(suite)

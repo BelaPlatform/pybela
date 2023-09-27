@@ -4,6 +4,7 @@ import websockets
 import json
 import errno
 import struct
+import os
 
 
 class Watcher:
@@ -115,7 +116,7 @@ class Watcher:
 
         return asyncio.run(_async_connect())
 
-    def stop(self):
+    def stop_ws(self):
         """Stops listeners and closes websockets
         """
         async def _async_stop():
@@ -337,6 +338,22 @@ class Watcher:
 
         return variables
 
+    def _generate_local_filename(self, local_path):
+        # if file already exists, throw a warning and add number at the end of the filename
+
+        new_local_path = local_path  # default
+        if os.path.exists(local_path):
+            base, ext = os.path.splitext(local_path)
+            counter = 1
+            new_local_path = local_path
+            while os.path.exists(new_local_path):
+                new_local_path = f"{base}_{counter}{ext}"
+                counter += 1
+            print(
+                f"\033[91m{local_path} already exists. Renaming file to {new_local_path}\033[0m")
+
+        return new_local_path
+
     def get_prop_of_var(self, var_name, prop):
         # TODO replace get_data_length by this
         """Get property of variable. Properties: name, type, timestamp_mode, log_filename, data_length
@@ -428,7 +445,7 @@ class Watcher:
     # destructor
 
     def __del__(self):
-        self.stop()  # stop websockets
+        self.stop_ws()  # stop websockets
 
 
 def handle_connection_exception(ws_address, exception, action):

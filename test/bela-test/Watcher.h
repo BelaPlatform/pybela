@@ -221,7 +221,11 @@ public:
 		{
 			p->logEventTimestamp = -1;
 			if(kLoggedStarting == p->logged)
+			{
+				if(!p->watched)
+					p->count = 0;
 				p->logged = kLoggedYes;
+			}
 			else if(kLoggedStopping == p->logged)
 				p->logged = kLoggedLast;
 		}
