@@ -12,7 +12,7 @@ class test_Watcher(unittest.TestCase):
     def test_list(self):
         watcher = Watcher()
         watcher.connect()
-        self.assertEqual(len(watcher.list()), len(watcher.watcher_vars),
+        self.assertEqual(len(watcher.list()["watchers"]), len(watcher.watcher_vars),
                          "Length of list should be equal to number of watcher variables")
 
     def test_start_stop(self):

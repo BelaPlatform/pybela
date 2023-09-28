@@ -20,6 +20,7 @@ class Watcher:
         """
 
         self.project_name = None
+        self._sample_rate = None
 
         self.ip = ip
         self.port = port
@@ -49,6 +50,10 @@ class Watcher:
         nest_asyncio.apply()
 
     @property
+    def sample_rate(self):
+        return self._sample_rate
+
+    @property
     def watcher_vars(self):
         """Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length)
 
@@ -56,7 +61,9 @@ class Watcher:
             list of dicts: List of variables in watcher and their properties
         """
         if self._watcher_vars == None:  # populate
-            self._watcher_vars = self._filtered_vars(lambda var: True)
+            _list = self.list()
+            self._watcher_vars = self._filtered_watcher_vars(
+                _list["watchers"], lambda var: True)
         return self._watcher_vars   # updates every time start is called
 
     @property
@@ -66,7 +73,8 @@ class Watcher:
         Returns:
             list of str: List of watched variables
         """
-        return self._filtered_vars(lambda var: var["watched"])
+        _list = self.list()
+        return self._filtered_watcher_vars(_list["watchers"], lambda var: var["watched"])
 
     @property
     def unwatched_vars(self):
@@ -75,7 +83,8 @@ class Watcher:
         Returns:
             list of str: List of unwatched variables
         """
-        return self._filtered_vars(lambda var: not var["watched"])
+        _list = self.list()
+        return self._filtered_watcher_vars(_list["watchers"], lambda var: not var["watched"])
 
     # --- public methods --- #
 
@@ -104,8 +113,10 @@ class Watcher:
                                 self.ws_data, self.ws_data_add)
 
                         # refresh watcher vars in case new project has been loaded in Bela
-                        self._watcher_vars = self._filtered_vars(
-                            lambda var: True)
+                        self._list = self.list()
+                        self._sample_rate = self._list["sampleRate"]
+                        self._watcher_vars = self._filtered_watcher_vars(self._list["watchers"],
+                                                                         lambda var: True)
                         print("Connection successful")
                         return 1
                     else:
@@ -231,7 +242,7 @@ class Watcher:
                 self._log_response = _msg["watcher"]
                 self._log_response_available.set()
             elif "sampleRate" in _msg["watcher"].keys():  # response to list cmd
-                self._list_response = _msg["watcher"]["watchers"]
+                self._list_response = _msg["watcher"]
                 self._list_response_available.set()
 
         if "projectName" in _msg.keys():
@@ -304,24 +315,24 @@ class Watcher:
         """
         _list.remove(task)
 
-    def _filtered_vars(self, filter_func):
+    def _filtered_watcher_vars(self, watchers, filter_func):
         """Filter variables in watcher depending on condition given by filter_func
 
         Args:
+            watchers (list of dicts): List of variables in watcher and their properties
             filter_func (function): filter function
 
         Returns:
             dict: Filtered variables
         """
-        _list = self.list()
         return [{
             "name": var["name"],
             "type": var["type"],
             "timestamp_mode":"sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
-            # "log_filename": var["logFileName"], # FIXME this is updated every time log is called so better not to store it?
+            # "log_filename": var["logFileName"], # this is updated every time log is called so better not to store it
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
         }
-            for var in _list if filter_func(var)]
+            for var in watchers if filter_func(var)]
 
     def _var_arg_checker(self, variables):
         """ Checks if variables passed to a function are passed as names in a list. If none are passed, returns all variables in watcher.

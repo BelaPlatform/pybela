@@ -15,6 +15,7 @@ float gInverseSampleRate;
 bool setup(BelaContext *context, void *userData)
 {
 	gui.setup(context->projectName);
+	Bela_getDefaultWatcherManager()->setup(context->audioSampleRate); // set sample rate in watcher
 	gInverseSampleRate = 1.0 / context->audioSampleRate;
 	gPhase = 0.0;
 	return true;
