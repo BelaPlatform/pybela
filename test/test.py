@@ -159,7 +159,7 @@ class test_Logger(unittest.TestCase):
             ]
 
             file_paths = logger.start_logging(
-                variables=logging_vars, transfer=True, dir=logging_dir)
+                variables=logging_vars, transfer=True, logging_dir=logging_dir)
             await asyncio.sleep(0.5)
             logger.stop_logging()
 
@@ -189,7 +189,7 @@ class test_Logger(unittest.TestCase):
             ]
             logging_dir = "./test"
             file_paths = logger.start_logging(
-                variables=logging_vars, transfer=False, dir=logging_dir)
+                variables=logging_vars, transfer=False, logging_dir=logging_dir)
             await asyncio.sleep(0.5)
             logger.stop_logging()
             local_paths = {}
@@ -212,6 +212,47 @@ class test_Logger(unittest.TestCase):
                 logger.delete_file_from_bela(file_paths["remote_paths"][var])
 
         asyncio.run(async_test_logged_files_wo_transfer())
+
+    def test_scheduling_logging(self):
+        async def async_test_scheduling_logging():
+            logger = Logger()
+            logger.connect()
+            logging_dir = "./"
+
+            logging_vars = [
+                "myvar",  # dense double
+                # "myvar2",  # dense uint
+                # "myvar3",  # sparse uint
+                # "myvar4"  # sparse double
+            ]
+
+            latest_timestamp = logger.get_latest_timestamp()
+            sample_rate = logger.sample_rate
+            timestamps = [latest_timestamp +
+                          2*sample_rate, latest_timestamp+2*sample_rate + 5*sample_rate]
+            
+            print("timestamps: ", timestamps)
+
+            file_paths = logger.schedule_logging(variables=logging_vars,
+                                                 timestamps=timestamps, 
+                                                 transfer=True, 
+                                                 logging_dir=logging_dir)
+
+            self._test_logged_data(logger, logging_vars, file_paths["local_paths"])
+
+            # FIXME this test doesn't fail but scheduling doesn't work -- it doesn't stop at the second timestamp and it runs forever
+            # clean local log files
+            for var in file_paths["local_paths"]:
+                if os.path.exists(file_paths["local_paths"][var]):
+                    os.remove(file_paths["local_paths"][var])
+
+            # clean all remote log files in project
+            for var in file_paths["remote_paths"]:
+                logger.delete_file_from_bela(file_paths["remote_paths"][var])
+            await asyncio.sleep(2)
+            logger.stop_logging()
+
+        asyncio.run(async_test_scheduling_logging())
 
 
 class test_Monitor(unittest.TestCase):
@@ -242,7 +283,7 @@ class test_Monitor(unittest.TestCase):
             for var in monitor_vars:
                 self.assertTrue(np.all(np.diff(monitored_values[var]["timestamps"]) == period),
                                 "The timestamps of the monitored variables should be spaced by the period")
-                if var in ["myvar", "myvar2"]:  # assigned at each frame n # FIXME fails
+                if var in ["myvar", "myvar2"]:  # assigned at each frame n
                     self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == period),
                                     "The values of the monitored variables should be spaced by the period")
 
@@ -253,7 +294,11 @@ class test_Monitor(unittest.TestCase):
             period = 1000
             saving_filename = "test_monitor_save.txt"
 
-            monitor_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
+            monitor_vars = ["myvar", 
+                            "myvar2", 
+                            "myvar3", 
+                            "myvar4"
+                            ]
 
             # delete any existing test files
             for var in monitor_vars:
@@ -288,10 +333,10 @@ class test_Monitor(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # run all tests
+    # # run all tests
     unittest.main(verbosity=2)
 
-    # select which tests to run
+    # # select which tests to run
     # suite = unittest.TestSuite()
 
     # suite.addTest(test_Watcher('test_list'))
@@ -302,6 +347,7 @@ if __name__ == '__main__':
 
     # suite.addTest(test_Logger('test_logged_files_with_transfer'))
     # suite.addTest(test_Logger('test_logged_files_wo_transfer'))
+    # suite.addTest(test_Logger('test_scheduling_logging'))
 
     # suite.addTest(test_Monitor('test_peek'))
     # suite.addTest(test_Monitor('test_period_monitor'))

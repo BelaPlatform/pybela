@@ -402,10 +402,14 @@ class Streamer(Watcher):
 
                 # parse buffer body
                 parsed_buffer = self._parse_binary_data(
-                    msg, var_timestamp_mode, _type)
+                    msg, var_timestamp_mode, _type).copy()
 
-                self._streaming_buffers_queue[var_name].append(
-                    parsed_buffer.copy())  # .copy() avoids data corruption
+                # fixes bug where data is shifted by period
+                _var_streaming_buffers_queue = copy.deepcopy(
+                    self._streaming_buffers_queue[var_name])
+                _var_streaming_buffers_queue.append(parsed_buffer)
+                self._streaming_buffers_queue[var_name] = _var_streaming_buffers_queue
+
                 # populate last streamed buffer
                 self.last_streamed_buffer[var_name]["data"] = parsed_buffer["data"]
                 if self._mode == "STREAM":

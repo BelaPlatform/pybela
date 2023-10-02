@@ -18,7 +18,7 @@ class Logger(Watcher):
         """
         super(Logger, self).__init__(ip, port, data_add, control_add)
 
-        self._logging = False
+        self._logging_mode = "OFF"
         self._logging_vars = []
         self._logging_transfer = True
 
@@ -29,7 +29,7 @@ class Logger(Watcher):
 
         self._mode = "LOG"
 
-    def start_logging(self, variables=[], transfer=True, dir="./"):
+    def start_logging(self, variables=[], transfer=True, logging_dir="./"):
         """ Starts logging session. The session can be ended by calling stop_logging().
 
         Args:
@@ -40,11 +40,112 @@ class Logger(Watcher):
             list of str: List of local paths to the logged files.
         """
 
+        remote_paths = self.__logging_common_routine(
+            "FOREVER", [], variables, logging_dir)
+
+        local_paths = {}
+        if transfer:
+            for var in [v for v in self.watcher_vars if v["name"] in variables]:
+                var = var["name"]
+                local_path = os.path.join(
+                    logging_dir, os.path.basename(remote_paths[var]))
+
+                # if file already exists, throw a warning and add number at the end of the filename
+                local_paths[var] = self._generate_local_filename(local_path)
+
+                copying_task = self.copy_file_in_chunks(
+                    remote_paths[var], local_paths[var])
+                self._active_copying_tasks.append(copying_task)
+
+        return {"local_paths": local_paths, "remote_paths": remote_paths}
+
+    def schedule_logging(self, variables=[], timestamps=[], transfer=True, logging_dir="./"):
+        async def _async_schedule_logging(variables, timestamps, transfer, logging_dir):
+            # checks types and if no variables are specified, stream all watcher variables (default)
+            latest_timestamp = self.get_latest_timestamp()
+
+            # if timestamps, poll latest timestamp
+            if timestamps is not []:
+                if isinstance(timestamps, list) and len(timestamps) == 2:
+                    start_timestamp = timestamps[0]
+                    end_timestamp = timestamps[1]
+
+                    # sanity checks timestamps # TODO what if start_timestamp and end_timestamp have a diff of only a few timestamps -- throw a warning?
+                    if end_timestamp < start_timestamp:
+                        print(
+                            f"Error: Timestamp to finish logging ({end_timestamp}) should be larger than timestamp to start logging ({start_timestamp})")
+                        return
+                    elif end_timestamp < latest_timestamp:
+                        print(
+                            f"Error: End timestamp {end_timestamp} is in the past (latest timestamp is {latest_timestamp}).")
+                        return
+                    elif start_timestamp < latest_timestamp:
+                        print(
+                            f"Warning: Start timestamp ({start_timestamp}) is in the past (latest timestamp is {latest_timestamp}) but end timestamp ({end_timestamp}) is in the future. Logging starting now and stopping at {end_timestamp}.")
+
+            remote_paths = self.__logging_common_routine(
+                "SCHEDULED", timestamps, variables, logging_dir)
+
+            local_paths = {}
+            if transfer:
+                # wait til the file exists
+                if latest_timestamp < start_timestamp:
+                    # check if file exists remotely, if it does, start copying
+                    # if file does not exist, take difference between latest_timestamp and start_timestamp and poll for half of that
+                    diff_stamps = start_timestamp-latest_timestamp
+
+                    while True:
+                        # Wait for a second before checking again
+                        await asyncio.sleep(diff_stamps//(2*self.sample_rate))
+                        _have_files_been_created = 0
+                        for var in remote_paths:
+                            # remote_file = self.sftp_client.open(
+                            #     remote_paths[var], 'rb')
+                            remote_file_size = self.sftp_client.stat(
+                                remote_paths[var]).st_size
+
+                            if remote_file_size > 0:  # white till first buffers are written into the file
+                                _have_files_been_created = 1
+                                print("Logging started...")
+                                break  # Break the loop if the remote file size is non-zero
+
+                        if _have_files_been_created:
+                            break
+
+                for var in [v for v in self.watcher_vars if v["name"] in variables]:
+                    var = var["name"]
+                    local_path = os.path.join(
+                        logging_dir, os.path.basename(remote_paths[var]))
+
+                    # if file already exists, throw a warning and add number at the end of the filename
+                    local_paths[var] = self._generate_local_filename(
+                        local_path)
+
+                    copying_task = self.copy_file_in_chunks(
+                        remote_paths[var], local_paths[var])
+                    self._active_copying_tasks.append(copying_task)
+
+                    # async version (non blocking)
+                    # async def _async_cleanup():
+                    #     await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
+                    #     self._active_copying_tasks.clear()
+                    #     self.sftp_client.close()
+                    # asyncio.run(_async_cleanup())
+
+                    await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
+                    self._active_copying_tasks.clear()
+                    self.sftp_client.close()
+
+            return {"local_paths": local_paths, "remote_paths": remote_paths}
+
+        return asyncio.run(_async_schedule_logging(variables, timestamps, transfer, logging_dir))
+
+    def __logging_common_routine(self, mode, timestamps=[], variables=[], logging_dir="./"):
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        if not os.path.exists(logging_dir):
+            os.makedirs(logging_dir)
 
         if self.is_logging():
             self.stop_logging()
@@ -52,13 +153,13 @@ class Logger(Watcher):
         # self.start()  # start websocket connection -- done with .connect()
         self.connect_ssh()  # start ssh connection
 
-        self._logging = True
+        self._logging_mode = mode
 
         async def _async_send_logging_cmd_and_wait_for_response(var):
             # the logger responds with the name of the file where the variable is being logged in Bela
             # the logger responds with one message per variable -- so to keep track of responses it is easier to ask for a variable at a time rather than all at once
             self.send_ctrl_msg(
-                {"watcher": [{"cmd": "log", "watchers": [var]}]})
+                {"watcher": [{"cmd": "log", "timestamps": timestamps, "watchers": [var]}]})
             await self._log_response_available.wait()
             self._log_response_available.clear()
             return self._log_response
@@ -70,21 +171,7 @@ class Logger(Watcher):
                 "logFileName"]
             remote_paths[var] = f'/root/Bela/projects/{self.project_name}/{remote_files[var]}'
 
-        if transfer:
-            local_paths = {}
-            for var in [v for v in self.watcher_vars if v["name"] in variables]:
-                var = var["name"]
-                local_path = os.path.join(dir, remote_files[var])
-
-                # if file already exists, throw a warning and add number at the end of the filename
-                local_paths[var] = self._generate_local_filename(local_path)
-
-                copying_task = self.copy_file_in_chunks(
-                    remote_paths[var], local_paths[var])
-                self._active_copying_tasks.append(copying_task)
-
-            return {"local_paths": local_paths, "remote_paths": remote_paths}
-        return {"remote_paths": remote_paths}
+        return remote_paths
 
     def stop_logging(self, variables=[]):
         """ Stops logging session.
@@ -93,7 +180,7 @@ class Logger(Watcher):
             variables (list of str, optional): List of variables to stop logging. If none is passed, logging is stopped for all variables in the watcher. Defaults to [].
         """
         async def async_stop_logging(variables=[]):
-            self._logging = False
+            self._logging_mode = "OFF"
             if variables == []:
                 # if no variables specified, stop streaming all watcher variables (default)
                 variables = [var["name"] for var in self.watcher_vars]
@@ -113,7 +200,7 @@ class Logger(Watcher):
     def connect_ssh(self):
         """ Connects to Bela via ssh to transfer log files.
         """
-        
+
         if self.sftp_client is not None:
             self.disconnect_ssh()
 
@@ -144,7 +231,7 @@ class Logger(Watcher):
         Returns:
             bool: Logger status
         """
-        return self._logging
+        return True if self._logging_mode != "OFF" else False
 
     def copy_file_in_chunks(self, remote_path, local_path,  chunk_size=2**12):
         """ Copies a file from the remote path to the local path in chunks. This function is called by start_logging() if transfer=True.
@@ -303,7 +390,7 @@ class Logger(Watcher):
         """
         try:
             if os.path.exists(local_path):
-                local_path = self._generate_local_filename(local_path) 
+                local_path = self._generate_local_filename(local_path)
             transferred_event = asyncio.Event()
             def callback(transferred, to_transfer): return transferred_event.set(
             ) if transferred == to_transfer else None
@@ -318,7 +405,6 @@ class Logger(Watcher):
         except Exception as e:
             print(f"Error while transferring file: {e}")
             return False
-
 
     # -- ssh delete utils
 

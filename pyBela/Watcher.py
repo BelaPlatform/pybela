@@ -306,6 +306,9 @@ class Watcher:
 
     # --- utils --- #
 
+    def get_latest_timestamp(self):
+        return self.list()["timestamp"]
+
     async def _async_remove_item_from_list(self, _list, task):
         """Remove item from list. Used to remove listeners from the list of listeners.
 

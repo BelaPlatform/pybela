@@ -222,9 +222,11 @@ public:
 			p->logEventTimestamp = -1;
 			if(kLoggedStarting == p->logged)
 			{
-				if(!p->watched)
-					p->count = 0;
 				p->logged = kLoggedYes;
+				// TODO: watching and logging use the same buffer,
+				// so you'll get a dropout in the watching if you
+				// are watching right now
+				p->count = 0;
 			}
 			else if(kLoggedStopping == p->logged)
 				p->logged = kLoggedLast;
@@ -490,6 +492,7 @@ private:
 				JSONObject watcher;
 				watcher[L"watchers"] = new JSONValue(watchers);
 				watcher[L"sampleRate"] = new JSONValue(float(sampleRate));
+				watcher[L"timestamp"] = new JSONValue(double(timestamp));
 				sendJsonResponse(new JSONValue(watcher));
 			}
 			if("watch" == cmd || "unwatch" == cmd || "control" == cmd || "uncontrol" == cmd || "log" == cmd || "unlog" == cmd || "monitor" == cmd) {
