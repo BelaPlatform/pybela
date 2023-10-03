@@ -92,7 +92,7 @@ class Watcher:
         """Attempts to establish a WebSocket connection and prints a message indicating success or failure.
 
         """
-        if self._ctrl_listener is not None and self._data_listener is not None:
+        if self.is_connected():
             return "Already connected"
 
         async def _async_connect():
@@ -117,11 +117,9 @@ class Watcher:
                         self._sample_rate = self._list["sampleRate"]
                         self._watcher_vars = self._filtered_watcher_vars(self._list["watchers"],
                                                                          lambda var: True)
-                        print("Connection successful")
-                        return 1
+                        return "Connection successful"
                     else:
-                        print("Connection failed")
-                        return 0
+                        return "Connection failed"
             except Exception as e:
                 return f"Connection failed: {str(e)}."
 
@@ -143,6 +141,9 @@ class Watcher:
                 self._data_listener = None
 
         return asyncio.run(_async_stop())
+
+    def is_connected(self):
+        return True if self._ctrl_listener is not None and self._data_listener is not None else False
 
     def list(self):
         """ Asks the watcher for the list of variables and their properties and returns it

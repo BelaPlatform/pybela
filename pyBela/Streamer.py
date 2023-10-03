@@ -5,6 +5,7 @@ import glob
 import asyncio
 import aiofiles  # async file i/o
 from collections import deque  # circular buffers
+from itertools import cycle
 import warnings
 
 import bokeh.plotting
@@ -90,7 +91,10 @@ class Streamer(Watcher):
     def start(self):
         """Starts the websocket connection and initialises the streaming buffers queue.
         """
-        self.connect()
+        # self.connect()
+        if not self.is_connected():
+            print("Streamer is not connected to Bela. Run streamer.connect() first.")
+            return 0
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
@@ -130,7 +134,8 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        self.start()  # start before setting saving enabled to ensure streaming buffer is initialised properly
+        if self.start() == 0:  # bela is not connected
+            return
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
@@ -146,10 +151,14 @@ class Streamer(Watcher):
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "watch", "watchers": variables}]})
+            print(
+                f"Started streaming variables {variables}... Run stop_streaming() to stop streaming.")
         elif self._mode == "MONITOR":
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
+            print(
+                f"Started monitoring variables {variables}... Run stop_monitoring() to stop monitoring.")
 
     def stop_streaming(self, variables=[]):
         """
@@ -179,14 +188,15 @@ class Streamer(Watcher):
             if self._mode == "STREAM":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
+                print(f"Stopped streaming variables {variables}...")
             elif self._mode == "MONITOR":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
+                print(f"Stopped monitoring variables {variables}...")
 
         return asyncio.run(async_stop_streaming(variables))
 
     def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
-        # FIXME rename to n values -- n frames is confusing since it suggest the frames are continuous
         """
         Streams a given number of frames. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
 
@@ -231,7 +241,8 @@ class Streamer(Watcher):
         if self.is_streaming():
             self.stop_streaming()  # stop any previous streaming
 
-        self.start()
+        if self.start() == 0:  # bela is not connected
+            return
 
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
@@ -262,6 +273,7 @@ class Streamer(Watcher):
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
+            print(f"Streaming {n_values} values for variables {variables}...")
 
         elif self._mode == "MONITOR":
             # if mode monitor, each buffer has 1 value so the length of the streaming buffer queue is equal to n_values
@@ -270,6 +282,8 @@ class Streamer(Watcher):
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
+            print(
+                f"Monitoring {n_values} values for variables {variables} with periods {periods}...")
 
         # await until streaming buffer is full
         await self._streaming_buffer_available.wait()
@@ -355,10 +369,15 @@ class Streamer(Watcher):
             template = {"timestamps": [], **{var: [] for var in data}}
             source = bokeh.models.ColumnDataSource(template)
 
-            # Create line glyphs for each y_var
+            # # Create line glyphs for each y_var
+            colors = cycle([
+                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+                "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+                "#bcbd22", "#17becf", "#1a55FF", "#FF1A1A"
+            ])
             for y_var in y_vars:
-                p.circle(source=source, x="timestamps",
-                         y=y_var, legend_label=y_var, size=1)
+                p.line(source=source, x="timestamps",
+                       y=y_var, line_color=next(colors), legend_label=y_var)
 
             @bokeh.driving.linear()
             def update(step):
@@ -372,7 +391,7 @@ class Streamer(Watcher):
             doc.add_periodic_callback(update, plot_update_delay)
         return _app
 
-    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=1000):
+    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=500):
         """ Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.
 
         Args:
@@ -382,9 +401,33 @@ class Streamer(Watcher):
             plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 100.
             rollover (int, optional): Number of data points to keep on the plot. Defaults to 1000.
         """
+
+        # check that x_var and y_vars are either streamed or monitored
+        # more efficient to call this once since it does a list request
+        watched_vars = self.watched_vars
+        monitored_vars = self.monitored_vars
+        for _var in [x_var, *y_vars]:
+            if _var not in [var["name"] for var in watched_vars] or [var["name"] for var in monitored_vars]:
+                print(
+                    f"PlottingError: {_var} is not being streamed or monitored.")
+                return
+
+        # check buffer lengths are the same
+        # wait until streaming buffers have been populated
+        async def wait_for_streaming_buffers_to_arrive():
+            while not all(data['data'] for data in {
+                    var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}.values()):
+                await asyncio.sleep(0.1)
+        asyncio.run(wait_for_streaming_buffers_to_arrive())
+        if len(y_vars) > 1 and not all([len(self.last_streamed_buffer[y_var]) == len(self.last_streamed_buffer[y_vars[0]]) for y_var in y_vars[1:]]):
+            print(
+                "PlottingError: plotting buffers of different length is not supported yet. Try using the same timestamp mode and type for your variables...")
+            return
+
         bokeh.io.output_notebook(INLINE)
-        bokeh.io.show(self._bokeh_plot_data_app(data=self.last_streamed_buffer, x_var=x_var,
-                      y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
+        bokeh.io.show(self._bokeh_plot_data_app(data={
+            var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}, x_var=x_var,
+            y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
 
     # --- private methods --- #
 
@@ -447,7 +490,8 @@ class Streamer(Watcher):
 
                 # save data to file if saving is enabled
                 if _saving_enabled:
-                    _saving_var_filename = os.path.join(os.path.dirname(self._saving_filename), f"{var_name}_{os.path.basename(self._saving_filename)}")
+                    _saving_var_filename = os.path.join(os.path.dirname(
+                        self._saving_filename), f"{var_name}_{os.path.basename(self._saving_filename)}")
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
                         self._save_data_to_file(_saving_var_filename, parsed_buffer))
@@ -529,6 +573,15 @@ class Streamer(Watcher):
         _list.remove(task)
 
     def _check_periods(self, periods, variables):
+        """Checks the periods format and values. If periods is an int, it is converted to a list of the same length as variables. If periods is an empty list, it is converted to a list of 1000s. If periods is a list, it is checked that it has the same length as variables and that all values are integers.
+
+        Args:
+            periods (_type_): variable periods passed as an argument to a monitoring function
+            variables (list): list of variables
+
+        Returns:
+            periods (list of ints): Sanity checked periods
+        """
 
         if isinstance(periods, int):
             periods = [periods]*len(variables)
