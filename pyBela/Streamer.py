@@ -52,6 +52,11 @@ class Streamer(Watcher):
 
     @property
     def monitored_vars(self):
+        """ Returns a list of monitored variables. If no variables are monitored, returns an empty list.
+
+        Returns:
+            list: list of monitored variables
+        """
         _list = self.list()
         return self._filtered_watcher_vars(_list["watchers"], lambda var: var["monitor"])
 
@@ -109,7 +114,7 @@ class Streamer(Watcher):
 
     # stream forever until stopped
 
-    def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt"):
+    def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
         """
         Starts the streaming session. The session can be stopped with stop_streaming().
 
@@ -129,7 +134,7 @@ class Streamer(Watcher):
 
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
-            saving_filename) if saving_enabled else None
+            saving_filename, saving_dir) if saving_enabled else None
 
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
@@ -442,7 +447,7 @@ class Streamer(Watcher):
 
                 # save data to file if saving is enabled
                 if _saving_enabled:
-                    _saving_var_filename = f"{var_name}_{self._saving_filename}"
+                    _saving_var_filename = os.path.join(os.path.dirname(self._saving_filename), f"{var_name}_{os.path.basename(self._saving_filename)}")
                     # save the data asynchronously
                     saving_task = asyncio.create_task(
                         self._save_data_to_file(_saving_var_filename, parsed_buffer))
@@ -491,7 +496,7 @@ class Streamer(Watcher):
         finally:
             await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
-    def _generate_filename(self, saving_filename):
+    def _generate_filename(self, saving_filename, saving_dir="./"):
         """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled. 
 
         Args:
@@ -504,15 +509,15 @@ class Streamer(Watcher):
         filename_wo_ext, filename_ext = os.path.splitext(saving_filename)
         # files that follow naming convention, returns list of varname_filename (no __idx.ext)
         matching_files = [os.path.splitext(file)[0].split(
-            "__")[0] for file in glob.glob(f"*{filename_wo_ext}*{filename_ext}")]
+            "__")[0] for file in glob.glob(os.path.join(saving_dir, f"*{filename_wo_ext}*{filename_ext}"))]
 
         if not matching_files:
-            return saving_filename
+            return os.path.join(saving_dir, saving_filename)
 
         # counts files with the same varname_filename
         idx = max([matching_files.count(item) for item in set(matching_files)])
 
-        return f"{filename_wo_ext}__{idx}{filename_ext}"
+        return os.path.join(saving_dir, f"{filename_wo_ext}__{idx}{filename_ext}")
 
     async def _async_remove_item_from_list(self, _list, task):
         """ Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.

@@ -127,7 +127,7 @@ class Watcher:
 
         return asyncio.run(_async_connect())
 
-    def stop_ws(self):
+    def stop(self):
         """Stops listeners and closes websockets
         """
         async def _async_stop():
@@ -355,7 +355,6 @@ class Watcher:
 
     def _generate_local_filename(self, local_path):
         # if file already exists, throw a warning and add number at the end of the filename
-
         new_local_path = local_path  # default
         if os.path.exists(local_path):
             base, ext = os.path.splitext(local_path)
@@ -460,7 +459,7 @@ class Watcher:
     # destructor
 
     def __del__(self):
-        self.stop_ws()  # stop websockets
+        self.stop()  # stop websockets
 
 
 def handle_connection_exception(ws_address, exception, action):

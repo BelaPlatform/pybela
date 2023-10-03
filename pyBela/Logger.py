@@ -485,4 +485,4 @@ class Logger(Watcher):
 
     def __del__(self):
         self.disconnect_ssh()  # disconnect ssh
-        self.stop_ws()  # stop websockets
+        self.stop()  # stop websockets
