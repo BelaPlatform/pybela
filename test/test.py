@@ -27,27 +27,27 @@ class test_Watcher(unittest.TestCase):
 
 class test_Streamer(unittest.TestCase):
 
-    def test_stream_n_frames(self):
+    def test_stream_n_values(self):
         streamer = Streamer()
         streamer.connect()
-        n_frames = 500
+        n_values = 500
 
         streaming_vars = ["myvar", "myvar2"]
 
-        streaming_buffer = streamer.stream_n_frames(
-            variables=streaming_vars, n_frames=n_frames)
+        streaming_buffer = streamer.stream_n_values(
+            variables=streaming_vars, n_values=n_values)
 
         buffer_sizes = [
             streamer.get_data_length(var["type"], var["timestamp_mode"])
             for var in streamer.watcher_vars if var["name"] in streaming_vars]
 
-        n_buffers = -(-n_frames // min(buffer_sizes))
+        n_buffers = -(-n_values // min(buffer_sizes))
 
         self.assertTrue(all(len(streamer.streaming_buffers_data[
-                        var]) > n_frames for var in streaming_vars), "The streamed flat buffers for every variable should have at least n_frames")
+                        var]) > n_values for var in streaming_vars), "The streamed flat buffers for every variable should have at least n_values")
 
         self.assertTrue(all(len(streaming_buffer[
-                        var]) == n_buffers for var in streaming_vars), "The streaming buffers queue should have at least n_frames/buffer_size buffers for every variable")
+                        var]) == n_buffers for var in streaming_vars), "The streaming buffers queue should have at least n_values/buffer_size buffers for every variable")
 
     def test_buffers(self):
 
@@ -59,9 +59,9 @@ class test_Streamer(unittest.TestCase):
 
             streaming_vars = [
                 "myvar",  # dense double
-                # "myvar2",  # dense uint
-                # "myvar3",  # sparse uint
-                # "myvar4"  # sparse double
+                "myvar2",  # dense uint
+                "myvar3",  # sparse uint
+                "myvar4"  # sparse double
             ]
 
             # delete any existing test files
@@ -230,15 +230,14 @@ class test_Logger(unittest.TestCase):
             sample_rate = logger.sample_rate
             timestamps = [latest_timestamp +
                           2*sample_rate, latest_timestamp+2*sample_rate + 5*sample_rate]
-            
-            print("timestamps: ", timestamps)
 
             file_paths = logger.schedule_logging(variables=logging_vars,
-                                                 timestamps=timestamps, 
-                                                 transfer=True, 
+                                                 timestamps=timestamps,
+                                                 transfer=True,
                                                  logging_dir=logging_dir)
 
-            self._test_logged_data(logger, logging_vars, file_paths["local_paths"])
+            self._test_logged_data(logger, logging_vars,
+                                   file_paths["local_paths"])
 
             # FIXME this test doesn't fail but scheduling doesn't work -- it doesn't stop at the second timestamp and it runs forever
             # clean local log files
@@ -289,14 +288,39 @@ class test_Monitor(unittest.TestCase):
 
         asyncio.run(async_test_period_monitor())
 
+    def test_monitor_n_values(self):
+
+        async def async_test_monitor_n_values():
+            period = 1000
+            n_values = 25
+
+            monitor_vars = ["myvar", "myvar2"]  # assigned at every frame n
+
+            monitor = Monitor()
+            monitor.connect()
+            monitored_buffer = monitor.monitor_n_values(
+                variables=monitor_vars, periods=[period]*len(monitor_vars), n_values=n_values)
+
+            for var in monitor_vars:
+                self.assertTrue(np.all(np.diff(monitor.values[var]["timestamps"]) == period),
+                                "The timestamps of the monitored variables should be spaced by the period")
+                self.assertTrue(np.all(np.diff(monitor.values[var]["values"]) == period),
+                                "The values of the monitored variables should be spaced by the period")
+                self.assertTrue(all(len(monitor.streaming_buffers_data[
+                    var]) >= n_values for var in monitor_vars), "The streamed flat buffers for every variable should have at least n_values")
+                self.assertTrue(all(len(monitored_buffer[
+                    var]) == n_values for var in monitor_vars), "The streaming buffers queue should have at least n_values/buffer_size buffers for every variable")
+
+        asyncio.run(async_test_monitor_n_values())
+
     def test_save_monitor(self):
         async def async_test_save_monitor():
             period = 1000
             saving_filename = "test_monitor_save.txt"
 
-            monitor_vars = ["myvar", 
-                            "myvar2", 
-                            "myvar3", 
+            monitor_vars = ["myvar",
+                            "myvar2",
+                            "myvar3",
                             "myvar4"
                             ]
 
@@ -342,7 +366,7 @@ if __name__ == '__main__':
     # suite.addTest(test_Watcher('test_list'))
     # suite.addTest(test_Watcher('test_start_stop'))
 
-    # suite.addTest(test_Streamer('test_stream_n_frames'))
+    # suite.addTest(test_Streamer('test_stream_n_values'))
     # suite.addTest(test_Streamer('test_buffers'))
 
     # suite.addTest(test_Logger('test_logged_files_with_transfer'))
@@ -351,6 +375,7 @@ if __name__ == '__main__':
 
     # suite.addTest(test_Monitor('test_peek'))
     # suite.addTest(test_Monitor('test_period_monitor'))
+    # suite.addTest(test_Monitor('test_monitor_n_values'))
     # suite.addTest(test_Monitor('test_save_monitor'))
 
     # runner = unittest.TextTestRunner(verbosity=2)

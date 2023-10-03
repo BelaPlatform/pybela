@@ -32,7 +32,7 @@ class Streamer(Watcher):
         self._streaming_buffers_queue = None
         self.last_streamed_buffer = {}
 
-        self._streaming_mode = "OFF"  # OFF, FOREVER, N_FRAMES :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
+        self._streaming_mode = "OFF"  # OFF, FOREVER, n_values :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
 
         self._saving_enabled = False
@@ -49,6 +49,11 @@ class Streamer(Watcher):
     # --- public methods --- #
 
     # - setters & getters
+
+    @property
+    def monitored_vars(self):
+        _list = self.list()
+        return self._filtered_watcher_vars(_list["watchers"], lambda var: var["monitor"])
 
     @property
     def streaming_buffers_queue_length(self):
@@ -96,7 +101,8 @@ class Streamer(Watcher):
         for var in self.streaming_buffers_queue:
             data[var] = []
             for _buffer in self.streaming_buffers_queue[var]:
-                data[var].extend(_buffer["data"])
+                data[var].extend(_buffer["data"] if self._mode !=
+                                 "MONITOR" else [_buffer["data"]])
         return data
 
     # - streaming methods
@@ -174,21 +180,21 @@ class Streamer(Watcher):
 
         return asyncio.run(async_stop_streaming(variables))
 
-    def stream_n_frames(self, variables=[], n_frames=1000, saving_enabled=False, saving_filename=None):
+    def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
         # FIXME rename to n values -- n frames is confusing since it suggest the frames are continuous
         """
         Streams a given number of frames. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
 
-        Note: This function will block the main thread until n_frames have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_frames, unless n_frames is a multiple of the block size (streamer._streaming_block_size).
+        Note: This function will block the main thread until n_values have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_values, unless n_values is a multiple of the block size (streamer._streaming_block_size).
 
         To avoid blocking, use the async version of this function:
-            stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
+            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffers_queue = await stream_task
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
-            n_frames (int, optional): Number of frames to stream. Defaults to 1000.
+            n_values (int, optional): Number of frames to stream. Defaults to 1000.
             delay (int, optional): _description_. Defaults to 0.
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
@@ -196,26 +202,25 @@ class Streamer(Watcher):
         Returns:
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
-        # TODO implement delay once data comes timestamped
-        return asyncio.run(self.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
+        return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename))
 
-    async def async_stream_n_frames(self, variables=[], n_frames=1000, saving_enabled=False, saving_filename="var_stream.txt"):
-        """ Asynchronous version of stream_n_frames(). Usage: 
-            stream_task = asyncio.create_task(streamer.async_stream_n_frames(variables, n_frames, saving_enabled, saving_filename))
+    async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt"):
+        """ Asynchronous version of stream_n_values(). Usage: 
+            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffers_queue = await stream_task
 
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
-            n_frames (int, optional): Number of frames to stream. Defaults to 1000.
+            n_values (int, optional): Number of frames to stream. Defaults to 1000.
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
 
         Returns:
             _type_: _description_
         """
-        # resizes the streaming buffer size to n_frames and returns it when full
+        # resizes the streaming buffer size to n_values and returns it when full
 
         # start watcher and populate watcher vars
         if self.is_streaming():
@@ -226,28 +231,40 @@ class Streamer(Watcher):
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
-        # variables might have different buffer sizes -- the code below finds the minimum number of buffers needed to stream n_frames for all variables
-        buffer_sizes = [
-            self.get_data_length(var["type"], var["timestamp_mode"])
-            for var in self.watcher_vars if var["name"] in variables]
-
-        # TODO add a warning when there's different buffer sizes ?
-
-        # ceiling division
-        n_buffers = -(-n_frames // min(buffer_sizes))
-
-        # using setter to automatically resize buffer
-        self.streaming_buffers_queue_length = n_buffers
-
         self._saving_enabled = True if saving_enabled else False
         self._saving_filename = self._generate_filename(
             saving_filename) if saving_enabled else None
 
-        self._streaming_mode = "N_FRAMES"  # flag cleared in __rec_msg_callback
+        self._streaming_mode = "N_VALUES"  # flag cleared in __rec_msg_callback
 
-        # watch only the variables specified
-        self.send_ctrl_msg(
-            {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
+        if self._mode == "STREAM":
+            # if mode stream, each buffer has m values and we need to calc the min buffers needed to supply n_values
+
+            # variables might have different buffer sizes -- the code below finds the minimum number of buffers needed to stream n_values for all variables
+            buffer_sizes = [
+                self.get_data_length(var["type"], var["timestamp_mode"])
+                for var in self.watcher_vars if var["name"] in variables]
+
+            # TODO add a warning when there's different buffer sizes ?
+
+            # ceiling division
+            n_buffers = -(-n_values // min(buffer_sizes))
+            # using setter to automatically resize buffer
+            self.streaming_buffers_queue_length = n_buffers
+
+            if periods != []:
+                warnings.warn(
+                    "Periods list is ignored in streaming mode STREAM")
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
+
+        elif self._mode == "MONITOR":
+            # if mode monitor, each buffer has 1 value so the length of the streaming buffer queue is equal to n_values
+            self.streaming_buffers_queue_length = n_values
+
+            periods = self._check_periods(periods, variables)
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
 
         # await until streaming buffer is full
         await self._streaming_buffer_available.wait()
@@ -270,7 +287,7 @@ class Streamer(Watcher):
 
     def load_data_from_file(self, filename):
         """
-        Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_frames(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
+        Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
         Args:
             filename (str): Filename
 
@@ -441,10 +458,13 @@ class Streamer(Watcher):
                     if all(value is not None for value in self._peek_response.values()):
                         self._peek_response_available.set()
 
-                # if streaming buffers queue is full for watched variables and streaming mode is N_FRAMES
-                if self._streaming_mode == "N_FRAMES" and all(len(self._streaming_buffers_queue[var["name"]]) == self._streaming_buffers_queue_length for var in self.watched_vars):
-                    self._streaming_mode = "OFF"
-                    self._streaming_buffer_available.set()
+                # if streaming buffers queue is full for watched variables and streaming mode is n_values
+                if self._streaming_mode == "N_VALUES":
+                    obs_vars = self.watched_vars if self._mode == "STREAM" else self.monitored_vars
+                    if all(len(self._streaming_buffers_queue[var["name"]]) == self._streaming_buffers_queue_length
+                            for var in obs_vars):
+                        self._streaming_mode = "OFF"
+                        self._streaming_buffer_available.set()
 
     async def _save_data_to_file(self, filename, msg):
         """ Saves data to file asynchronously. This function is called by _process_data_msg() when a buffer is received and saving is enabled.
@@ -472,7 +492,7 @@ class Streamer(Watcher):
             await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
     def _generate_filename(self, saving_filename):
-        """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_frames() when saving is enabled. 
+        """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled. 
 
         Args:
             saving_filename (str): Root filename

@@ -30,10 +30,6 @@ class Monitor(Streamer):
                 values[var]["values"].append(_buffer["data"])
         return values
 
-    @property
-    def monitored_vars(self):
-        pass
-
     def peek(self, variables=[]):
         """ Peek at variables
 
@@ -79,6 +75,19 @@ class Monitor(Streamer):
 
         self.start_streaming(
             variables, periods, saving_enabled, saving_filename)
+
+    def monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
+        variables = self._var_arg_checker(variables)
+        periods = self._check_periods(periods, variables)
+        return self.stream_n_values(variables, periods, n_values,
+                                    saving_enabled, saving_filename)
+
+    async def async_monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
+        variables = self._var_arg_checker(variables)
+        periods = self._check_periods(periods, variables)
+
+        self.async_stream_n_values(variables, periods, n_values,
+                                   saving_enabled, saving_filename)
 
     def stop_monitoring(self, variables=[]):
         self.stop_streaming(variables)

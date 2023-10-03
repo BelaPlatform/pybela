@@ -333,7 +333,8 @@ class Watcher:
             "type": var["type"],
             "timestamp_mode":"sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
             # "log_filename": var["logFileName"], # this is updated every time log is called so better not to store it
-            "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,)
+            "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,),
+            "monitor": var["monitor"]
         }
             for var in watchers if filter_func(var)]
 
