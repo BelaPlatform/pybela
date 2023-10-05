@@ -354,13 +354,13 @@ class Logger(Watcher):
 
     # -- ssh copy utils
 
-    def copy_file_from_bela(self, remote_path, local_path, verbose=False):
+    def copy_file_from_bela(self, remote_path, local_path, verbose=True):
         self.connect_ssh()
         asyncio.run(self._async_copy_file_from_bela(
             remote_path, local_path, verbose))
         self.disconnect_ssh()
 
-    def copy_all_bin_files_in_project(self, dir="./", verbose=False):
+    def copy_all_bin_files_in_project(self, dir="./", verbose=True):
         """ Copies all .bin files in the specified remote directory using SFTP.
         """
         self.connect_ssh()
@@ -408,7 +408,7 @@ class Logger(Watcher):
 
     # -- ssh delete utils
 
-    def delete_file_from_bela(self, remote_path, verbose=False):
+    def delete_file_from_bela(self, remote_path, verbose=True):
         """Deletes a file from the remote path in Bela.
 
         Args:
@@ -418,7 +418,7 @@ class Logger(Watcher):
         asyncio.run(self._async_delete_file_from_bela(remote_path, verbose))
         self.disconnect_ssh()
 
-    def delete_all_bin_files_in_project(self, verbose=False):
+    def delete_all_bin_files_in_project(self, verbose=True):
         """ Deletes all .bin files in the specified remote directory using SFTP.
         """
         self.connect_ssh()
@@ -439,8 +439,14 @@ class Logger(Watcher):
         finally:
             self.disconnect_ssh()
 
-    async def _async_delete_file_from_bela(self, remote_path, verbose=False):
+    async def _async_delete_file_from_bela(self, remote_path, verbose=True):
         # this function doesn't return until the file has been deleted
+        try:
+            self.sftp_client.stat(remote_path)  # check if file exists
+        except FileNotFoundError:
+            print(f"Error: Remote file '{remote_path}' does not exist.")
+            return
+
         while True:
             await asyncio.sleep(0.1)  # Adjust the interval as needed
             try:
