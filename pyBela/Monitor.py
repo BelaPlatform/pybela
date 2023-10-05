@@ -1,6 +1,5 @@
 from .Streamer import Streamer
 import asyncio
-# TODO check saving
 
 
 class Monitor(Streamer):
@@ -22,12 +21,17 @@ class Monitor(Streamer):
 
     @property
     def values(self):
+        """ Get monitored values from last monitoring session
+
+        Returns:
+            dict of dicts of list: Dict containing the monitored buffers for each variable in the watcher
+        """
         values = {}
         for var in self.streaming_buffers_queue:
             values[var] = {"timestamps": [], "values": []}
             for _buffer in self.streaming_buffers_queue[var]:
-                values[var]["timestamps"].append(_buffer["ref_timestamp"])
-                values[var]["values"].append(_buffer["data"])
+                values[var]["timestamps"].append(_buffer["timestamp"])
+                values[var]["values"].append(_buffer["value"])
         return values
 
     def peek(self, variables=[]):
@@ -60,14 +64,17 @@ class Monitor(Streamer):
         # res = self.list()
         # return {var: next(r["value"] for r in res if r["name"] == var) for var in variables}
 
-    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_monitor.txt"):
-        """_summary_
+    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt"):
+        """
+        Starts the monitoring session. The session can be stopped with stop_monitoring().
+
+        If no variables are specified, all watcher variables are monitored. If saving_enabled is True, the monitored data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists. 
 
         Args:
-            variables (list, optional): _description_. Defaults to [].
-            period (list, optional): _description_. Defaults to [].
-            saving_enabled (bool, optional): _description_. Defaults to False.
-            saving_filename (str, optional): _description_. Defaults to "var_monitor.txt".
+            variables (list, optional): List of variables to be streamed. Defaults to [].
+            periods (list, optional): List of monitoring periods. Defaults to [].
+            saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.
+            saving_filename (str, optional) Filename for saving the monitored data. Defaults to None.
         """
 
         variables = self._var_arg_checker(variables)
@@ -76,13 +83,52 @@ class Monitor(Streamer):
         self.start_streaming(
             variables, periods, saving_enabled, saving_filename)
 
-    def monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
+    def monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="monitor.txt"):
+        """
+        Monitors a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be monitored (unless the number of frames is a multiple of the buffer size). 
+
+        Note: This function will block the main thread until n_values have been monitored. Since the monitored values come in blocks, the actual number of returned frames monitored may be higher than n_values, unless n_values is a multiple of the block size (monitor._streaming_block_size).
+
+        To avoid blocking, use the async version of this function:
+            monitor_task = asyncio.create_task(monitor.async_monitor_n_values(variables, n_values, periods, saving_enabled, saving_filename))
+        and retrieve the monitored buffer using:
+             monitored_buffers_queue = await monitor_task
+
+        Args:
+            variables (list, optional): List of variables to be monitored. Defaults to [].
+            periods (list, optional): List of monitoring periods. Defaults to [].
+            n_values (int, optional): Number of values to monitor for each variable. Defaults to 1000.
+            delay (int, optional): _description_. Defaults to 0.
+            saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.
+            saving_filename (_type_, optional) Filename for saving the monitored data. Defaults to None.
+
+        Returns:
+            monitored_buffers_queue (dict): Dict containing the monitored buffers for each streamed variable.
+        """
         variables = self._var_arg_checker(variables)
         periods = self._check_periods(periods, variables)
-        return self.stream_n_values(variables, periods, n_values,
-                                    saving_enabled, saving_filename)
+        self.stream_n_values(variables, periods, n_values,
+                             saving_enabled, saving_filename)
+        return self.values
 
     async def async_monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
+        """ 
+        Asynchronous version of monitor_n_values(). Usage: 
+            monitor_task = asyncio.create_task(monitor.async_monitor_n_values(variables, periods, n_values, saving_enabled, saving_filename)) 
+        and retrieve the monitored buffer using:
+            monitoring_buffers_queue = await monitor_task
+
+
+        Args:
+            variables (list, optional): List of variables to be monitored. Defaults to [].
+            periods (list, optional): List of monitoring period. Defaults to [].
+            n_values (int, optional): Number of values to monitor for each variable. Defaults to 1000.
+            saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.
+            saving_filename (_type_, optional) Filename for saving the monitored data. Defaults to None.
+
+        Returns:
+            deque: Monitored buffers queue
+        """
         variables = self._var_arg_checker(variables)
         periods = self._check_periods(periods, variables)
 
@@ -90,6 +136,36 @@ class Monitor(Streamer):
                                    saving_enabled, saving_filename)
 
     def stop_monitoring(self, variables=[]):
+        """
+        Stops the current monitoring session for the given variables. If no variables are passed, the monitoring of all variables is interrupted.
+
+        Args:
+            variables (list, optional): List of variables to stop monitoring. Defaults to [].
+
+        Returns:
+            dict of dicts of lists: Dict containing the monitored buffers for each monitored variable
+        """
         self.stop_streaming(variables)
         # return only nonempty variables
         return {var: self.values[var] for var in self.values if self.values[var]["timestamps"] != []}
+
+    def load_data_from_file(self, filename, flatten=True):
+        """
+        Loads data from a file saved through the saving_enabled function in start_monitoring() or monitor_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
+        Args:
+            filename (str): Filename
+            flatten (bool, optional): If True, the returned list of values is flattened. Defaults to True.
+
+        Returns:
+            dict of lists: Dict with "timestamps" and "values" list if flatten is True, otherwise a list of dicts with "timestamp" and "value" keys.
+        """
+        loaded_buffers = super().load_data_from_file(filename)
+        if flatten:
+            flatten_loaded_buffers = {"timestamps": [], "values": []}
+            for _buffer in loaded_buffers:
+                flatten_loaded_buffers["timestamps"].append(
+                    _buffer["timestamp"])
+                flatten_loaded_buffers["values"].append(_buffer["value"])
+            return flatten_loaded_buffers
+        else:
+            return loaded_buffers

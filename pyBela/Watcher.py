@@ -60,10 +60,10 @@ class Watcher:
         Returns:
             list of dicts: List of variables in watcher and their properties
         """
-        if self._watcher_vars == None:  # populate
-            _list = self.list()
-            self._watcher_vars = self._filtered_watcher_vars(
-                _list["watchers"], lambda var: True)
+        # if self._watcher_vars == None:  # populate
+        _list = self.list()
+        self._watcher_vars = self._filtered_watcher_vars(
+            _list["watchers"], lambda var: True)
         return self._watcher_vars   # updates every time start is called
 
     @property
@@ -143,7 +143,7 @@ class Watcher:
         return asyncio.run(_async_stop())
 
     def is_connected(self):
-        return True if self._ctrl_listener is not None and self._data_listener is not None else False
+        return True if (self._ctrl_listener is not None and not self._ctrl_listener.done()) and (self._data_listener is not None and not self._data_listener.done()) else False
 
     def list(self):
         """ Asks the watcher for the list of variables and their properties and returns it
@@ -192,8 +192,7 @@ class Watcher:
                         else:
                             print(msg)
             except Exception as e:
-                handle_connection_exception(
-                    ws_address, e, "receiving message")
+                handle_connection_exception(ws_address, e, "receiving message")
         loop = asyncio.get_event_loop()
         # create_task() is needed so that the listener runs in the background and prints messages as received without blocking the cell
         listener_task = loop.create_task(
@@ -217,6 +216,7 @@ class Watcher:
                     await ws.send(json.dumps(msg))
             except Exception as e:
                 handle_connection_exception(ws_address, e, "sending message")
+                return 0
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_async_send_msg(ws, ws_address, msg))
 
@@ -301,7 +301,7 @@ class Watcher:
             # size of the buffer is not fixed as in the other modes
 
             parsed_buffer = {
-                "ref_timestamp": ref_timestamp, "data": _buffer[0]}
+                "timestamp": ref_timestamp, "value": _buffer[0]}
 
         return parsed_buffer
 
@@ -340,17 +340,25 @@ class Watcher:
             for var in watchers if filter_func(var)]
 
     def _var_arg_checker(self, variables):
-        """ Checks if variables passed to a function are passed as names in a list. If none are passed, returns all variables in watcher.
+        """ Checks if variables passed to a function are passed as names in a list. It also checks if the variables requested are in the watcher. If none are passed, returns all variables in watcher.
 
         Args:
             variables (list of str): Variables arg passed to a function
         """
+        watcher_vars = self.watcher_vars
+
         if len(variables) == 0:
             # if no variables are specified, stream all watcher variables (default)
-            variables = [var["name"] for var in self.watcher_vars]
+            return [var["name"] for var in watcher_vars]
 
         variables = variables if isinstance(variables, list) else [
             variables]  # variables should be a list of strings
+
+        # check if variables are in watcher
+        for var in variables:
+            if var not in [v["name"] for v in watcher_vars]:
+                raise ValueError(
+                    f"Variable {var} is not in the watcher. Please check the list of variables in the watcher with watcher.list().")
 
         return variables
 
@@ -464,17 +472,19 @@ class Watcher:
 
 
 def handle_connection_exception(ws_address, exception, action):
+    bela_msg = "Make sure Bela is connected to the same network as your computer, that the IP address is correct, and that there is a project running on Bela."
     if isinstance(exception, websockets.exceptions.WebSocketException):
         print(
-            f"WebSocket exception while connecting to {ws_address}: {exception}")
+            f"WebSocket exception while connecting to {ws_address}: {exception}.  {bela_msg}")
     elif isinstance(exception, OSError):
         if exception.errno == errno.ECONNREFUSED:
-            print(
-                f"Error {exception.errno}: Connection refused while connecting to {ws_address}")
+            raise ConnectionError(
+                f"Error {exception.errno}: Connection refused while connecting to {ws_address}. {bela_msg}")
         elif exception.errno == errno.ENETUNREACH:
-            print(
-                f"Error {exception.errno}: Network is unreachable while connecting to {ws_address}")
+            raise ConnectionError(
+                f"Error {exception.errno}: Network is unreachable while connecting to {ws_address}.  {bela_msg}")
         else:
-            print(f"Error {exception.errno} while connecting to {ws_address}")
+            raise ConnectionError(
+                f"Error {exception.errno} while connecting to {ws_address}.  {bela_msg}")
     else:
-        print(f"Error while {action}: {exception}")
+        print(f"Error while {action}: {exception}.  {bela_msg}")

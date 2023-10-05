@@ -93,7 +93,7 @@ class Streamer(Watcher):
         """
         # self.connect()
         if not self.is_connected():
-            print("Streamer is not connected to Bela. Run streamer.connect() first.")
+            print(f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
             return 0
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
@@ -111,7 +111,7 @@ class Streamer(Watcher):
             data[var] = []
             for _buffer in self.streaming_buffers_queue[var]:
                 data[var].extend(_buffer["data"] if self._mode !=
-                                 "MONITOR" else [_buffer["data"]])
+                                 "MONITOR" else [_buffer["value"]])
         return data
 
     # - streaming methods
@@ -126,7 +126,7 @@ class Streamer(Watcher):
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
-            periods (list, optional): List of streaming periods. Streaming periods are used by the monitor. If no streaming periods are passed, the streaming is continuous. Defaults to [].
+            periods (list, optional): List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
         """
@@ -144,7 +144,7 @@ class Streamer(Watcher):
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
-        self._streaming_mode = "FOREVER"
+        self._streaming_mode = "FOREVER" if self._peek_response is None else "PEEK"
         if self._mode == "STREAM":
             if periods != []:
                 warnings.warn(
@@ -157,8 +157,11 @@ class Streamer(Watcher):
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
-            print(
-                f"Started monitoring variables {variables}... Run stop_monitoring() to stop monitoring.")
+            if self._streaming_mode == "FOREVER":
+                print(
+                    f"Started monitoring variables {variables}... Run stop_monitoring() to stop monitoring.")
+            elif self._streaming_mode == "PEEK":
+                print(f"Peeking at variables {variables}...")
 
     def stop_streaming(self, variables=[]):
         """
@@ -172,6 +175,8 @@ class Streamer(Watcher):
         """
         async def async_stop_streaming(variables=[]):
             # self.stop()
+
+            _previous_streaming_mode = copy.copy(self._streaming_mode)
 
             self._streaming_mode = "OFF"
             if self._saving_enabled:
@@ -192,24 +197,26 @@ class Streamer(Watcher):
             elif self._mode == "MONITOR":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
-                print(f"Stopped monitoring variables {variables}...")
+                if not _previous_streaming_mode == "PEEK":
+                    print(f"Stopped monitoring variables {variables}...")
 
         return asyncio.run(async_stop_streaming(variables))
 
     def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
         """
-        Streams a given number of frames. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
+        Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
 
         Note: This function will block the main thread until n_values have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_values, unless n_values is a multiple of the block size (streamer._streaming_block_size).
 
         To avoid blocking, use the async version of this function:
-            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename))
+            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, periods, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffers_queue = await stream_task
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
-            n_values (int, optional): Number of frames to stream. Defaults to 1000.
+            periods (list, optional): List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].
+            n_values (int, optional): Number of values to stream for each variable. Defaults to 1000.
             delay (int, optional): _description_. Defaults to 0.
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
@@ -220,20 +227,22 @@ class Streamer(Watcher):
         return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename))
 
     async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt"):
-        """ Asynchronous version of stream_n_values(). Usage: 
-            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename))
+        """ 
+        Asynchronous version of stream_n_values(). Usage: 
+            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename)) 
         and retrieve the streaming buffer using:
-             streaming_buffers_queue = await stream_task
+            streaming_buffers_queue = await stream_task
 
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
-            n_values (int, optional): Number of frames to stream. Defaults to 1000.
+            periods (list, optional): List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].
+            n_values (int, optional): Number of values to stream for each variable. Defaults to 1000.
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
             saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
 
         Returns:
-            _type_: _description_
+            deque: Streaming buffers queue
         """
         # resizes the streaming buffer size to n_values and returns it when full
 
@@ -382,9 +391,11 @@ class Streamer(Watcher):
             @bokeh.driving.linear()
             def update(step):
                 # Update plot by streaming in data
-                new_data = {"timestamps": data[x_var]["timestamps"]}
+                new_data = {"timestamps": [
+                    data[x_var]["timestamp"]]if "timestamp" in data[x_var] else data[x_var]["timestamps"]}
                 for y_var in y_vars:
-                    new_data[y_var] = data[y_var]["data"]
+                    new_data[y_var] = data[y_var]["data"] if isinstance(
+                        data[y_var]["data"], list) else [data[y_var]["data"]]
                 source.stream(new_data, rollover)
 
             doc.add_root(p)
@@ -402,12 +413,16 @@ class Streamer(Watcher):
             rollover (int, optional): Number of data points to keep on the plot. Defaults to 1000.
         """
 
+        if self._mode == "MONITOR":
+            raise NotImplementedError(
+                "Plotting is not yet supported in monitor mode.")
+
         # check that x_var and y_vars are either streamed or monitored
         # more efficient to call this once since it does a list request
         watched_vars = self.watched_vars
         monitored_vars = self.monitored_vars
         for _var in [x_var, *y_vars]:
-            if _var not in [var["name"] for var in watched_vars] or [var["name"] for var in monitored_vars]:
+            if not (_var in [var["name"] for var in watched_vars] or _var in [var["name"] for var in monitored_vars]):
                 print(
                     f"PlottingError: {_var} is not being streamed or monitored.")
                 return
@@ -476,8 +491,8 @@ class Streamer(Watcher):
                 self._streaming_buffers_queue[var_name] = _var_streaming_buffers_queue
 
                 # populate last streamed buffer
-                self.last_streamed_buffer[var_name]["data"] = parsed_buffer["data"]
                 if self._mode == "STREAM":
+                    self.last_streamed_buffer[var_name]["data"] = parsed_buffer["data"]
                     if var_timestamp_mode == "dense":
                         self.last_streamed_buffer[var_name]["timestamps"] = [
                             parsed_buffer["ref_timestamp"] + i for i in range(0, len(parsed_buffer["data"]))]
@@ -485,8 +500,7 @@ class Streamer(Watcher):
                         self.last_streamed_buffer[var_name]["timestamps"] = [
                             parsed_buffer["ref_timestamp"] + i for i in parsed_buffer["rel_timestamps"]]
                 elif self._mode == "MONITOR":
-                    self.last_streamed_buffer[self._watcher_vars[_channel]
-                                              ['name']] = parsed_buffer
+                    self.last_streamed_buffer[var_name] = {"timestamp": parsed_buffer["timestamp"], "value": parsed_buffer["value"]}
 
                 # save data to file if saving is enabled
                 if _saving_enabled:
@@ -501,8 +515,7 @@ class Streamer(Watcher):
                 if self._mode == "MONITOR" and self._peek_response is not None:
                     # check that all the watched variables have been received
                     self._peek_response[self._watcher_vars[_channel]["name"]] = {
-                        "timestamp": parsed_buffer["ref_timestamp"], "value": parsed_buffer["data"]}
-
+                        "timestamp": parsed_buffer["timestamp"], "value": parsed_buffer["value"]}
                     # notify peek() that data is available
                     if all(value is not None for value in self._peek_response.values()):
                         self._peek_response_available.set()

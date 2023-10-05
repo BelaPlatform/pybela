@@ -291,7 +291,7 @@ class test_Monitor(unittest.TestCase):
                 self.assertTrue(all(len(self.monitor.streaming_buffers_data[
                     var]) >= n_values for var in self.monitor_vars[:2]), "The streamed flat buffers for every variable should have at least n_values")
                 self.assertTrue(all(len(monitored_buffer[
-                    var]) == n_values for var in self.monitor_vars[:2]), "The streaming buffers queue should have at least n_values/buffer_size buffers for every variable")
+                    var]["values"]) == n_values for var in self.monitor_vars[:2]), "The streaming buffers queue should have n_value for every variable")
 
         asyncio.run(async_test_monitor_n_values())
 
@@ -310,17 +310,16 @@ class test_Monitor(unittest.TestCase):
                 saving_enabled=True,
                 saving_filename=saving_filename)
             await asyncio.sleep(0.5)
-            self.monitor.stop_monitoring()
+            monitored_buffers = self.monitor.stop_monitoring()
 
             for var in self.monitor_vars:
-                monitored_buffers = self.monitor.streaming_buffers_queue[var]
                 loaded_buffers = self.monitor.load_data_from_file(
                     f"{var}_{saving_filename}")
-                for loaded_buffer, monitored_buffer in zip(loaded_buffers, monitored_buffers):
-                    self.assertEqual(loaded_buffer["ref_timestamp"], monitored_buffer["ref_timestamp"],
-                                     "The ref_timestamp of the loaded buffer should be equal to the ref_timestamp of the monitored buffer")
-                    self.assertEqual(loaded_buffer["data"], monitored_buffer["data"],
-                                     "The data of the loaded buffer should be equal to the data of the monitored buffer")
+            
+                self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
+                                    "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
+                self.assertEqual(loaded_buffers["values"], monitored_buffers[var]["values"],
+                                    "The values of the loaded buffer should be equal to the values of the monitored buffer")
 
             for var in self.monitor_vars:
                 remove_file(f"{var}_{saving_filename}")
