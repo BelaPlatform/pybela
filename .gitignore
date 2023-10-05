@@ -3,7 +3,6 @@ notes.md
 .ipynb_checkpoints
 dev/
 *.err
-flowcharts/pdf
 .vscode/
 __pycache__/
 *.txt
