@@ -28,6 +28,9 @@ class Streamer(Watcher):
 
         super(Streamer, self).__init__(ip, port, data_add, control_add)
 
+        # stores the list of monitored variables for each monitored session. cleaned after each monitoring session. used to avoid calling list() every time a new message is parsed
+        self._monitored_vars = None
+
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 20
         self._streaming_buffers_queue = None
@@ -58,8 +61,11 @@ class Streamer(Watcher):
         Returns:
             list: list of monitored variables
         """
-        _list = self.list()
-        return self._filtered_watcher_vars(_list["watchers"], lambda var: var["monitor"])
+        if self._monitored_vars is None:  # avoids calling list() every time a new message is parsed
+            _list = self.list()
+            self._monitored_vars = self._filtered_watcher_vars(
+                _list["watchers"], lambda var: var["monitor"])
+        return self._monitored_vars
 
     @property
     def streaming_buffers_queue_length(self):
@@ -95,6 +101,7 @@ class Streamer(Watcher):
         if not self.is_connected():
             print(f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
             return 0
+        watcher_vars = self.watcher_vars
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
@@ -300,6 +307,8 @@ class Streamer(Watcher):
 
         # turns off listener, unwatches variables
         self.stop_streaming(variables)
+        if self._mode == "MONITOR":
+            self._monitored_vars = None  # reset monitored vars
 
         return self.streaming_buffers_queue
 
@@ -418,11 +427,8 @@ class Streamer(Watcher):
                 "Plotting is not yet supported in monitor mode.")
 
         # check that x_var and y_vars are either streamed or monitored
-        # more efficient to call this once since it does a list request
-        watched_vars = self.watched_vars
-        monitored_vars = self.monitored_vars
         for _var in [x_var, *y_vars]:
-            if not (_var in [var["name"] for var in watched_vars] or _var in [var["name"] for var in monitored_vars]):
+            if not (_var in [var["name"] for var in self.watched_vars] or _var in [var["name"] for var in self.monitored_vars]):
                 print(
                     f"PlottingError: {_var} is not being streamed or monitored.")
                 return
@@ -500,7 +506,8 @@ class Streamer(Watcher):
                         self.last_streamed_buffer[var_name]["timestamps"] = [
                             parsed_buffer["ref_timestamp"] + i for i in parsed_buffer["rel_timestamps"]]
                 elif self._mode == "MONITOR":
-                    self.last_streamed_buffer[var_name] = {"timestamp": parsed_buffer["timestamp"], "value": parsed_buffer["value"]}
+                    self.last_streamed_buffer[var_name] = {
+                        "timestamp": parsed_buffer["timestamp"], "value": parsed_buffer["value"]}
 
                 # save data to file if saving is enabled
                 if _saving_enabled:

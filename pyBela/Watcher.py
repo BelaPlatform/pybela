@@ -60,10 +60,10 @@ class Watcher:
         Returns:
             list of dicts: List of variables in watcher and their properties
         """
-        # if self._watcher_vars == None:  # populate
-        _list = self.list()
-        self._watcher_vars = self._filtered_watcher_vars(
-            _list["watchers"], lambda var: True)
+        if self._watcher_vars == None:  # populate
+            _list = self.list()
+            self._watcher_vars = self._filtered_watcher_vars(
+                _list["watchers"], lambda var: True)
         return self._watcher_vars   # updates every time start is called
 
     @property
@@ -345,18 +345,17 @@ class Watcher:
         Args:
             variables (list of str): Variables arg passed to a function
         """
-        watcher_vars = self.watcher_vars
 
         if len(variables) == 0:
             # if no variables are specified, stream all watcher variables (default)
-            return [var["name"] for var in watcher_vars]
+            return [var["name"] for var in self.watcher_vars]
 
         variables = variables if isinstance(variables, list) else [
             variables]  # variables should be a list of strings
 
         # check if variables are in watcher
         for var in variables:
-            if var not in [v["name"] for v in watcher_vars]:
+            if var not in [v["name"] for v in self.watcher_vars]:
                 raise ValueError(
                     f"Variable {var} is not in the watcher. Please check the list of variables in the watcher with watcher.list().")
 

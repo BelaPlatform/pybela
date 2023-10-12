@@ -146,6 +146,7 @@ class Monitor(Streamer):
             dict of dicts of lists: Dict containing the monitored buffers for each monitored variable
         """
         self.stop_streaming(variables)
+        self._monitored_vars = None  # reset monitored variables
         # return only nonempty variables
         return {var: self.values[var] for var in self.values if self.values[var]["timestamps"] != []}
 
