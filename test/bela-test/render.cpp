@@ -25,7 +25,7 @@ void render(BelaContext *context, void *userData)
 {
 
 	static size_t count = 0;
-	if(count++ >= context->audioSampleRate * 0.6 / context->audioFrames)
+	if(1) // if(count++ >= context->audioSampleRate * 0.6 / context->audioFrames)
 	{
 		//rt_printf("%.5f %.5f\n\r", float(myvar), float(myvar2));
 		static int pastC = -1;
