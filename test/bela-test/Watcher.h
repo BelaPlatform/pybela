@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <typeinfo>
 #include <string>
@@ -17,8 +19,13 @@ public:
 		}
 	}
 	virtual double wmGet() = 0;
+	virtual double wmGetInput() = 0;
 	virtual void wmSet(double) = 0;
+	virtual void wmSetMask(unsigned int, unsigned int) = 0;
 	virtual void localControlChanged() {}
+	bool hasLocalControl() {
+		return localControlEnabled;
+	}
 protected:
 	bool localControlEnabled = true;
 };
@@ -107,16 +114,20 @@ static inline double JSONGetNumber(JSONValue* el, const std::string& key)
 	return _JSONGetNumber(el, wkey);
 }
 
+#include <thread>
 class WatcherManager
 {
 	static constexpr uint32_t kMonitorDont = 0;
 	static constexpr uint32_t kMonitorChange = 1 << 31;
 	typedef uint64_t AbsTimestamp;
 	typedef uint32_t RelTimestamp;
+	struct Priv;
+	std::thread pipeToJsonThread;
 	AbsTimestamp timestamp = 0;
 	size_t pipeReceivedRt = 0;
 	size_t pipeSentNonRt = 0;
 	Pipe pipe;
+	volatile bool shouldStop;
 	static constexpr size_t kMsgHeaderLength = sizeof(timestamp);
 	static_assert(0 == kMsgHeaderLength % sizeof(float), "has to be multiple");
 	static constexpr size_t kBufSize = 4096 + kMsgHeaderLength;
@@ -135,7 +146,15 @@ public:
 			this->controlCallback(json);
 			return true;
 		});
+		pipe.setTimeoutMsNonRt(100);
+		shouldStop = false;
+		pipeToJsonThread = std::thread(&WatcherManager::pipeToJson, this);
 	};
+	~WatcherManager()
+	{
+		shouldStop = true;
+		pipeToJsonThread.join();
+	}
 	void setup(float sampleRate)
 	{
 		this->sampleRate = sampleRate;
@@ -160,17 +179,14 @@ public:
 			.relTimestampsOffset = getRelTimestampsOffset(sizeof(T)),
 			.countRelTimestamps = 0,
 			.monitoring = kMonitorDont,
-			.logEventTimestamp = -1u,
-			.watched = false,
 			.controlled = false,
-			.logged = kLoggedNo,
-			.hasLogged = false,
 		});
 		Priv* p = vec.back();
 		p->v.resize(kBufSize); // how do we include this above?
 		if(((uintptr_t)p->v.data() + kMsgHeaderLength) & (sizeof(T) - 1))
 			throw(std::bad_alloc());
 		p->maxCount = kTimestampBlock == p->timestampMode ? p->v.size() : p->relTimestampsOffset - (sizeof(T) - 1);
+		updateSometingToDo(p);
 		return (Details*)vec.back();
 	}
 	void unreg(WatcherBase* that)
@@ -183,24 +199,32 @@ public:
 		delete *it;
 		vec.erase(it);
 	}
-	void tick(AbsTimestamp frames)
+	void tick(AbsTimestamp frames, bool full = true)
 	{
 		timestamp = frames;
+		if(!full)
+			return;
 		while(pipeReceivedRt != pipeSentNonRt)
 		{
-			Msg msg;
+			MsgToRt msg;
 			if(1 == pipe.readRt(msg))
 			{
 				pipeReceivedRt++;
 				switch(msg.cmd)
 				{
-					case Msg::kCmdStartLogging:
-						startLogging(msg.priv, msg.arg);
+					case MsgToRt::kCmdStartLogging:
+						startLogging(msg.priv, msg.args[0], msg.args[1]);
 						break;
-					case Msg::kCmdStopLogging:
-						stopLogging(msg.priv, msg.arg);
+					case MsgToRt::kCmdStopLogging:
+						stopLogging(msg.priv, msg.args[0]);
 						break;
-					case Msg::kCmdNone:
+					case MsgToRt::kCmdStartWatching:
+						startWatching(msg.priv, msg.args[0], msg.args[1]);
+						break;
+					case MsgToRt::kCmdStopWatching:
+						stopWatching(msg.priv, msg.args[0]);
+						break;
+					case MsgToRt::kCmdNone:
 						break;
 				}
 			} else {
@@ -208,6 +232,21 @@ public:
 				pipeReceivedRt = pipeSentNonRt;
 			}
 		}
+		clientActive = gui.numActiveConnections();
+	}
+	void updateSometingToDo(Priv* p, bool should = false)
+	{
+		for(auto& stream : p->streams)
+		{
+			should |= (stream.schedTsStart != -1);
+			should |= stream.state;
+		}
+		should |= (kMonitorDont != p->monitoring);
+		// TODO: is watching should be conditional to && clientActive,
+		// but for that to work, we'd need to call this for each client
+		// on clientActive change, which could be very expensive
+		should |= (isStreaming(p, kStreamIdxWatch)) || isStreaming(p, kStreamIdxLog);
+		p->somethingToDo = should;
 	}
 	// the relevant object is passed back here so that we don't have to waste
 	// time looking it up
@@ -217,19 +256,35 @@ public:
 		Priv* p = reinterpret_cast<Priv*>(d);
 		if(!p)
 			return;
-		if(timestamp >= p->logEventTimestamp)
+		if(!p->somethingToDo)
+			return;
+		bool streamLast = false;
+		for(auto& stream : p->streams)
 		{
-			p->logEventTimestamp = -1;
-			if(kLoggedStarting == p->logged)
+			if(timestamp >= stream.schedTsStart)
 			{
-				p->logged = kLoggedYes;
-				// TODO: watching and logging use the same buffer,
-				// so you'll get a dropout in the watching if you
-				// are watching right now
-				p->count = 0;
+				stream.schedTsStart = -1;
+				if(kStreamStateStarting == stream.state)
+				{
+					stream.state = kStreamStateYes;
+					// TODO: watching and logging use the same buffer,
+					// so you'll get a dropout in the watching if you
+					// are watching right now
+					p->count = 0;
+					if(-1 != stream.schedTsEnd) {
+						// if an end timestamp is provided,
+						// schedule the end immediately
+						stream.schedTsStart = stream.schedTsEnd;
+						stream.state = kStreamStateStopping;
+					}
+				}
+				else if(kStreamStateStopping == stream.state)
+				{
+					stream.state = kStreamStateLast;
+					streamLast = true;
+				}
+				updateSometingToDo(p);
 			}
-			else if(kLoggedStopping == p->logged)
-				p->logged = kLoggedLast;
 		}
 		if(kMonitorDont != p->monitoring)
 		{
@@ -244,24 +299,28 @@ public:
 			}
 			if(timestamp >= p->monitoringNext)
 			{
-				// big enough for the timestamp and one value
-				// and possibly some padding bytes at the end
-				// (though in practice there won't be any when
-				// sizeof(T) <= kMsgHeaderLength)
-				uint8_t data[((kMsgHeaderLength + sizeof(value) + sizeof(T) - 1) / sizeof(T)) * sizeof(T)];
-				memcpy(data, &timestamp, kMsgHeaderLength);
-				memcpy(data + kMsgHeaderLength, &value, sizeof(value));
-				gui.sendBuffer(p->guiBufferId, (T*)data, sizeof(data) / sizeof(T));
+				if(clientActive)
+				{
+					// big enough for the timestamp and one value
+					// and possibly some padding bytes at the end
+					// (though in practice there won't be any when
+					// sizeof(T) <= kMsgHeaderLength)
+					uint8_t data[((kMsgHeaderLength + sizeof(value) + sizeof(T) - 1) / sizeof(T)) * sizeof(T)];
+					memcpy(data, &timestamp, kMsgHeaderLength);
+					memcpy(data + kMsgHeaderLength, &value, sizeof(value));
+					gui.sendBuffer(p->guiBufferId, (T*)data, sizeof(data) / sizeof(T));
+				}
 				if(1 == p->monitoring)
 				{
 					// special case: one-shot
 					// so disable at the next iteration
 					p->monitoring = kMonitorChange | 0;
+					updateSometingToDo(p);
 				} else
 					p->monitoringNext = timestamp + p->monitoring;
 			}
 		}
-		if(p->watched || isLogging(p))
+		if((isStreaming(p, kStreamIdxWatch) && clientActive) || isStreaming(p, kStreamIdxLog))
 		{
 			if(0 == p->count)
 			{
@@ -286,9 +345,9 @@ public:
 				// only one array of type T starting at
 				// kMsgHeaderLength
 			}
-			if(full || kLoggedLast == p->logged)
+			if(full || streamLast)
 			{
-				if(kLoggedLast == p->logged && !full)
+				if(!full)
 				{
 					// when logging stops, we need to fill
 					// up all the remaining space with zeros
@@ -310,22 +369,44 @@ public:
 				// header
 
 				send<T>(p);
-				if(kLoggedLast == p->logged)
+				bool shouldUpdate = false;
+				for(size_t n = 0; n < p->streams.size(); ++n)
 				{
-					p->logger->requestFlush();
-					p->logged = kLoggedNo;
+					Stream& stream = p->streams[n];
+					if(kStreamStateLast == stream.state)
+					{
+						if(kStreamIdxLog == n)
+							p->logger->requestFlush();
+						stream.state = kStreamStateNo;
+						shouldUpdate = true;
+					}
 				}
+				if(shouldUpdate)
+					updateSometingToDo(p);
 				p->count = 0;
 			}
 		}
 	}
+	Gui& getGui() {
+		return gui;
+	}
 private:
-	enum Logged {
-		kLoggedNo,
-		kLoggedStarting,
-		kLoggedYes,
-		kLoggedStopping,
-		kLoggedLast,
+	enum StreamIdx {
+		kStreamIdxLog,
+		kStreamIdxWatch,
+		kStreamIdxNum,
+	};
+	enum StreamState {
+		kStreamStateNo,
+		kStreamStateStarting,
+		kStreamStateYes,
+		kStreamStateStopping,
+		kStreamStateLast,
+	};
+	struct Stream {
+		AbsTimestamp schedTsStart = -1;
+		AbsTimestamp schedTsEnd = -1;
+		StreamState state = kStreamStateNo;
 	};
 	struct Priv {
 		WatcherBase* w;
@@ -343,44 +424,73 @@ private:
 		size_t maxCount;
 		uint32_t monitoring;
 		AbsTimestamp monitoringNext;
-		AbsTimestamp logEventTimestamp;
-		bool watched;
+		std::array<Stream,kStreamIdxNum> streams;
 		bool controlled;
-		Logged logged;
-		bool hasLogged;
+		bool somethingToDo;
 	};
-	struct Msg {
+	struct MsgToNrt {
+		Priv* priv;
+		enum Cmd {
+			kCmdNone,
+			kCmdStartedLogging,
+		} cmd;
+		uint64_t args[2];
+	};
+	struct MsgToRt {
 		Priv* priv;
 		enum Cmd {
 			kCmdNone,
 			kCmdStartLogging,
 			kCmdStopLogging,
+			kCmdStartWatching,
+			kCmdStopWatching,
 		} cmd;
-		uint64_t arg;
+		uint64_t args[2];
 	};
-	bool isLogging(const Priv* p) const
+	void pipeToJson()
 	{
-		return p->logger && (kLoggedYes == p->logged || kLoggedStopping == p->logged || kLoggedLast == p->logged);
+		while(!shouldStop)
+		{
+			struct MsgToNrt msg;
+			if(1 == pipe.readNonRt(msg))
+			{
+				switch(msg.cmd)
+				{
+					case MsgToNrt::kCmdStartedLogging:
+					{
+						JSONObject watcher;
+						watcher[L"watcher"] = new JSONValue(JSON::s2ws(msg.priv->name));
+						watcher[L"logFileName"] = new JSONValue(JSON::s2ws(msg.priv->logFileName));
+						watcher[L"timestamp"] = new JSONValue(double(msg.args[0]));
+						watcher[L"timestampEnd"] = new JSONValue(double(msg.args[1]));
+						sendJsonResponse(new JSONValue(watcher), WSServer::kThreadOther);
+					}
+						break;
+					case MsgToNrt::kCmdNone:
+						break;
+				}
+			}
+		}
+	}
+	bool isStreaming(const Priv* p, StreamIdx idx) const
+	{
+		StreamState state = p->streams[idx].state;
+		return kStreamStateYes == state || kStreamStateStopping == state|| kStreamStateLast == state;
 	}
 	template <typename T>
 	void send(Priv* p) {
 		size_t size = p->v.size(); // TODO: customise this for smaller frames
-		if(p->watched)
+		if(clientActive && isStreaming(p, kStreamIdxWatch))
 			gui.sendBuffer(p->guiBufferId, (T*)p->v.data(), size / sizeof(T));
-		if(isLogging(p))
+		if(isStreaming(p, kStreamIdxLog))
 			p->logger->log((float*)p->v.data(), size / sizeof(float));
 	}
-	void startWatching(Priv* p) {
-		if(p->watched)
-			return;
-		p->watched = true;
-		p->count = 0;
+	void startWatching(Priv* p, AbsTimestamp startTimestamp, AbsTimestamp duration) {
+		startStreamAtFor(p, kStreamIdxWatch, startTimestamp, duration);
 		// TODO: register guiBufferId here
 	}
-	void stopWatching(Priv* p) {
-		if(!p->watched)
-			return;
-		p->watched = false;
+	void stopWatching(Priv* p, AbsTimestamp timestampEnd) {
+		stopStreamAt(p, kStreamIdxWatch, timestampEnd);
 		// TODO: unregister guiBufferId here
 	}
 	void startControlling(Priv* p) {
@@ -395,24 +505,50 @@ private:
 		p->controlled = false;
 		p->w->localControl(true);
 	}
-	void startLogging(Priv* p, AbsTimestamp timestamp) {
-		if(kLoggedNo != p->logged)
+	void startStreamAtFor(Priv* p, StreamIdx idx, AbsTimestamp startTimestamp, AbsTimestamp duration) {
+		Stream& stream = p->streams[idx];
+		stream.state = kStreamStateStarting;
+		if(startTimestamp < timestamp)
+			startTimestamp = timestamp;
+		stream.schedTsStart = startTimestamp;
+		AbsTimestamp timestampEnd = startTimestamp + duration;
+		if(0 == duration)
+			timestampEnd = -1; // do not stop automatically
+		stream.schedTsEnd = timestampEnd;
+		if(kStreamIdxLog == idx) {
+			// send a response with the actual timestamps
+			MsgToNrt msg {
+				.priv = p,
+				.cmd = MsgToNrt::kCmdStartedLogging,
+				.args = {
+					startTimestamp,
+					timestampEnd,
+				},
+			};
+			pipe.writeRt(msg);
+		}
+		updateSometingToDo(p, true);
+	}
+	void stopStreamAt(Priv* p, StreamIdx idx, AbsTimestamp timestampEnd) {
+		Stream& stream = p->streams[idx];
+		if(kStreamStateNo == stream.state)
 			return;
-		p->logged = kLoggedStarting;
-		p->logEventTimestamp = timestamp;
-		p->hasLogged = true;
+		stream.state = kStreamStateStopping;
+		stream.schedTsStart = timestampEnd;
+		updateSometingToDo(p, true);
+	}
+	void startLogging(Priv* p, AbsTimestamp startTimestamp, AbsTimestamp duration) {
+		startStreamAtFor(p, kStreamIdxLog, startTimestamp, duration);
 	}
 	void stopLogging(Priv* p, AbsTimestamp timestamp) {
-		if(kLoggedNo == p->logged)
-			return;
-		p->logged = kLoggedStopping;
-		p->logEventTimestamp = timestamp;
+		stopStreamAt(p, kStreamIdxLog, timestamp);
 	}
 	void setMonitoring(Priv* p, size_t period) {
 		p->monitoring = (kMonitorChange | period);
+		p->somethingToDo = true; // TODO: race condition
 	}
 	void setupLogger(Priv* p) {
-		delete p->logger;
+		cleanupLogger(p);
 		p->logger = new WriteFile((p->name + ".bin").c_str(), false, false);
 		p->logger->setFileType(kBinary);
 		p->logFileName = p->logger->getName();
@@ -440,8 +576,7 @@ private:
 	void cleanupLogger(Priv* p) {
 		if(!p || !p->logger)
 			return;
-		bool shouldDiscard = !p->hasLogged;
-		p->logger->cleanup(shouldDiscard);
+		p->logger->cleanup(false);
 		delete p->logger;
 		p->logger = nullptr;
 	}
@@ -455,13 +590,13 @@ private:
 		else
 			return nullptr;
 	}
-	void sendJsonResponse(JSONValue* watcher)
+	void sendJsonResponse(JSONValue* watcher, WSServer::CallingThread thread)
 	{
 		// should be called from the controlCallback() thread
 		JSONObject root;
 		root[L"watcher"] = watcher;
 		JSONValue value(root);
-		gui.sendControl(&value, WSServer::kThreadCallback);
+		gui.sendControl(&value, thread);
 	}
 	bool controlCallback(JSONObject& root) {
 		auto watcher = JSONGetArray(root, "watcher");
@@ -469,7 +604,6 @@ private:
 		{
 			JSONValue* el = watcher[n];
 			std::string cmd = JSONGetString(el, "cmd");
-			printf("Command cmd: %s\n\r", cmd.c_str());
 			if("list" == cmd)
 			{
 				// send watcher list JSON
@@ -479,12 +613,13 @@ private:
 					auto& v = *item;
 					JSONObject watcher;
 					watcher[L"name"] = new JSONValue(JSON::s2ws(v.name));
-					watcher[L"watched"] = new JSONValue(v.watched);
+					watcher[L"watched"] = new JSONValue(isStreaming(&v, kStreamIdxWatch));
 					watcher[L"controlled"] = new JSONValue(v.controlled);
-					watcher[L"logged"] = new JSONValue(v.logged);
+					watcher[L"logged"] = new JSONValue(isStreaming(&v, kStreamIdxLog));
 					watcher[L"monitor"] = new JSONValue(int((~kMonitorChange) & v.monitoring));
 					watcher[L"logFileName"] = new JSONValue(JSON::s2ws(v.logFileName));
 					watcher[L"value"] = new JSONValue(v.w->wmGet());
+					watcher[L"valueInput"] = new JSONValue(v.w->wmGetInput());
 					watcher[L"type"] = new JSONValue(JSON::s2ws(v.type));
 					watcher[L"timestampMode"] = new JSONValue(v.timestampMode);
 					watchers.emplace_back(new JSONValue(watcher));
@@ -493,49 +628,55 @@ private:
 				watcher[L"watchers"] = new JSONValue(watchers);
 				watcher[L"sampleRate"] = new JSONValue(float(sampleRate));
 				watcher[L"timestamp"] = new JSONValue(double(timestamp));
-				sendJsonResponse(new JSONValue(watcher));
-			}
+				sendJsonResponse(new JSONValue(watcher), WSServer::kThreadCallback);
+			} else
 			if("watch" == cmd || "unwatch" == cmd || "control" == cmd || "uncontrol" == cmd || "log" == cmd || "unlog" == cmd || "monitor" == cmd) {
 				const JSONArray& watchers = JSONGetArray(el, "watchers");
 				const JSONArray& periods = JSONGetArray(el, "periods"); // used only by 'monitor'
 				const JSONArray& timestamps = JSONGetArray(el, "timestamps"); // used only by some commands
+				const JSONArray& durations = JSONGetArray(el, "durations"); // used only by some commands
 				size_t numSent = 0;
 				for(size_t n = 0; n < watchers.size(); ++n)
 				{
 					std::string str = JSONGetAsString(watchers[n]);
 					Priv* p = findPrivByName(str);
+#ifdef WATCHER_PRINT
 					printf("%s {'%s', %p}, ", cmd.c_str(), str.c_str(), p);
+#endif // WATCHER_PRINT
 					if(p)
 					{
 						AbsTimestamp timestamp = 0;
-						Msg msg {
+						AbsTimestamp duration = 0;
+						MsgToRt msg {
 							.priv = p,
-							.cmd = Msg::kCmdNone,
+							.cmd = MsgToRt::kCmdNone,
 						};
 						if(n < timestamps.size())
 							timestamp = JSONGetAsNumber(timestamps[n]);
-						if("watch" == cmd)
-							startWatching(p);
-						else if("unwatch" == cmd)
-							stopWatching(p);
+						if(n < durations.size())
+							duration = JSONGetAsNumber(durations[n]);
+						if("watch" == cmd) {
+							msg.cmd = MsgToRt::kCmdStartWatching;
+							msg.args[0] = timestamp;
+							msg.args[1] = duration;
+						} else if("unwatch" == cmd) {
+							msg.cmd = MsgToRt::kCmdStopWatching;
+							msg.args[0] = timestamp;
+						}
 						else if("control" == cmd)
 							startControlling(p);
 						else if("uncontrol" == cmd)
 							stopControlling(p);
 						else if("log" == cmd) {
-							if(isLogging(p))
+							if(isStreaming(p, kStreamIdxLog))
 								continue;
-							msg.cmd = Msg::kCmdStartLogging;
-							msg.arg = timestamp;
-							cleanupLogger(p);
+							msg.cmd = MsgToRt::kCmdStartLogging;
+							msg.args[0] = timestamp;
+							msg.args[1] = duration;
 							setupLogger(p);
-							JSONObject watcher;
-							watcher[L"watcher"] = new JSONValue(JSON::s2ws(str));
-							watcher[L"logFileName"] = new JSONValue(JSON::s2ws(p->logFileName));
-							sendJsonResponse(new JSONValue(watcher));
 						} else if("unlog" == cmd) {
-							msg.cmd = Msg::kCmdStopLogging;
-							msg.arg = timestamp;
+							msg.cmd = MsgToRt::kCmdStopLogging;
+							msg.args[0] = timestamp;
 						} else if ("monitor" == cmd) {
 							if(n < periods.size())
 							{
@@ -546,14 +687,16 @@ private:
 								break;
 							}
 						}
-						if(Msg::kCmdNone != msg.cmd)
+						if(MsgToRt::kCmdNone != msg.cmd)
 						{
 							pipe.writeNonRt(msg);
 							numSent++;
 						}
 					}
 				}
+#ifdef WATCHER_PRINT
 				printf("\n");
+#endif // WATCHER_PRINT
 				if(numSent)
 				{
 					// this full memory barrier may be
@@ -563,10 +706,11 @@ private:
 					std::atomic_thread_fence(std::memory_order_release);
 					pipeSentNonRt += numSent;
 				}
-			}
-			if("set" == cmd) {
+			} else
+			if("set" == cmd || "setMask" == cmd) {
 				const JSONArray& watchers = JSONGetArray(el, "watchers");
 				const JSONArray& values = JSONGetArray(el, "values");
+				const JSONArray& masks = JSONGetArray(el, "masks");
 				if(watchers.size() != values.size()) {
 					fprintf(stderr, "set: incompatible size of watchers and values\n");
 					return false;
@@ -578,26 +722,29 @@ private:
 					Priv* p = findPrivByName(name);
 					if(p)
 					{
-						p->w->wmSet(val);
+						if("set" == cmd)
+							p->w->wmSet(val);
+						else if("setMask" == cmd) {
+							if(n > masks.size())
+								break;
+							unsigned int mask = JSONGetAsNumber(masks[n]);
+							p->w->wmSetMask(val, mask);
+						}
 					}
 				}
-			}
+			} else
+				printf("Unhandled command cmd: %s\n", cmd.c_str());
 		}
 		return false;
 	}
 	std::vector<Priv*> vec;
 	float sampleRate = 0;
 	Gui& gui;
+	bool clientActive = true;
 };
 
-Gui gui;
-WatcherManager* Bela_getDefaultWatcherManager()
-{
-	static WatcherManager defaultWatcherManager(gui);
-	return &defaultWatcherManager;
-}
-
 WatcherManager* Bela_getDefaultWatcherManager();
+
 template <typename T>
 class Watcher : public WatcherBase {
     static_assert(
@@ -615,7 +762,7 @@ public:
 		if(wm)
 			d = wm->reg<T>(this, name, timestampMode);
 	}
-	~Watcher() {
+	virtual ~Watcher() {
 		if(wm)
 			wm->unreg(this);
 	}
@@ -627,9 +774,24 @@ public:
 	{
 		return get();
 	}
+	double wmGetInput() override {
+		return v;
+	}
 	void wmSet(double value) override
 	{
 		vr = value;
+	}
+	// TODO: figure out how to provide  NOP alternative via enable_if for
+	// non-integer types
+	// template <typename = std::enable_if<std::is_integral<T>::value>>
+	void wmSetMask(unsigned int value, unsigned int mask) override
+	{
+		this->mask = mask;
+		vr = ((unsigned int)vr & ~mask) | (value & mask);
+	}
+	unsigned int getMask()
+	{
+		return this->mask;
 	}
 	// TODO: use template functions to cast to numerical types if T is numerical
 	void operator=(T value) {
@@ -655,8 +817,9 @@ public:
 	}
 protected:
 	T v {};
-	T vr;
+	T vr {};
 	WatcherManager* wm;
 	WatcherManager::Details* d;
+	unsigned int mask;
 };
 

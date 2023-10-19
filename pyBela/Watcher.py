@@ -105,6 +105,7 @@ class Watcher:
                     response = json.loads(await ws_ctrl.recv())
                     # Check if the response indicates a successful connection
                     if "event" in response and response["event"] == "connection":
+                        self.send_ctrl_msg({"event": "connection-reply"})
                         if self._ctrl_listener is None:  # avoid duplicate listeners
                             self._ctrl_listener = self._start_listener(
                                 self.ws_ctrl, self.ws_ctrl_add)

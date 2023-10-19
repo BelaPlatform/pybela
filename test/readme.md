@@ -1,5 +1,20 @@
 # testing
 
-`test.py` expects the Bela to be connected. The Bela API code should be running this dev version `3aee7b48`. You can update your board following [these instructions](https://github.com/giuliomoro/git-tutorial#bela-workflow).
+`test.py` expects the Bela to be connected. You should be using:
 
-The Bela testing code depends on the `Watcher.h` library, which can be found [here](https://github.com/BelaPlatform/watcher), use the commit `6dda37e`. Clone this repo into `Bela/projects`: https://github.com/BelaPlatform/watcher, you can use the git instructions provided above. Once cloned into your Bela board, you can replace the `render.cpp` with the one provided [in this folder](render.cpp).
+[Bela](https://github.com/BelaPlatform/Bela) at `dev` branch commit `2f86cdc2`
+[watcher](https://github.com/BelaPlatform/watcher) at `main` commit `903573a`
+
+The watcher code is already included in `bela-test`. You can update your Bela API code following [these instructions](https://github.com/giuliomoro/git-tutorial#bela-workflow).
+
+To run the tests, copy the `bela-test` code into your Bela
+
+```bash
+scp -r bela-test root@bela.local:Bela/projects/
+```
+
+From the Bela IDE, compile and run the `bela-test` project. Then, from your computer, you can run the tests using:
+
+```bash
+pipenv run python test.py
+```
