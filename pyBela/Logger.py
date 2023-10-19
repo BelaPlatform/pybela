@@ -41,7 +41,7 @@ class Logger(Watcher):
         """
 
         remote_paths = self.__logging_common_routine(
-            "FOREVER", [], variables, logging_dir)
+            mode="FOREVER", timestamps=[], durations=[], variables=variables, logging_dir=logging_dir)
 
         local_paths = {}
         if transfer:
@@ -59,61 +59,43 @@ class Logger(Watcher):
 
         return {"local_paths": local_paths, "remote_paths": remote_paths}
 
-    def schedule_logging(self, variables=[], timestamps=[], transfer=True, logging_dir="./"):
-        async def _async_schedule_logging(variables, timestamps, transfer, logging_dir):
+    def schedule_logging(self, variables=[], timestamps=[], durations=[], transfer=True, logging_dir="./"):
+        async def _async_schedule_logging(variables, timestamps, durations, transfer, logging_dir):
             # checks types and if no variables are specified, stream all watcher variables (default)
             latest_timestamp = self.get_latest_timestamp()
 
-            # if timestamps, poll latest timestamp
-            if timestamps is not []:
-                if isinstance(timestamps, list) and len(timestamps) == 2:
-                    start_timestamp = timestamps[0]
-                    end_timestamp = timestamps[1]
-
-                    # sanity checks timestamps # TODO what if start_timestamp and end_timestamp have a diff of only a few timestamps -- throw a warning?
-                    if end_timestamp < start_timestamp:
-                        print(
-                            f"Error: Timestamp to finish logging ({end_timestamp}) should be larger than timestamp to start logging ({start_timestamp})")
-                        return
-                    elif end_timestamp < latest_timestamp:
-                        print(
-                            f"Error: End timestamp {end_timestamp} is in the past (latest timestamp is {latest_timestamp}).")
-                        return
-                    elif start_timestamp < latest_timestamp:
-                        print(
-                            f"Warning: Start timestamp ({start_timestamp}) is in the past (latest timestamp is {latest_timestamp}) but end timestamp ({end_timestamp}) is in the future. Logging starting now and stopping at {end_timestamp}.")
+            # check timestamps and duration types
+            assert isinstance(
+                timestamps, list) and all(isinstance(timestamp, int) for timestamp in timestamps), "Error: timestamps must be a list of ints."
+            assert isinstance(
+                durations, list) and all(isinstance(duration, int) for duration in durations), "Error: durations must be a list of ints."
 
             remote_paths = self.__logging_common_routine(
-                "SCHEDULED", timestamps, variables, logging_dir)
+                mode="SCHEDULED", timestamps=timestamps, durations=durations, variables=variables, logging_dir=logging_dir)
 
             local_paths = {}
             if transfer:
-                # wait til the file exists
-                if latest_timestamp < start_timestamp:
-                    # check if file exists remotely, if it does, start copying
-                    # if file does not exist, take difference between latest_timestamp and start_timestamp and poll for half of that
-                    diff_stamps = start_timestamp-latest_timestamp
+                async def _async_check_if_file_exists_and_start_copying(var, timestamp):
 
+                    diff_stamps = timestamp - latest_timestamp
                     while True:
-                        # Wait for a second before checking again
-                        await asyncio.sleep(diff_stamps//(2*self.sample_rate))
-                        _have_files_been_created = 0
-                        for var in remote_paths:
-                            # remote_file = self.sftp_client.open(
-                            #     remote_paths[var], 'rb')
-                            remote_file_size = self.sftp_client.stat(
-                                remote_paths[var]).st_size
+                        _has_file_been_created = 0
 
-                            if remote_file_size > 0:  # white till first buffers are written into the file
-                                _have_files_been_created = 1
-                                print("Logging started...")
-                                break  # Break the loop if the remote file size is non-zero
+                        remote_file_size = self.sftp_client.stat(
+                            remote_paths[var]).st_size
 
-                        if _have_files_been_created:
+                        if remote_file_size > 0:  # white till first buffers are written into the file
+                            _has_file_been_created = 1
+                            print(f"Logging started for {var}...")
+                            break  # Break the loop if the remote file size is non-zero
+
+                        if _has_file_been_created:
                             break
 
-                for var in [v for v in self.watcher_vars if v["name"] in variables]:
-                    var = var["name"]
+                        # Wait before checking again
+                        await asyncio.sleep(diff_stamps//(2*self.sample_rate))
+
+                    # when file has been created
                     local_path = os.path.join(
                         logging_dir, os.path.basename(remote_paths[var]))
 
@@ -125,22 +107,32 @@ class Logger(Watcher):
                         remote_paths[var], local_paths[var])
                     self._active_copying_tasks.append(copying_task)
 
-                    # async version (non blocking)
-                    # async def _async_cleanup():
-                    #     await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
-                    #     self._active_copying_tasks.clear()
-                    #     self.sftp_client.close()
-                    # asyncio.run(_async_cleanup())
+                _active_checking_tasks = []
+                for idx, var in enumerate(variables):
+                    check_task = asyncio.create_task(
+                        _async_check_if_file_exists_and_start_copying(var, timestamps[idx]))
+                    _active_checking_tasks.append(check_task)
 
-                    await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
-                    self._active_copying_tasks.clear()
-                    self.sftp_client.close()
+                # wait for all the files to be created
+                await asyncio.gather(*_active_checking_tasks, return_exceptions=True)
+                # wait for all the files to be copied
+                await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
+                self._active_copying_tasks.clear()
+                _active_checking_tasks.clear()
+                self.sftp_client.close()
+
+                # async version (non blocking)
+                # async def _async_cleanup():
+                #     await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
+                #     self._active_copying_tasks.clear()
+                #     self.sftp_client.close()
+                # asyncio.run(_async_cleanup())
 
             return {"local_paths": local_paths, "remote_paths": remote_paths}
 
-        return asyncio.run(_async_schedule_logging(variables, timestamps, transfer, logging_dir))
+        return asyncio.run(_async_schedule_logging(variables=variables, timestamps=timestamps, durations=durations, transfer=transfer, logging_dir=logging_dir))
 
-    def __logging_common_routine(self, mode, timestamps=[], variables=[], logging_dir="./"):
+    def __logging_common_routine(self, mode, timestamps=[], durations=[], variables=[], logging_dir="./"):
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
@@ -159,7 +151,7 @@ class Logger(Watcher):
             # the logger responds with the name of the file where the variable is being logged in Bela
             # the logger responds with one message per variable -- so to keep track of responses it is easier to ask for a variable at a time rather than all at once
             self.send_ctrl_msg(
-                {"watcher": [{"cmd": "log", "timestamps": timestamps, "watchers": [var]}]})
+                {"watcher": [{"cmd": "log", "timestamps": timestamps, "durations": durations, "watchers": [var]}]})
             await self._log_response_available.wait()
             self._log_response_available.clear()
             return self._log_response

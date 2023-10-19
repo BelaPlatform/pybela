@@ -129,15 +129,16 @@ class Watcher:
     def stop(self):
         """Stops listeners and closes websockets
         """
+
         async def _async_stop():
             if self._ctrl_listener is not None:
                 self._ctrl_listener.cancel()
-                if self.ws_ctrl is not None:
+                if self.ws_ctrl is not None and self.ws_ctrl.open:
                     await self.ws_ctrl.close()
                 self._ctrl_listener = None  # empty the listener
             if self._data_listener is not None:
                 self._data_listener.cancel()
-                if self.ws_data is not None:
+                if self.ws_data is not None and self._data_listener.open:
                     await self.ws_data.close()
                 self._data_listener = None
 

@@ -214,10 +214,12 @@ class test_Logger(unittest.TestCase):
             latest_timestamp = self.logger.get_latest_timestamp()
             sample_rate = self.logger.sample_rate
             timestamps = [latest_timestamp +
-                          2*sample_rate, latest_timestamp+2*sample_rate + 5*sample_rate]
+                          sample_rate] * len(self.logging_vars)  # start logging after ~1s
+            durations = [sample_rate] * len(self.logging_vars)  # log for 1s
 
             file_paths = self.logger.schedule_logging(variables=self.logging_vars,
                                                       timestamps=timestamps,
+                                                      durations=durations,
                                                       transfer=True,
                                                       logging_dir=self.logging_dir)
 
@@ -233,8 +235,6 @@ class test_Logger(unittest.TestCase):
             for var in file_paths["remote_paths"]:
                 self.logger.delete_file_from_bela(
                     file_paths["remote_paths"][var])
-            await asyncio.sleep(2)
-            self.logger.stop_logging()
 
         asyncio.run(async_test_scheduling_logging())
 
@@ -315,11 +315,11 @@ class test_Monitor(unittest.TestCase):
             for var in self.monitor_vars:
                 loaded_buffers = self.monitor.load_data_from_file(
                     f"{var}_{saving_filename}")
-            
+
                 self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
-                                    "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
+                                 "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
                 self.assertEqual(loaded_buffers["values"], monitored_buffers[var]["values"],
-                                    "The values of the loaded buffer should be equal to the values of the monitored buffer")
+                                 "The values of the loaded buffer should be equal to the values of the monitored buffer")
 
             for var in self.monitor_vars:
                 remove_file(f"{var}_{saving_filename}")
@@ -340,7 +340,6 @@ if __name__ == '__main__':
     # select which tests to run
     if 1:
         suite = unittest.TestSuite()
-
         if 1:
             suite.addTest(test_Watcher('test_list'))
             suite.addTest(test_Watcher('test_start_stop'))
@@ -352,7 +351,7 @@ if __name__ == '__main__':
         if 1:
             suite.addTest(test_Logger('test_logged_files_with_transfer'))
             suite.addTest(test_Logger('test_logged_files_wo_transfer'))
-            # suite.addTest(test_Logger('test_scheduling_logging'))
+            suite.addTest(test_Logger('test_scheduling_logging'))
 
         if 1:
             suite.addTest(test_Monitor('test_peek'))
