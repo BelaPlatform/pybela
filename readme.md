@@ -2,8 +2,7 @@
 
 \[description\]
 
-Bela at `dev` branch commit `2f86cdc2`
-watcher at `main` commit `903573a`
+Tested with Bela at `dev` branch commit `9e436a9` and watcher at `main` commit `903573a`.
 
 ## Installation
 

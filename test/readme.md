@@ -1,9 +1,6 @@
 # testing
 
-`test.py` expects the Bela to be connected. You should be using:
-
-[Bela](https://github.com/BelaPlatform/Bela) at `dev` branch commit `2f86cdc2`
-[watcher](https://github.com/BelaPlatform/watcher) at `main` commit `903573a`
+`test.py` expects the Bela to be connected. Tested with [Bela](https://github.com/BelaPlatform/Bela) at `dev` branch commit `9e436a9` and [watcher](https://github.com/BelaPlatform/watcher) at `main` commit `903573a`.
 
 The watcher code is already included in `bela-test`. You can update your Bela API code following [these instructions](https://github.com/giuliomoro/git-tutorial#bela-workflow).
 
