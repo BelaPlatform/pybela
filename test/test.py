@@ -14,7 +14,7 @@ class test_Watcher(unittest.TestCase):
         self.watcher.connect()
 
     def tearDown(self):
-        del self.watcher
+        self.watcher.__del__()
 
     def test_list(self):
         self.assertEqual(len(self.watcher.list()["watchers"]), len(self.watcher.watcher_vars),
@@ -22,10 +22,10 @@ class test_Watcher(unittest.TestCase):
 
     def test_start_stop(self):
         self.watcher.stop()
-        self.assertEqual(self.watcher._ctrl_listener, None,
-                         "Watcher ctrl listener should be None after stop")
-        self.assertEqual(self.watcher._data_listener, None,
-                         "Watcher data listener should be None after stop")
+        self.assertTrue(self.watcher.ws_ctrl.close,
+                        "Watcher ctrl websocket should be closed after stop")
+        self.assertTrue(self.watcher.ws_data.close,
+                        "Watcher data websocket should be closed after stop")
 
 
 class test_Streamer(unittest.TestCase):
@@ -42,7 +42,7 @@ class test_Streamer(unittest.TestCase):
         self.saving_dir = "./test"
 
     def tearDown(self):
-        del self.streamer
+        self.streamer.__del__()
 
     def test_stream_n_values(self):
         n_values = 40
@@ -130,7 +130,7 @@ class test_Logger(unittest.TestCase):
         self.logging_dir = "./test"
 
     def tearDown(self):
-        del self.logger
+        self.logger.__del__()
 
     def _test_logged_data(self, logger, logging_vars, local_paths):
         # common routine to test the data in the logged files
@@ -202,15 +202,16 @@ class test_Logger(unittest.TestCase):
             # clean log files
             for var in self.logging_vars:
                 remove_file(local_paths[var])
-                self.logger.delete_file_from_bela(
-                    file_paths["remote_paths"][var])
+                # self.logger.delete_file_from_bela(
+                #     file_paths["remote_paths"][var])
+            self.logger.delete_all_bin_files_in_project()
+
+
 
         asyncio.run(async_test_logged_files_wo_transfer())
 
     def test_scheduling_logging(self):
         async def async_test_scheduling_logging():
-            # FIXME this test doesn't fail but scheduling doesn't work -- it doesn't stop at the second timestamp and it runs forever
-
             latest_timestamp = self.logger.get_latest_timestamp()
             sample_rate = self.logger.sample_rate
             timestamps = [latest_timestamp +
@@ -230,11 +231,12 @@ class test_Logger(unittest.TestCase):
             for var in file_paths["local_paths"]:
                 if os.path.exists(file_paths["local_paths"][var]):
                     os.remove(file_paths["local_paths"][var])
+            self.logger.delete_all_bin_files_in_project()
 
-            # clean all remote log files in project
-            for var in file_paths["remote_paths"]:
-                self.logger.delete_file_from_bela(
-                    file_paths["remote_paths"][var])
+            # # clean all remote log files in project
+            # for var in file_paths["remote_paths"]:
+            #     self.logger.delete_file_from_bela(
+            #         file_paths["remote_paths"][var])
 
         asyncio.run(async_test_scheduling_logging())
 
@@ -248,7 +250,7 @@ class test_Monitor(unittest.TestCase):
         self.monitor.connect()
 
     def tearDown(self):
-        del self.monitor
+        self.monitor.__del__()
 
     def test_peek(self):
         async def async_test_peek():
@@ -333,31 +335,35 @@ def remove_file(file_path):
 
 
 if __name__ == '__main__':
-    # run all tests
     if 0:
         unittest.main(verbosity=2)
 
     # select which tests to run
-    if 1:
-        suite = unittest.TestSuite()
-        if 1:
-            suite.addTest(test_Watcher('test_list'))
-            suite.addTest(test_Watcher('test_start_stop'))
+    n = 5
+    for i in range(n):
+
+        print(f"\n\n....Running test {i+1}/{n}")
 
         if 1:
-            suite.addTest(test_Streamer('test_stream_n_values'))
-            suite.addTest(test_Streamer('test_buffers'))
+            suite = unittest.TestSuite()
+            if 1:
+                suite.addTest(test_Watcher('test_list'))
+                suite.addTest(test_Watcher('test_start_stop'))
 
-        if 1:
-            suite.addTest(test_Logger('test_logged_files_with_transfer'))
-            suite.addTest(test_Logger('test_logged_files_wo_transfer'))
-            suite.addTest(test_Logger('test_scheduling_logging'))
+            if 1:
+                suite.addTest(test_Streamer('test_stream_n_values'))
+                suite.addTest(test_Streamer('test_buffers'))
 
-        if 1:
-            suite.addTest(test_Monitor('test_peek'))
-            suite.addTest(test_Monitor('test_period_monitor'))
-            suite.addTest(test_Monitor('test_monitor_n_values'))
-            suite.addTest(test_Monitor('test_save_monitor'))
+            if 1:
+                suite.addTest(test_Logger('test_logged_files_with_transfer'))
+                suite.addTest(test_Logger('test_logged_files_wo_transfer'))
+                suite.addTest(test_Logger('test_scheduling_logging'))
 
-        runner = unittest.TextTestRunner(verbosity=2)
-        runner.run(suite)
+            if 1:
+                suite.addTest(test_Monitor('test_peek'))
+                suite.addTest(test_Monitor('test_period_monitor'))
+                suite.addTest(test_Monitor('test_monitor_n_values'))
+                suite.addTest(test_Monitor('test_save_monitor'))
+
+            runner = unittest.TextTestRunner(verbosity=2)
+            runner.run(suite)

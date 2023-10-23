@@ -4,6 +4,7 @@ import aiofiles
 import struct
 import paramiko
 from .Watcher import Watcher
+from .utils import bcolors, print_error, print_info, print_ok, print_warning
 
 
 class Logger(Watcher):
@@ -86,7 +87,8 @@ class Logger(Watcher):
 
                         if remote_file_size > 0:  # white till first buffers are written into the file
                             _has_file_been_created = 1
-                            print(f"Logging started for {var}...")
+                            print_info(
+                                f"Logging started for {var}...")
                             break  # Break the loop if the remote file size is non-zero
 
                         if _has_file_been_created:
@@ -206,6 +208,10 @@ class Logger(Watcher):
                 self.ip, port=22, username="root", password=None)
         except paramiko.SSHException as e:
             self.ssh_client.get_transport().auth_none("root")
+        except Exception as e:
+            print_error(
+                f"Error while connecting to Bela via ssh: {e} {bcolors.ENDC}")
+            return
 
         self.sftp_client = self.ssh_client.open_sftp()  # TODO handle exceptions better
 
@@ -252,7 +258,8 @@ class Logger(Watcher):
                         break  # Break the loop if the remote file size is non-zero
 
                 except FileNotFoundError:
-                    print(f"Remote file '{remote_path}' does not exist.")
+                    print_error(
+                        f"Remote file '{remote_path}' does not exist.")
                     return None
 
             try:
@@ -262,13 +269,14 @@ class Logger(Watcher):
                         if not chunk:
                             break
                         await local_file.write(chunk)
-                        print(
-                            f"\rTransferring {remote_path}-->{local_path}... ", end="", flush=True)
+                        print_ok(
+                            f"\rTransferring {remote_path}-->{local_path}...", end="", flush=True)
                     remote_file.close()
-                    print("Done.")
+                    print_ok("Done.")
 
             except Exception as e:
-                print(f"Error while transferring file: {e}")
+                print_error(
+                    f"Error while transferring file: {e}.")
                 return None
 
             finally:
@@ -330,7 +338,7 @@ class Logger(Watcher):
                     parsed_buffers.append(_parsed_buffer)
 
                 except struct.error as e:
-                    print(e)
+                    print_error(e)
                     break  # No more data to read
 
         return {
@@ -355,9 +363,9 @@ class Logger(Watcher):
     def copy_all_bin_files_in_project(self, dir="./", verbose=True):
         """ Copies all .bin files in the specified remote directory using SFTP.
         """
-        self.connect_ssh()
         remote_path = f'/root/Bela/projects/{self.project_name}'
         try:
+            self.connect_ssh()
             copy_tasks = self._action_on_all_bin_files_in_project(
                 "copy", dir)
 
@@ -366,10 +374,11 @@ class Logger(Watcher):
                 *copy_tasks, return_exceptions=True))
 
             if verbose:
-                print(
+                print_ok(
                     f"All .bin files in {remote_path} have been copied to {dir}.")
         except Exception as e:
-            print(f"Error copying .bin files in {remote_path}: {e}")
+            print_error(
+                f"Error copying .bin files in {remote_path}: {e}")
         finally:
             self.disconnect_ssh()
 
@@ -389,13 +398,14 @@ class Logger(Watcher):
             self.sftp_client.get(remote_path, local_path, callback=callback)
             await asyncio.wait_for(transferred_event.wait(), timeout=3)
             if verbose:
-                print(f"\rTransferring {remote_path}-->{local_path}... Done.")
+                print_ok(
+                    f"\rTransferring {remote_path}-->{local_path}... Done.")
             return transferred_event.is_set()
         except asyncio.TimeoutError:
-            print("Timeout while transferring file.")
+            print_error("Timeout while transferring file.")
             return False  # File copy did not complete within the timeout
         except Exception as e:
-            print(f"Error while transferring file: {e}")
+            print_error(f"Error while transferring file: {e}")
             return False
 
     # -- ssh delete utils
@@ -413,8 +423,9 @@ class Logger(Watcher):
     def delete_all_bin_files_in_project(self, verbose=True):
         """ Deletes all .bin files in the specified remote directory using SFTP.
         """
-        self.connect_ssh()
+        remote_path = f'/root/Bela/projects/{self.project_name}'
         try:
+            self.connect_ssh()
             deletion_tasks = self._action_on_all_bin_files_in_project(
                 "delete")
 
@@ -422,12 +433,12 @@ class Logger(Watcher):
             asyncio.run(asyncio.gather(
                 *deletion_tasks, return_exceptions=True))
 
-            remote_path = f'/root/Bela/projects/{self.project_name}'
             if verbose:
-                print(
+                print_ok(
                     f"All .bin files in {remote_path} have been removed.")
         except Exception as e:
-            print(f"Error deleting .bin files in {remote_path}: {e}")
+            print_error(
+                f"Error deleting .bin files in {remote_path}: {e}")
         finally:
             self.disconnect_ssh()
 
@@ -436,7 +447,8 @@ class Logger(Watcher):
         try:
             self.sftp_client.stat(remote_path)  # check if file exists
         except FileNotFoundError:
-            print(f"Error: Remote file '{remote_path}' does not exist.")
+            print_error(
+                f"Error: Remote file '{remote_path}' does not exist.")
             return
 
         while True:
@@ -447,10 +459,12 @@ class Logger(Watcher):
             except FileNotFoundError:
                 # File does not exist, it has been successfully removed
                 if verbose:
-                    print(f"File '{remote_path}' has been removed from Bela.")
+                    print_ok(
+                        f"File '{remote_path}' has been removed from Bela.")
                 break
             except Exception as e:
-                print(f"Error while deleting file in Bela: {e}")
+                print_error(
+                    f"Error while deleting file in Bela: {e} ")
                 break
 
     # -- bunk task utils
@@ -460,7 +474,7 @@ class Logger(Watcher):
         remote_path = f'/root/Bela/projects/{self.project_name}'
         file_list = self.sftp_client.listdir(remote_path)
         if len(file_list) == 0:
-            print(f"No .bin files in {remote_path}.")
+            print_warning(f"No .bin files in {remote_path}.")
             return
 
         # Iterate through the files and delete .bin files

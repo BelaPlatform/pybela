@@ -13,6 +13,7 @@ import bokeh.io
 import bokeh.driving
 from bokeh.resources import INLINE
 from .Watcher import Watcher
+from .utils import print_info, print_error, print_warning
 
 
 class Streamer(Watcher):
@@ -99,9 +100,8 @@ class Streamer(Watcher):
         """
         # self.connect()
         if not self.is_connected():
-            print(f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
+            print_warning(f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
             return 0
-        watcher_vars = self.watcher_vars
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
@@ -158,17 +158,17 @@ class Streamer(Watcher):
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "watch", "watchers": variables}]})
-            print(
+            print_info(
                 f"Started streaming variables {variables}... Run stop_streaming() to stop streaming.")
         elif self._mode == "MONITOR":
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
             if self._streaming_mode == "FOREVER":
-                print(
+                print_info(
                     f"Started monitoring variables {variables}... Run stop_monitoring() to stop monitoring.")
             elif self._streaming_mode == "PEEK":
-                print(f"Peeking at variables {variables}...")
+                print_info(f"Peeking at variables {variables}...")
 
     def stop_streaming(self, variables=[]):
         """
@@ -200,12 +200,12 @@ class Streamer(Watcher):
             if self._mode == "STREAM":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
-                print(f"Stopped streaming variables {variables}...")
+                print_info(f"Stopped streaming variables {variables}...")
             elif self._mode == "MONITOR":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
                 if not _previous_streaming_mode == "PEEK":
-                    print(f"Stopped monitoring variables {variables}...")
+                    print_info(f"Stopped monitoring variables {variables}...")
 
         return asyncio.run(async_stop_streaming(variables))
 
@@ -289,7 +289,8 @@ class Streamer(Watcher):
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
-            print(f"Streaming {n_values} values for variables {variables}...")
+            print_info(
+                f"Streaming {n_values} values for variables {variables}...")
 
         elif self._mode == "MONITOR":
             # if mode monitor, each buffer has 1 value so the length of the streaming buffer queue is equal to n_values
@@ -298,7 +299,7 @@ class Streamer(Watcher):
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
-            print(
+            print_info(
                 f"Monitoring {n_values} values for variables {variables} with periods {periods}...")
 
         # await until streaming buffer is full
@@ -343,7 +344,7 @@ class Streamer(Watcher):
                     except EOFError:  # reached end of file
                         break
         except Exception as e:
-            print(f"Error while loading data from file: {e}")
+            print_error(f"Error while loading data from file: {e}")
             return None
 
         return data
@@ -429,7 +430,7 @@ class Streamer(Watcher):
         # check that x_var and y_vars are either streamed or monitored
         for _var in [x_var, *y_vars]:
             if not (_var in [var["name"] for var in self.watched_vars] or _var in [var["name"] for var in self.monitored_vars]):
-                print(
+                print_error(
                     f"PlottingError: {_var} is not being streamed or monitored.")
                 return
 
@@ -441,7 +442,7 @@ class Streamer(Watcher):
                 await asyncio.sleep(0.1)
         asyncio.run(wait_for_streaming_buffers_to_arrive())
         if len(y_vars) > 1 and not all([len(self.last_streamed_buffer[y_var]) == len(self.last_streamed_buffer[y_vars[0]]) for y_var in y_vars[1:]]):
-            print(
+            print_error(
                 "PlottingError: plotting buffers of different length is not supported yet. Try using the same timestamp mode and type for your variables...")
             return
 
@@ -555,7 +556,7 @@ class Streamer(Watcher):
                     await f.write(_json+"\n")
 
         except Exception as e:
-            print(f"Error while saving data to file: {e}")
+            print_error(f"Error while saving data to file: {e}")
 
         finally:
             await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())

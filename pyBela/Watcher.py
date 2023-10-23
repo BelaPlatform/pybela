@@ -5,6 +5,7 @@ import json
 import errno
 import struct
 import os
+from .utils import print_error, print_warning, print_ok
 
 
 class Watcher:
@@ -28,18 +29,15 @@ class Watcher:
         self.control_add = control_add
         self.ws_ctrl_add = f"ws://{self.ip}:{self.port}/{self.control_add}"
         self.ws_data_add = f"ws://{self.ip}:{self.port}/{self.data_add}"
-
         self.ws_ctrl = None
         self.ws_data = None
 
-        self._ctrl_listener = None
-        self._data_listener = None
-
-        self._watcher_vars = None
         self._list_response_available = asyncio.Event()
         self._list_response = None
         self._log_response_available = asyncio.Event()
         self._log_response = None
+
+        self._watcher_vars = None
 
         self._mode = "WATCH"
 
@@ -97,62 +95,56 @@ class Watcher:
 
         async def _async_connect():
             try:
-                async with websockets.connect(self.ws_ctrl_add) as ws_ctrl:
-                    self.ws_ctrl = ws_ctrl
-                    # Send a control message to check the connection
-                    self.send_ctrl_msg({"watcher": [{"cmd": "list"}]})
-                    # Wait for a response from the server
-                    response = json.loads(await ws_ctrl.recv())
-                    # Check if the response indicates a successful connection
-                    if "event" in response and response["event"] == "connection":
-                        self.send_ctrl_msg({"event": "connection-reply"})
-                        if self._ctrl_listener is None:  # avoid duplicate listeners
-                            self._ctrl_listener = self._start_listener(
-                                self.ws_ctrl, self.ws_ctrl_add)
-                        if self._data_listener is None:
-                            self._data_listener = self._start_listener(
-                                self.ws_data, self.ws_data_add)
+                # Connect to the control websocket
+                ws_ctrl = await websockets.connect(self.ws_ctrl_add)
+                self.ws_ctrl = ws_ctrl
 
-                        # refresh watcher vars in case new project has been loaded in Bela
-                        self._list = self.list()
-                        self._sample_rate = self._list["sampleRate"]
-                        self._watcher_vars = self._filtered_watcher_vars(self._list["watchers"],
-                                                                         lambda var: True)
-                        return "Connection successful"
-                    else:
-                        return "Connection failed"
+                # Check if the response indicates a successful connection
+                response = json.loads(await ws_ctrl.recv())
+                if "event" in response and response["event"] == "connection":
+                    self.project_name = response["projectName"]
+                    # Send connection reply to establish the connection
+                    self.send_ctrl_msg({"event": "connection-reply"})
+
+                    # Connect to the data websocket
+                    ws_data = await websockets.connect(self.ws_data_add)
+                    self.ws_data = ws_data
+
+                    # Start listener loops
+                    self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
+                    self._start_listener(self.ws_data, self.ws_data_add)
+
+                    # refresh watcher vars in case new project has been loaded in Bela
+                    self._list = self.list()
+                    self._sample_rate = self._list["sampleRate"]
+                    self._watcher_vars = self._filtered_watcher_vars(self._list["watchers"],
+                                                                     lambda var: True)
+                    print_ok("Connection successful")
+                else:
+                    print_error("Connection failed")
             except Exception as e:
-                return f"Connection failed: {str(e)}."
+                raise ConnectionError(f"Connection failed: {str(e)}.")
 
         return asyncio.run(_async_connect())
 
     def stop(self):
-        """Stops listeners and closes websockets
+        """Closes websockets
         """
-
         async def _async_stop():
-            if self._ctrl_listener is not None:
-                self._ctrl_listener.cancel()
-                if self.ws_ctrl is not None and self.ws_ctrl.open:
-                    await self.ws_ctrl.close()
-                self._ctrl_listener = None  # empty the listener
-            if self._data_listener is not None:
-                self._data_listener.cancel()
-                if self.ws_data is not None and self._data_listener.open:
-                    await self.ws_data.close()
-                self._data_listener = None
+            if self.ws_ctrl is not None and self.ws_ctrl.open:
+                await self.ws_ctrl.close()
+            if self.ws_data is not None and self.ws_data.open:
+                await self.ws_data.close()
 
         return asyncio.run(_async_stop())
 
     def is_connected(self):
-        return True if (self._ctrl_listener is not None and not self._ctrl_listener.done()) and (self._data_listener is not None and not self._data_listener.done()) else False
+        return True if (self.ws_ctrl is not None and self.ws_ctrl.open) and (self.ws_data is not None and self.ws_data.open) else False
 
     def list(self):
         """ Asks the watcher for the list of variables and their properties and returns it
         """
         async def _async_list():
-            if self._ctrl_listener is None:  # start listener if listener is not running
-                self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
             self.send_ctrl_msg({"watcher": [{"cmd": "list"}]})
             # Wait for the list response to be available
             await self._list_response_available.wait()
@@ -167,14 +159,14 @@ class Watcher:
         Args:
             msg (str): Message to send to the Bela watcher. Example: {"watcher": [{"cmd": "list"}]}
         """
-        self._send_msg(self.ws_ctrl, self.ws_ctrl_add, msg)
+        self._send_msg(self.ws_ctrl_add, msg)
 
     # --- private methods --- #
 
     # start listener
 
     def _start_listener(self, ws, ws_address):
-        """Start listener for messages. 
+        """Start listener for messages. The listener is a while True loop that runs in the background and processes messages received in ws as they are received.
 
         Args:
             ws (websocket): Websocket object
@@ -182,28 +174,26 @@ class Watcher:
         """
         async def _async_start_listener(ws, ws_address):
             try:
-                async with websockets.connect(ws_address) as ws:
-                    while True:
-                        msg = await ws.recv()
-                        if self._printall_responses:
-                            print(msg)
-                        if ws_address == self.ws_data_add:
-                            self._process_data_msg(msg)
-                        elif ws_address == self.ws_ctrl_add:
-                            self._process_ctrl_msg(msg)
-                        else:
-                            print(msg)
+                while ws is not None and ws.open:
+                    msg = await ws.recv()
+                    if self._printall_responses:
+                        print(msg)
+                    if ws_address == self.ws_data_add:
+                        self._process_data_msg(msg)
+                    elif ws_address == self.ws_ctrl_add:
+                        self._process_ctrl_msg(msg)
+                    else:
+                        print(msg)
             except Exception as e:
-                handle_connection_exception(ws_address, e, "receiving message")
-        loop = asyncio.get_event_loop()
-        # create_task() is needed so that the listener runs in the background and prints messages as received without blocking the cell
-        listener_task = loop.create_task(
+                if ws.open:  # otherwise websocket was closed intentionally
+                    handle_connection_exception(
+                        ws_address, e, "receiving message")
+        asyncio.create_task(
             _async_start_listener(ws, ws_address))
-        return listener_task
 
     # send message
 
-    def _send_msg(self, ws, ws_address, msg):
+    def _send_msg(self, ws_address, msg):
         """Send message to websocket
 
         Args:
@@ -211,16 +201,16 @@ class Watcher:
             ws_address (str): Websocket address
             msg (str): Message to send
         """
-        async def _async_send_msg(ws, ws_address, msg):
+        async def _async_send_msg(ws_address, msg):
             try:
-                # here you can use the same websocket for multiple messages -- but avoid using the same one for sending and receiving
-                async with websockets.connect(ws_address) as ws:
-                    await ws.send(json.dumps(msg))
+                if ws_address == self.ws_data_add and self.ws_data is not None and self.ws_data.open:
+                    await self.ws_data.send(json.dumps(msg))
+                elif ws_address == self.ws_ctrl_add and self.ws_ctrl is not None and self.ws_ctrl.open:
+                    await self.ws_ctrl.send(json.dumps(msg))
             except Exception as e:
                 handle_connection_exception(ws_address, e, "sending message")
                 return 0
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(_async_send_msg(ws, ws_address, msg))
+        asyncio.run(_async_send_msg(ws_address, msg))
 
     # process messages
 
@@ -247,9 +237,6 @@ class Watcher:
             elif "sampleRate" in _msg["watcher"].keys():  # response to list cmd
                 self._list_response = _msg["watcher"]
                 self._list_response_available.set()
-
-        if "projectName" in _msg.keys():
-            self.project_name = _msg["projectName"]
 
     def _parse_binary_data(self, binary_data, timestamp_mode, _type):
         """Binary data parser. This method is used both by the streamer and the logger to parse the binary data buffers.
@@ -373,13 +360,12 @@ class Watcher:
             while os.path.exists(new_local_path):
                 new_local_path = f"{base}_{counter}{ext}"
                 counter += 1
-            print(
-                f"\033[91m{local_path} already exists. Renaming file to {new_local_path}\033[0m")
+            print_warning(
+                f"{local_path} already exists. Renaming file to {new_local_path}")
 
         return new_local_path
 
     def get_prop_of_var(self, var_name, prop):
-        # TODO replace get_data_length by this
         """Get property of variable. Properties: name, type, timestamp_mode, log_filename, data_length
 
         Args:
@@ -474,10 +460,9 @@ class Watcher:
 
 def handle_connection_exception(ws_address, exception, action):
     bela_msg = "Make sure Bela is connected to the same network as your computer, that the IP address is correct, and that there is a project running on Bela."
-    if isinstance(exception, websockets.exceptions.WebSocketException):
-        print(
-            f"WebSocket exception while connecting to {ws_address}: {exception}.  {bela_msg}")
-    elif isinstance(exception, OSError):
+    print_error(
+        f"WebSocket exception while connecting to {ws_address}: {exception}.  {bela_msg}")
+    if isinstance(exception, OSError):
         if exception.errno == errno.ECONNREFUSED:
             raise ConnectionError(
                 f"Error {exception.errno}: Connection refused while connecting to {ws_address}. {bela_msg}")
@@ -488,4 +473,4 @@ def handle_connection_exception(ws_address, exception, action):
             raise ConnectionError(
                 f"Error {exception.errno} while connecting to {ws_address}.  {bela_msg}")
     else:
-        print(f"Error while {action}: {exception}.  {bela_msg}")
+        print_error(f"Error while {action}: {exception}.  {bela_msg}")

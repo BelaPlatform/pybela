@@ -15,9 +15,12 @@ class Monitor(Streamer):
 
         super(Monitor, self).__init__(ip, port, data_add, control_add)
 
+        self._mode = "MONITOR"
+
+    def connect(self):
+        super().connect()
         # longer queue for monitor since each buffer has only one value
         self.streaming_buffers_queue_length = 2000
-        self._mode = "MONITOR"
 
     @property
     def values(self):
