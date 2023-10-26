@@ -2,7 +2,7 @@
 
 \[description\]
 
-Tested with Bela at `dev` branch commit `9e436a9` and watcher at `main` commit `903573a`.
+Tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
 
 ## Installation
 
