@@ -41,6 +41,8 @@ class test_Streamer(unittest.TestCase):
         ]
         self.saving_dir = "./test"
 
+        self.saving_filename = "test_streamer_save.txt"
+
     def tearDown(self):
         self.streamer.__del__()
 
@@ -62,45 +64,24 @@ class test_Streamer(unittest.TestCase):
         self.assertTrue(all(len(streaming_buffer[
                         var]) == n_buffers for var in self.streaming_vars[:2]), "The streaming buffers queue should have at least n_values/buffer_size buffers for every variable")
 
-    def test_buffers(self):
+    def __test_buffers(self, mode):
+        # test data
+        for var in [v for v in self.streamer.watcher_vars if v["name"] in self.streaming_vars]:
 
-        async def async_test_buffers():
-            self.streamer.streaming_buffers_queue_length = 1000
-            saving_filename = "test_streamer_save.txt"
+            # check buffers in streaming_buffers_queue have the right length
+            self.assertTrue(all(len(_buffer["data"]) == var["data_length"] for _buffer in self.streamer.streaming_buffers_queue[var["name"]]),
+                            f"The data buffers in self.streamer.streaming_buffers_queue should have a length of {var['data_length']} for a variable of type {var['type']} ")
+            loaded = self.streamer.load_data_from_file(
+                os.path.join(self.saving_dir, f"{var['name']}_{self.saving_filename}"))
+            # check that the loader buffers have the right length
+            self.assertTrue(all(len(_buffer["data"]) == var["data_length"] for _buffer in loaded),
+                            "The loaded data buffers should have a length of {var['data_length']} for a variable of type {var['type']} ")
+            # check that the number of buffers saved is the same as the number of buffers in self.streamer.streaming_buffers_queue
+            self.assertTrue(len(self.streamer.streaming_buffers_queue[var['name']]) == len(loaded),
+                            "The number of buffers saved should be equal to the number of buffers in self.streamer.streaming_buffers_queue (considering the queue length is long enough)")
 
-            # delete any existing test files
-            for var in self.streaming_vars:
-                remove_file(os.path.join(self.saving_dir,
-                                         f"{var}_{saving_filename}"))
-
-            # stream with saving
-            self.streamer.start_streaming(variables=self.streaming_vars,
-                                          saving_enabled=True, saving_filename=saving_filename, saving_dir=self.saving_dir)
-            # check streaming mode is FOREVER after start_streaming is called
-            self.assertEqual(self.streamer._streaming_mode, "FOREVER",
-                             "Streaming mode should be FOREVER after start_streaming")
-            await asyncio.sleep(0.5)  # wait for some data to be streamed
-            self.streamer.stop_streaming(variables=self.streaming_vars)
-            # check streaming mode is OFF after stop_streaming
-            self.assertEqual(self.streamer._streaming_mode, "OFF",
-                             "Streaming mode should be OFF after stop_streaming")
-
-            # test data
-            for var in [v for v in self.streamer.watcher_vars if v["name"] in self.streaming_vars]:
-
-                # check buffers in streaming_buffers_queue have the right length
-                self.assertTrue(all(len(_buffer["data"]) == var["data_length"] for _buffer in self.streamer.streaming_buffers_queue[var["name"]]),
-                                f"The data buffers in self.streamer.streaming_buffers_queue should have a length of {var['data_length']} for a variable of type {var['type']} ")
-                loaded = self.streamer.load_data_from_file(
-                    os.path.join(self.saving_dir, f"{var['name']}_{saving_filename}"))
-                # check that the loader buffers have the right length
-                self.assertTrue(all(len(_buffer["data"]) == var["data_length"] for _buffer in loaded),
-                                "The loaded data buffers should have a length of {var['data_length']} for a variable of type {var['type']} ")
-                # check that the number of buffers saved is the same as the number of buffers in self.streamer.streaming_buffers_queue
-                self.assertTrue(len(self.streamer.streaming_buffers_queue[var['name']]) == len(loaded),
-                                "The number of buffers saved should be equal to the number of buffers in self.streamer.streaming_buffers_queue (considering the queue length is long enough)")
-
-            # check continuity of frames (only works for dense variables)
+        # check continuity of frames (only works for dense variables)
+        if mode != "schedule":
             for var in [v for v in self.streamer.watcher_vars if v["name"] in self.streaming_vars[:2]]:
                 for _buffer in self.streamer.streaming_buffers_queue[var["name"]]:
                     self.assertEqual(_buffer["ref_timestamp"], _buffer["data"][0],
@@ -108,11 +89,53 @@ class test_Streamer(unittest.TestCase):
                     self.assertEqual(_buffer["ref_timestamp"]+var["data_length"]-1, _buffer["data"][-1],
                                      "The last data item should be equal to the ref_timestamp plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
 
+        for var in self.streaming_vars:
+            remove_file(os.path.join(self.saving_dir,
+                        f"{var}_{self.saving_filename}"))
+
+    def test_start_stop_streaming(self):
+        async def async_test_start_stop():
+            self.streamer.streaming_buffers_queue_length = 1000
+
+            # delete any existing test files
             for var in self.streaming_vars:
                 remove_file(os.path.join(self.saving_dir,
-                            f"{var}_{saving_filename}"))
+                                         f"{var}_{self.saving_filename}"))
 
-        asyncio.run(async_test_buffers())
+            # stream with saving
+            self.streamer.start_streaming(variables=self.streaming_vars,
+                                          saving_enabled=True, saving_filename=self.saving_filename, saving_dir=self.saving_dir)
+            # check streaming mode is FOREVER after start_streaming is called
+            self.assertEqual(self.streamer._streaming_mode, "FOREVER",
+                             "Streaming mode should be FOREVER after start_streaming")
+            await asyncio.sleep(0.5)  # wait for some data to be streamed
+            self.streamer.stop_streaming(variables=self.streaming_vars)
+            # check streaming mode is OFF after stop_streaming
+
+        asyncio.run(async_test_start_stop())
+        self.assertEqual(self.streamer._streaming_mode, "OFF",
+                         "Streaming mode should be OFF after stop_streaming")
+        self.__test_buffers(mode="start_stop")
+
+    def test_scheduling_streaming(self):
+        async def async_test_scheduling_streaming():
+            self.streamer.streaming_buffers_queue_length = 1000
+            latest_timestamp = self.streamer.get_latest_timestamp()
+            sample_rate = self.streamer.sample_rate
+            timestamps = [latest_timestamp +
+                          sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
+            durations = [sample_rate] * \
+                len(self.streaming_vars)  # stream for 1s
+
+            self.streamer.schedule_streaming(variables=self.streaming_vars,
+                                             timestamps=timestamps,
+                                             durations=durations,
+                                             saving_enabled=True,
+                                             saving_dir=self.saving_dir,
+                                             saving_filename=self.saving_filename)
+
+        asyncio.run(async_test_scheduling_streaming())
+        self.__test_buffers(mode="schedule")
 
 
 class test_Logger(unittest.TestCase):
@@ -205,8 +228,6 @@ class test_Logger(unittest.TestCase):
                 # self.logger.delete_file_from_bela(
                 #     file_paths["remote_paths"][var])
             self.logger.delete_all_bin_files_in_project()
-
-
 
         asyncio.run(async_test_logged_files_wo_transfer())
 
@@ -352,7 +373,8 @@ if __name__ == '__main__':
 
             if 1:
                 suite.addTest(test_Streamer('test_stream_n_values'))
-                suite.addTest(test_Streamer('test_buffers'))
+                suite.addTest(test_Streamer('test_start_stop_streaming'))
+                suite.addTest(test_Streamer('test_scheduling_streaming'))
 
             if 1:
                 suite.addTest(test_Logger('test_logged_files_with_transfer'))

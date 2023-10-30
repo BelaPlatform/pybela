@@ -33,7 +33,7 @@ class Streamer(Watcher):
         self._monitored_vars = None
 
         # number of streaming buffers (not of data points!)
-        self._streaming_buffers_queue_length = 20
+        self._streaming_buffers_queue_length = 1000
         self._streaming_buffers_queue = None
         self.last_streamed_buffer = {}
 
@@ -127,6 +127,7 @@ class Streamer(Watcher):
     def __streaming_common_routine(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
 
         if self.is_streaming():
+            print_warning("Stopping previous streaming session...")
             self.stop_streaming()  # stop any previous streaming
 
         if self.start() == 0:  # bela is not connected
@@ -206,7 +207,7 @@ class Streamer(Watcher):
                 # if no variables specified, stop streaming all watcher variables (default)
                 variables = [var["name"] for var in self.watcher_vars]
 
-            if self._mode == "STREAM":
+            if self._mode == "STREAM" and _previous_streaming_mode!="SCHEDULE":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
                 print_info(f"Stopped streaming variables {variables}...")
@@ -221,7 +222,60 @@ class Streamer(Watcher):
     # schedule
 
     def schedule_streaming(self, variables=[], periods=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
-        pass  # TODO implement
+        """Schedule streaming of variables. The streaming session can be stopped with stop_streaming().
+
+        Args:
+            variables (list, optional): _description_. Defaults to [].
+            periods (list, optional): _description_. Defaults to [].
+            timestamps (list, optional): _description_. Defaults to [].
+            durations (list, optional): _description_. Defaults to [].
+            saving_enabled (bool, optional): _description_. Defaults to False.
+            saving_filename (str, optional): _description_. Defaults to "var_stream.txt".
+            saving_dir (str, optional): _description_. Defaults to "./".
+
+        Returns:
+            _type_: _description_
+        """
+
+        self.__streaming_common_routine(
+            variables, saving_enabled, saving_filename, saving_dir)
+
+        self._streaming_mode = "SCHEDULE"
+        if self._mode == "STREAM":
+            if periods != []:
+                warnings.warn(
+                    "Periods list is ignored in streaming mode STREAM")
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "watch", "timestamps": timestamps, "durations": durations, "watchers": variables}]})
+        elif self._mode == "MONITOR":
+            return  # TODO implement monitor schedule
+            periods = self._check_periods(periods, variables)
+            self.send_ctrl_msg(
+                {"watcher": [{"cmd": "monitor", "timestamps": timestamps, "durations": durations, "watchers": variables, "periods": periods}]})
+
+        async def async_check_if_variables_have_been_streamed_and_stop():
+            # poll to see when variables start streaming and when they stop
+            started_streaming_vars = []
+            finished_streaming_vars = []
+            while True:
+
+                for var in [v["name"] for v in self.watched_vars]:
+                    if var not in started_streaming_vars:
+                        started_streaming_vars.append(var)
+                        print_info(f"Started streaming {var}...")
+
+                for var in started_streaming_vars:
+                    if var not in [v["name"] for v in self.watched_vars]:
+                        finished_streaming_vars.append(var)
+                        print_info(f"Stopped streaming {var}")
+
+                if all(var in finished_streaming_vars for var in variables):
+                    self.stop_streaming()
+                    break
+
+                await asyncio.sleep(0.1)
+        asyncio.run(
+            async_check_if_variables_have_been_streamed_and_stop())
 
     # stream n values
 
