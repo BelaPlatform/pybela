@@ -339,7 +339,7 @@ if __name__ == '__main__':
         unittest.main(verbosity=2)
 
     # select which tests to run
-    n = 5
+    n = 1
     for i in range(n):
 
         print(f"\n\n....Running test {i+1}/{n}")

@@ -124,6 +124,24 @@ class Streamer(Watcher):
 
     # - streaming methods
 
+    def __streaming_common_routine(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
+
+        if self.is_streaming():
+            self.stop_streaming()  # stop any previous streaming
+
+        if self.start() == 0:  # bela is not connected
+            return
+
+        if not os.path.exists(saving_dir):
+            os.makedirs(saving_dir)
+
+        self._saving_enabled = True if saving_enabled else False
+        self._saving_filename = self._generate_filename(
+            saving_filename, saving_dir) if saving_enabled else None
+
+        # checks types and if no variables are specified, stream all watcher variables (default)
+        variables = self._var_arg_checker(variables)
+
     # stream forever until stopped
 
     def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
@@ -139,18 +157,8 @@ class Streamer(Watcher):
             saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
         """
 
-        if self.is_streaming():
-            self.stop_streaming()  # stop any previous streaming
-
-        if self.start() == 0:  # bela is not connected
-            return
-
-        self._saving_enabled = True if saving_enabled else False
-        self._saving_filename = self._generate_filename(
-            saving_filename, saving_dir) if saving_enabled else None
-
-        # checks types and if no variables are specified, stream all watcher variables (default)
-        variables = self._var_arg_checker(variables)
+        self.__streaming_common_routine(
+            variables, saving_enabled, saving_filename, saving_dir)
 
         self._streaming_mode = "FOREVER" if self._peek_response is None else "PEEK"
         if self._mode == "STREAM":
@@ -210,7 +218,14 @@ class Streamer(Watcher):
 
         return asyncio.run(async_stop_streaming(variables))
 
-    def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None):
+    # schedule
+
+    def schedule_streaming(self, variables=[], periods=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
+        pass  # TODO implement
+
+    # stream n values
+
+    def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None, saving_dir="./"):
         """
         Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
 
@@ -227,14 +242,15 @@ class Streamer(Watcher):
             n_values (int, optional): Number of values to stream for each variable. Defaults to 1000.
             delay (int, optional): _description_. Defaults to 0.
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
-            saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
+            saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
+            saving_dir (str, optional): Directory for saving the streamed data. Defaults to "./".
 
         Returns:
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
-        return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename))
+        return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename, saving_dir))
 
-    async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt"):
+    async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
         """ 
         Asynchronous version of stream_n_values(). Usage: 
             stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename)) 
@@ -247,26 +263,16 @@ class Streamer(Watcher):
             periods (list, optional): List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].
             n_values (int, optional): Number of values to stream for each variable. Defaults to 1000.
             saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
-            saving_filename (_type_, optional) Filename for saving the streamed data. Defaults to None.
+            saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
+            saving_dir (str, optional): Directory for saving the streamed data. Defaults to "./".
 
         Returns:
             deque: Streaming buffers queue
         """
         # resizes the streaming buffer size to n_values and returns it when full
 
-        # start watcher and populate watcher vars
-        if self.is_streaming():
-            self.stop_streaming()  # stop any previous streaming
-
-        if self.start() == 0:  # bela is not connected
-            return
-
-        # checks types and if no variables are specified, stream all watcher variables (default)
-        variables = self._var_arg_checker(variables)
-
-        self._saving_enabled = True if saving_enabled else False
-        self._saving_filename = self._generate_filename(
-            saving_filename) if saving_enabled else None
+        self.__streaming_common_routine(
+            variables=variables, saving_enabled=saving_enabled, saving_filename=saving_filename, saving_dir=saving_dir)
 
         self._streaming_mode = "N_VALUES"  # flag cleared in __rec_msg_callback
 
