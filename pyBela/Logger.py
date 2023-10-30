@@ -61,6 +61,15 @@ class Logger(Watcher):
         return {"local_paths": local_paths, "remote_paths": remote_paths}
 
     def schedule_logging(self, variables=[], timestamps=[], durations=[], transfer=True, logging_dir="./"):
+        """Schedule logging session. The session starts at the specified timestamps and lasts for the specified durations. If the timestamp is in the past, the logging will start immediately. The session can be ended by calling stop_logging().
+
+        Args:
+            variables (list, optional): Variables to be logged. Defaults to [].
+            timestamps (list, optional): Timestamps to start logging (one for each variable). Defaults to [].
+            durations (list, optional): Durations to log for (one for each variable). Defaults to [].
+            transfer (bool, optional): Transfer files to laptop automatically during logging session. Defaults to True.
+            logging_dir (str, optional): Path to store the files. Defaults to "./".
+        """
         async def _async_schedule_logging(variables, timestamps, durations, transfer, logging_dir):
             # checks types and if no variables are specified, stream all watcher variables (default)
             latest_timestamp = self.get_latest_timestamp()
@@ -355,6 +364,13 @@ class Logger(Watcher):
     # -- ssh copy utils
 
     def copy_file_from_bela(self, remote_path, local_path, verbose=True):
+        """Copy a file from Bela onto the local machine.
+
+        Args:
+            remote_path (str): Path to the remote file to be copied.
+            local_path (str): Path to the local file (where the file is copied to)
+            verbose (bool, optional): Show info messages. Defaults to True.
+        """
         self.connect_ssh()
         asyncio.run(self._async_copy_file_from_bela(
             remote_path, local_path, verbose))
@@ -362,6 +378,10 @@ class Logger(Watcher):
 
     def copy_all_bin_files_in_project(self, dir="./", verbose=True):
         """ Copies all .bin files in the specified remote directory using SFTP.
+
+        Args:
+            dir (str, optional): Path to the local directory where the files are copied to. Defaults to "./".
+            verbose (bool, optional): Show info messages. Defaults to True.
         """
         remote_path = f'/root/Bela/projects/{self.project_name}'
         try:

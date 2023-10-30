@@ -37,7 +37,7 @@ class Streamer(Watcher):
         self._streaming_buffers_queue = None
         self.last_streamed_buffer = {}
 
-        self._streaming_mode = "OFF"  # OFF, FOREVER, n_values :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
+        self._streaming_mode = "OFF"  # OFF, FOREVER, N_VALUES, PEEK :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
         self._streaming_buffer_available = asyncio.Event()
 
         self._saving_enabled = False
@@ -100,7 +100,8 @@ class Streamer(Watcher):
         """
         # self.connect()
         if not self.is_connected():
-            print_warning(f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
+            print_warning(
+                f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
             return 0
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
