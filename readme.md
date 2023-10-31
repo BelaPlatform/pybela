@@ -185,4 +185,4 @@ pipenv run python test/test.py
 
 ## License
 
-To do
+This library is distributed under LGPL, the GNU Lesser General Public License (LGPL 3.0), available [here](https://www.gnu.org/licenses/lgpl-3.0.en.html).
