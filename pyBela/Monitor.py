@@ -67,7 +67,7 @@ class Monitor(Streamer):
         # res = self.list()
         # return {var: next(r["value"] for r in res if r["name"] == var) for var in variables}
 
-    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt"):
+    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt", saving_dir="/."):
         """
         Starts the monitoring session. The session can be stopped with stop_monitoring().
 
@@ -78,13 +78,14 @@ class Monitor(Streamer):
             periods (list, optional): List of monitoring periods. Defaults to [].
             saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.
             saving_filename (str, optional) Filename for saving the monitored data. Defaults to None.
+            saving_dir (str, optional): Directory for saving the monitored data. Defaults to "/.".
         """
 
         variables = self._var_arg_checker(variables)
         periods = self._check_periods(periods, variables)
 
         self.start_streaming(
-            variables, periods, saving_enabled, saving_filename)
+            variables=variables, periods=periods, saving_enabled=saving_enabled, saving_filename=saving_filename, saving_dir=saving_dir)
 
     def monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="monitor.txt"):
         """

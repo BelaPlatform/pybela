@@ -66,6 +66,8 @@ class Streamer(Watcher):
             _list = self.list()
             self._monitored_vars = self._filtered_watcher_vars(
                 _list["watchers"], lambda var: var["monitor"])
+            if self._monitored_vars == []:
+                self._monitored_vars = None
         return self._monitored_vars
 
     @property
@@ -143,8 +145,6 @@ class Streamer(Watcher):
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
-    # stream forever until stopped
-
     def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
         """
         Starts the streaming session. The session can be stopped with stop_streaming().
@@ -207,11 +207,11 @@ class Streamer(Watcher):
                 # if no variables specified, stop streaming all watcher variables (default)
                 variables = [var["name"] for var in self.watcher_vars]
 
-            if self._mode == "STREAM" and _previous_streaming_mode!="SCHEDULE":
+            if self._mode == "STREAM" and _previous_streaming_mode != "SCHEDULE":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
                 print_info(f"Stopped streaming variables {variables}...")
-            elif self._mode == "MONITOR":
+            elif self._mode == "MONITOR" and _previous_streaming_mode != "SCHEDULE":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
                 if not _previous_streaming_mode == "PEEK":
@@ -219,45 +219,33 @@ class Streamer(Watcher):
 
         return asyncio.run(async_stop_streaming(variables))
 
-    # schedule
-
-    def schedule_streaming(self, variables=[], periods=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
+    def schedule_streaming(self, variables=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
         """Schedule streaming of variables. The streaming session can be stopped with stop_streaming().
 
         Args:
-            variables (list, optional): _description_. Defaults to [].
-            periods (list, optional): _description_. Defaults to [].
-            timestamps (list, optional): _description_. Defaults to [].
-            durations (list, optional): _description_. Defaults to [].
-            saving_enabled (bool, optional): _description_. Defaults to False.
-            saving_filename (str, optional): _description_. Defaults to "var_stream.txt".
-            saving_dir (str, optional): _description_. Defaults to "./".
 
-        Returns:
-            _type_: _description_
+            variables (list, optional): List of variables to be streamed. Defaults to [].
+            timestamps (list, optional): Timestamps to start streaming (one for each variable). Defaults to [].
+            durations (list, optional): Durations to stream for (one for each variable). Defaults to [].
+            saving_enabled (bool, optional): Enables/disables saving streamed data to local file. Defaults to False.
+            saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
+            saving_dir (str, optional): Directory for saving the streamed data files. Defaults to "./".
         """
 
         self.__streaming_common_routine(
             variables, saving_enabled, saving_filename, saving_dir)
 
         self._streaming_mode = "SCHEDULE"
-        if self._mode == "STREAM":
-            if periods != []:
-                warnings.warn(
-                    "Periods list is ignored in streaming mode STREAM")
-            self.send_ctrl_msg(
-                {"watcher": [{"cmd": "watch", "timestamps": timestamps, "durations": durations, "watchers": variables}]})
-        elif self._mode == "MONITOR":
-            return  # TODO implement monitor schedule
-            periods = self._check_periods(periods, variables)
-            self.send_ctrl_msg(
-                {"watcher": [{"cmd": "monitor", "timestamps": timestamps, "durations": durations, "watchers": variables, "periods": periods}]})
+
+        self.send_ctrl_msg(
+            {"watcher": [{"cmd": "watch", "timestamps": timestamps, "durations": durations, "watchers": variables}]})
 
         async def async_check_if_variables_have_been_streamed_and_stop():
             # poll to see when variables start streaming and when they stop
             started_streaming_vars = []
             finished_streaming_vars = []
-            while True:
+
+            while not all(var in finished_streaming_vars for var in variables):
 
                 for var in [v["name"] for v in self.watched_vars]:
                     if var not in started_streaming_vars:
@@ -269,15 +257,12 @@ class Streamer(Watcher):
                         finished_streaming_vars.append(var)
                         print_info(f"Stopped streaming {var}")
 
-                if all(var in finished_streaming_vars for var in variables):
-                    self.stop_streaming()
-                    break
-
                 await asyncio.sleep(0.1)
+
+            self.stop_streaming()
+
         asyncio.run(
             async_check_if_variables_have_been_streamed_and_stop())
-
-    # stream n values
 
     def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None, saving_dir="./"):
         """
@@ -668,6 +653,7 @@ class Streamer(Watcher):
         if isinstance(periods, int):
             periods = [periods]*len(variables)
         elif periods == []:
+            print_warning("No periods passed, using default value of 1000")
             periods = [1000]*len(variables)
 
         for period in periods:

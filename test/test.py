@@ -266,6 +266,8 @@ class test_Monitor(unittest.TestCase):
     def setUp(self):
         self.monitor_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
         self.period = 1000
+        self.saving_filename = "test_monitor_save.txt"
+        self.saving_dir = "./test"
 
         self.monitor = Monitor()
         self.monitor.connect()
@@ -320,24 +322,24 @@ class test_Monitor(unittest.TestCase):
 
     def test_save_monitor(self):
         async def async_test_save_monitor():
-            saving_filename = "test_monitor_save.txt"
 
             # delete any existing test files
             for var in self.monitor_vars:
-                if os.path.exists(f"{var}_{saving_filename}"):
-                    os.remove(f"{var}_{saving_filename}")
+                if os.path.exists(f"{var}_{self.saving_filename}"):
+                    os.remove(f"{var}_{self.saving_filename}")
 
             self.monitor.start_monitoring(
                 variables=self.monitor_vars,
                 periods=[self.period]*len(self.monitor_vars),
                 saving_enabled=True,
-                saving_filename=saving_filename)
+                saving_filename=self.saving_filename,
+                saving_dir=self.saving_dir)
             await asyncio.sleep(0.5)
             monitored_buffers = self.monitor.stop_monitoring()
 
             for var in self.monitor_vars:
-                loaded_buffers = self.monitor.load_data_from_file(
-                    f"{var}_{saving_filename}")
+                loaded_buffers = self.monitor.load_data_from_file(os.path.join(self.saving_dir,
+                                                                               f"{var}_{self.saving_filename}"))
 
                 self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
                                  "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
@@ -345,7 +347,8 @@ class test_Monitor(unittest.TestCase):
                                  "The values of the loaded buffer should be equal to the values of the monitored buffer")
 
             for var in self.monitor_vars:
-                remove_file(f"{var}_{saving_filename}")
+                remove_file(os.path.join(self.saving_dir,
+                                         f"{var}_{self.saving_filename}"))
 
         asyncio.run(async_test_save_monitor())
 

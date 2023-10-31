@@ -181,6 +181,7 @@ pipenv run python test/test.py
 - [ ] **Code refactor:** There's two routines for generating filenames (for Streamer and for Logger). This should be unified.
 - [ ] **Possible feature:** Flexible backend buffer size for streaming: if the assign rate of variables is too slow, the buffers might not be filled and hence not sent (since the data flushed is not collected in the frontend), and there will be long delays between the variable assign and the data being sent to the frontend.
 - [ ] **Issue:** Flushed buffers are not collected after `stop_streaming` in the frontend.
+- [ ] **Bug:** `OSError: [Errno 12] Cannot allocate memory`
 
 ## License
 
