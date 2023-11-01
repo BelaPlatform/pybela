@@ -41,19 +41,19 @@ class Watcher:
 
         self._mode = "WATCH"
 
+        global _pyBela_ws_register
+        try:
+            _ = _pyBela_ws_register
+        except NameError:  # initialise _pyBela_ws_register only once in runtime
+            _pyBela_ws_register = {"WATCH": {},
+                                   "STREAM":  {},
+                                   "LOG":  {},
+                                   "MONITOR":  {}}
+
+        self._pyBela_ws_register = _pyBela_ws_register
+
         # debug
         self._printall_responses = False
-
-        global ws_register
-        try:
-            _ = ws_register
-        except NameError:  # initialise ws_register only once in runtime
-            ws_register = {"WATCH": {"ws_control": None, "ws_data": None},
-                           "STREAM":  {"ws_control": None, "ws_data": None},
-                           "LOG":  {"ws_control": None, "ws_data": None},
-                           "MONITOR":  {"ws_control": None, "ws_data": None}}
-
-        self.ws_register = ws_register
 
         # event loop needs to be nested - otherwise it conflicts with jupyter's event loop
         nest_asyncio.apply()
@@ -107,12 +107,12 @@ class Watcher:
         async def _async_connect():
             try:
                 # Close any open ctrl websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
-                if self.ws_register[self._mode]["ws_control"] is not None and self.ws_register[self._mode]["ws_control"].open:
-                    await self.ws_register[self._mode]["ws_control"].close()
+                if self._pyBela_ws_register[self._mode].get(self.ws_ctrl_add) is not None and self._pyBela_ws_register[self._mode][self.ws_ctrl_add].open:
+                    await self._pyBela_ws_register[self._mode][self.ws_ctrl_add].close()
 
                 # Connect to the control websocket
                 self.ws_ctrl = await websockets.connect(self.ws_ctrl_add)
-                self.ws_register[self._mode]["ws_control"] = self.ws_ctrl
+                self._pyBela_ws_register[self._mode][self.ws_ctrl_add] = self.ws_ctrl
 
                 # Check if the response indicates a successful connection
                 response = json.loads(await self.ws_ctrl.recv())
@@ -122,8 +122,8 @@ class Watcher:
                     self.send_ctrl_msg({"event": "connection-reply"})
 
                     # Close any open data websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
-                    if self.ws_register[self._mode]["ws_data"] is not None and self.ws_register[self._mode]["ws_data"].open:
-                        await self.ws_register[self._mode]["ws_data"].close()
+                    if self._pyBela_ws_register[self._mode].get(self.ws_data_add) is not None and self._pyBela_ws_register[self._mode][self.ws_data_add].open:
+                        await self._pyBela_ws_register[self._mode][self.ws_data_add].close()
 
                     # Connect to the data websocket
                     self.ws_data = await websockets.connect(self.ws_data_add)
@@ -155,12 +155,12 @@ class Watcher:
                 await self.ws_data.close()
 
             # remove websockets from register (should be done by now but just in case)
-            if self.ws_register[self._mode]["ws_control"] is not None and self.ws_register[self._mode]["ws_control"].open:
-                await self.ws_register[self._mode]["ws_control"].close()
-                self.ws_register[self._mode]["ws_control"] = None
-            if self.ws_register[self._mode]["ws_data"] is not None and self.ws_register[self._mode]["ws_data"].open:
-                await self.ws_register[self._mode]["ws_data"].close()
-                self.ws_register[self._mode]["ws_data"] = None
+            if self._pyBela_ws_register[self._mode].get(self.ws_ctrl_add) is not None and self._pyBela_ws_register[self._mode][self.ws_ctrl_add].open:
+                await self._pyBela_ws_register[self._mode][self.ws_ctrl_add].close()
+                self._pyBela_ws_register[self._mode][self.ws_ctrl_add] = None
+            if self._pyBela_ws_register[self._mode].get(self.ws_data_add) is not None and self._pyBela_ws_register[self._mode][self.ws_data_add].open:
+                await self._pyBela_ws_register[self._mode][self.ws_data_add].close()
+                self._pyBela_ws_register[self._mode][self.ws_data_add] = None
 
         return asyncio.run(_async_stop())
 
