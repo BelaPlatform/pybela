@@ -176,7 +176,7 @@ streamer.stop_streaming()
 To run pyBela's tests first copy the `bela-test` code into your Bela, compile and run it:
 
 ```bash
-rsync -rv  bela-test root@bela.local:Bela/projects/ && rsync -v ../watcher/* --exclude render.cpp root@bela.local:Bela/projects/bela-test/
+rsync -rvL  test/bela-test root@bela.local:Bela/projects/
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
 
