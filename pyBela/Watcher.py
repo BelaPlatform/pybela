@@ -44,6 +44,17 @@ class Watcher:
         # debug
         self._printall_responses = False
 
+        global ws_register
+        try:
+            _ = ws_register
+        except NameError:  # initialise ws_register only once in runtime
+            ws_register = {"WATCH": {"ws_control": None, "ws_data": None},
+                           "STREAM":  {"ws_control": None, "ws_data": None},
+                           "LOG":  {"ws_control": None, "ws_data": None},
+                           "MONITOR":  {"ws_control": None, "ws_data": None}}
+
+        self.ws_register = ws_register
+
         # event loop needs to be nested - otherwise it conflicts with jupyter's event loop
         nest_asyncio.apply()
 
@@ -95,20 +106,27 @@ class Watcher:
 
         async def _async_connect():
             try:
+                # Close any open ctrl websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
+                if self.ws_register[self._mode]["ws_control"] is not None and self.ws_register[self._mode]["ws_control"].open:
+                    await self.ws_register[self._mode]["ws_control"].close()
+
                 # Connect to the control websocket
-                ws_ctrl = await websockets.connect(self.ws_ctrl_add)
-                self.ws_ctrl = ws_ctrl
+                self.ws_ctrl = await websockets.connect(self.ws_ctrl_add)
+                self.ws_register[self._mode]["ws_control"] = self.ws_ctrl
 
                 # Check if the response indicates a successful connection
-                response = json.loads(await ws_ctrl.recv())
+                response = json.loads(await self.ws_ctrl.recv())
                 if "event" in response and response["event"] == "connection":
                     self.project_name = response["projectName"]
                     # Send connection reply to establish the connection
                     self.send_ctrl_msg({"event": "connection-reply"})
 
+                    # Close any open data websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
+                    if self.ws_register[self._mode]["ws_data"] is not None and self.ws_register[self._mode]["ws_data"].open:
+                        await self.ws_register[self._mode]["ws_data"].close()
+
                     # Connect to the data websocket
-                    ws_data = await websockets.connect(self.ws_data_add)
-                    self.ws_data = ws_data
+                    self.ws_data = await websockets.connect(self.ws_data_add)
 
                     # Start listener loops
                     self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
@@ -135,6 +153,14 @@ class Watcher:
                 await self.ws_ctrl.close()
             if self.ws_data is not None and self.ws_data.open:
                 await self.ws_data.close()
+
+            # remove websockets from register (should be done by now but just in case)
+            if self.ws_register[self._mode]["ws_control"] is not None and self.ws_register[self._mode]["ws_control"].open:
+                await self.ws_register[self._mode]["ws_control"].close()
+                self.ws_register[self._mode]["ws_control"] = None
+            if self.ws_register[self._mode]["ws_data"] is not None and self.ws_register[self._mode]["ws_data"].open:
+                await self.ws_register[self._mode]["ws_data"].close()
+                self.ws_register[self._mode]["ws_data"] = None
 
         return asyncio.run(_async_stop())
 
