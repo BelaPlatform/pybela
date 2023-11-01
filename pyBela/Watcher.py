@@ -153,15 +153,6 @@ class Watcher:
                 await self.ws_ctrl.close()
             if self.ws_data is not None and self.ws_data.open:
                 await self.ws_data.close()
-
-            # remove websockets from register (should be done by now but just in case)
-            if self._pyBela_ws_register[self._mode].get(self.ws_ctrl_add) is not None and self._pyBela_ws_register[self._mode][self.ws_ctrl_add].open:
-                await self._pyBela_ws_register[self._mode][self.ws_ctrl_add].close()
-                self._pyBela_ws_register[self._mode][self.ws_ctrl_add] = None
-            if self._pyBela_ws_register[self._mode].get(self.ws_data_add) is not None and self._pyBela_ws_register[self._mode][self.ws_data_add].open:
-                await self._pyBela_ws_register[self._mode][self.ws_data_add].close()
-                self._pyBela_ws_register[self._mode][self.ws_data_add] = None
-
         return asyncio.run(_async_stop())
 
     def is_connected(self):
