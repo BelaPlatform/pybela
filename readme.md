@@ -4,21 +4,21 @@ pyBela is a Python library that allows you to interface with [Bela](https://bela
 
 This library is currently under development and has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
 
-## Installation and set up
+## [Installation and set up](#installation)
 
 ### 1. Installing the python package
 
-#### Option A:
+#### Option A [unavailable as package hasn't been uploaded to pyPI yet]:
 
-You can install this library using `pip`:
+You can install this library using `pip` (replace `pip` with `pipenv` if you are using a pipenv environment):
 
 ```python
 pip install pybela
 ```
 
-#### Option B:
+#### Option B [unavailable as package hasn't been uploaded to releases yet]:
 
-You can also download the built package from the [releases]() section and run:
+You can also download the built package from the [releases]() section and run (replace `pip` with `pipenv` if you are using a pipenv environment):
 
 ```bash
 pip install pybela-<version>.tar.gz
@@ -26,7 +26,7 @@ pip install pybela-<version>.tar.gz
 
 #### Option C:
 
-You can also install this library by cloning this repository and running:
+You can also install this library using [pipenv](https://pipenv.pypa.io/en/latest/installation/) by cloning this repository and running:
 
 ```bash
 git clone  --recurse-submodules https://github.com/BelaPlatform/pyBela
@@ -99,6 +99,22 @@ pyBela has three different modes of operation:
 
 You can check the **tutorials** at `tutorials/` for more detailed information and usage of each of the modes.
 
+### Running the examples
+
+The quickest way to get started is to start a jupyter notebook server and run the examples. If you haven't done it yet, install the python package as explained in the [installation section](#installation). If you don't have the `jupyter notebook` package installed, you can installed by running (replace `pip` with `pipenv` if you are using a pipenv environment):
+
+```bash
+pip install notebook
+```
+
+Once installed, start a jupyter notebook server by running:
+
+```bash
+jupyter notebook # or `pipenv run jupyter notebook` if you are using a pipenv environment
+```
+
+This should open a window in your browser from which you can look for the `tutorials/notebooks` folder and open the examples.
+
 ### Basic usage
 
 pyBela allows you to access variables defined in your Bela code from python. To do so, you need to define the variables you want to access in your Bela code using the `Watcher` library.
@@ -160,21 +176,21 @@ streamer.stop_streaming()
 To run pyBela's tests first copy the `bela-test` code into your Bela, compile and run it:
 
 ```bash
-scp -r bela-test root@bela.local:Bela/projects/
+rsync -rv  bela-test root@bela.local:Bela/projects/ && rsync -v ../watcher/* --exclude render.cpp root@bela.local:Bela/projects/bela-test/
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
 
 you can run the python tests by running:
 
 ```bash
-pipenv run python test/test.py
+python test/test.py # or `pipenv run python test/test.py` if you are using a pipenv environment
 ```
 
 ## To do and known issues
 
-- [ ] **To do:** Add frontend for streaming with scheduling
 - [ ] **To do:** Upload to pyPI (so that the package can be installed using `pip`)
-- [ ] **To do:** Add license
+- [ ] - [ ] **To do:** Upload built package to `releases` (so that the package can be installed using `pip install pybela-<version>.tar.gz`)
+
 - [ ] **Issue:** Monitor and streamer can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
 - [ ] **Issue**: The plotting routine does not work for the monitor (it only works for the streamer)

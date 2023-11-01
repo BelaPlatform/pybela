@@ -15,7 +15,7 @@ uint gPot2Ch = 1;
 
 bool setup(BelaContext *context, void *userData)
 {
-	gui.setup(context->projectName);
+	Bela_getDefaultWatcherManager()->getGui().setup(context->projectName);
 	Bela_getDefaultWatcherManager()->setup(context->audioSampleRate); // set sample rate in watcher
 	gAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 	gInverseSampleRate = 1.0 / context->audioSampleRate;

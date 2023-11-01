@@ -4,15 +4,15 @@ pyBela has been tested with [Bela](https://github.com/BelaPlatform/Bela) at `dev
 
 The watcher code is already included in `bela-test`. You can update your Bela API code following [these instructions](readme.md).
 
-To run the tests, copy the `bela-test` code into your Bela, compile and run it:
+To run the tests, copy the `bela-test` code into your Bela, add the `Watcher`` library compile and run it:
 
 ```bash
-scp -r bela-test root@bela.local:Bela/projects/
+rsync -rv  bela-test root@bela.local:Bela/projects/ && rsync -v ../watcher/* --exclude render.cpp root@bela.local:Bela/projects/bela-test/
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
 
 Once the `bela-test` project is running on Bela, you can run the python tests by running:
 
 ```bash
-pipenv run python test.py
+python test.py # or `pipenv run python test.py` if you are using a pipenv environment
 ```
