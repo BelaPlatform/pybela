@@ -11,3 +11,4 @@ build/
 *.bin
 *.fzz
 dist/
+!requirements.txt
