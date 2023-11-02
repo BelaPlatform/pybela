@@ -7,6 +7,7 @@ import aiofiles  # async file i/o
 from collections import deque  # circular buffers
 from itertools import cycle
 import warnings
+import re
 
 import bokeh.plotting
 import bokeh.io
@@ -515,10 +516,11 @@ class Streamer(Watcher):
         # in case buffer is received whilst streaming mode is on but parsed after streaming_enabled has changed
         _saving_enabled = copy.copy(self._saving_enabled)
         if self._streaming_mode != "OFF":
-            if len(msg) == 3:
+            if len(msg) in [3, 4]:  # _channel can be either 1 or 2 bytes long
                 # parse buffer header
-                _channel = int(str(msg)[2])
-                _type = str(msg)[4]
+                _channel, _type = re.search(
+                    r'(\d+).*?(\w)', msg.decode()).groups()
+                _channel = int(_channel)
 
                 assert _type in ['i', 'f', 'j', 'd',
                                  'c'], f"Unsupported type: {_type}"
