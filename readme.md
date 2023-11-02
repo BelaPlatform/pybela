@@ -192,14 +192,14 @@ You can build pyBela using pipenv:
 
 ```bash
 pipenv install -d # installs all dependencies including dev dependencies
+pipenv lock && pipenv sync # updates packages hashes
 pipenv run python -m build --sdist # builds the .tar.gz file
 ```
 
 ## To do and known issues
 
 - [ ] **To do:** Upload to pyPI (so that the package can be installed using `pip`)
-- [ ] - [ ] **To do:** Upload built package to `releases` (so that the package can be installed using `pip install pybela-<version>.tar.gz`)
-
+- [ ] **To do:** Upload built package to `releases` (so that the package can be installed using `pip install pybela-<version>.tar.gz`)
 - [ ] **Issue:** Monitor and streamer can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
 - [ ] **Issue**: The plotting routine does not work for the monitor (it only works for the streamer)

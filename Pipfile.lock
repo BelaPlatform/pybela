@@ -787,11 +787,11 @@
         },
         "jupyterlab": {
             "hashes": [
-                "sha256:08683045117cc495531fdb39c22ababb9aaac6977a45e67cfad20046564c9c7c",
-                "sha256:48792efd9f962b2bcda1f87d72168ff122c288b1d97d32109e4a11b33dc862be"
+                "sha256:2ff5aa2a51eb21df241d6011c236e88bd1ff9a5dbb75bebc54472f9c18bfffa4",
+                "sha256:c4fe93f977bcc987bd395d7fae5ab02e0c042bf4e0f7c95196f3e2e578c2fb3a"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==4.0.7"
+            "version": "==4.0.8"
         },
         "jupyterlab-pygments": {
             "hashes": [

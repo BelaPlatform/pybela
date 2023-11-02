@@ -281,6 +281,10 @@ class Logger(Watcher):
                         await local_file.write(chunk)
                         print_ok(
                             f"\rTransferring {remote_path}-->{local_path}...", end="", flush=True)
+                    await asyncio.sleep(0.1) # flushed data 
+                    chunk = remote_file.read(chunk_size)
+                    if chunk:
+                        await local_file.write(chunk)
                     remote_file.close()
                     print_ok("Done.")
 
