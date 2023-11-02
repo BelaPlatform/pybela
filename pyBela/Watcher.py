@@ -108,6 +108,8 @@ class Watcher:
             try:
                 # Close any open ctrl websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
                 if self._pyBela_ws_register[self._mode].get(self.ws_ctrl_add) is not None and self._pyBela_ws_register[self._mode][self.ws_ctrl_add].open:
+                    print_warning(
+                        f"pyBela doesn't support more than one active connection at a time for a given mode. Closing previous connection for {self._mode} at {self.ws_ctrl_add}.")
                     await self._pyBela_ws_register[self._mode][self.ws_ctrl_add].close()
 
                 # Connect to the control websocket
@@ -123,6 +125,8 @@ class Watcher:
 
                     # Close any open data websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
                     if self._pyBela_ws_register[self._mode].get(self.ws_data_add) is not None and self._pyBela_ws_register[self._mode][self.ws_data_add].open:
+                        print_warning(
+                            f"pyBela doesn't support more than one active connection at a time for a given mode. Closing previous connection for {self._mode} at {self.data_add}.")
                         await self._pyBela_ws_register[self._mode][self.ws_data_add].close()
 
                     # Connect to the data websocket
