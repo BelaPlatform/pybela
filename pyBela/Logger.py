@@ -275,7 +275,8 @@ class Logger(Watcher):
                 async with aiofiles.open(local_path, 'wb') as local_file:
                     while True:
                         chunk = remote_file.read(chunk_size)
-                        if not chunk:
+                        # keep checking file whilst logging is still going on (in case a variable fills the buffers slowly)
+                        if not chunk and self._logging_mode == "OFF":
                             break
                         await local_file.write(chunk)
                         print_ok(

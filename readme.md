@@ -186,6 +186,15 @@ you can run the python tests by running:
 python test/test.py # or `pipenv run python test/test.py` if you are using a pipenv environment
 ```
 
+## Building
+
+You can build pyBela using pipenv:
+
+```bash
+pipenv install -d # installs all dependencies including dev dependencies
+pipenv run python -m build --sdist # builds the .tar.gz file
+```
+
 ## To do and known issues
 
 - [ ] **To do:** Upload to pyPI (so that the package can be installed using `pip`)
