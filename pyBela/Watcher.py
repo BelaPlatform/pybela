@@ -295,12 +295,12 @@ class Watcher:
 
             elif timestamp_mode == "dense":
                 # ensure that the buffer is the correct size
-                binary_data = binary_data[:struct.calcsize(
-                    'Q')+data_length*struct.calcsize(_type)]
+                # binary_data = binary_data[:struct.calcsize(
+                #     'Q')+data_length*struct.calcsize(_type)]
 
                 ref_timestamp, * \
                     data = struct.unpack(
-                        'Q' + f"{_type}"*data_length, binary_data)
+                        'Q' + f"{_type}"*int((len(binary_data) - struct.calcsize('Q'))/struct.calcsize(_type)), binary_data) 
 
                 parsed_buffer = {
                     "ref_timestamp": ref_timestamp, "data": data}

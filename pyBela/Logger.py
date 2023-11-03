@@ -124,6 +124,10 @@ class Logger(Watcher):
                         _async_check_if_file_exists_and_start_copying(var, timestamps[idx]))
                     _active_checking_tasks.append(check_task)
 
+                # wait for the longest duration
+                await asyncio.sleep(max(durations)//(self.sample_rate))
+                self._logging_mode = "OFF"
+
                 # wait for all the files to be created
                 await asyncio.gather(*_active_checking_tasks, return_exceptions=True)
                 # wait for all the files to be copied
@@ -281,8 +285,8 @@ class Logger(Watcher):
                         await local_file.write(chunk)
                         print_ok(
                             f"\rTransferring {remote_path}-->{local_path}...", end="", flush=True)
-                    await asyncio.sleep(0.1) # flushed data 
-                    chunk = remote_file.read(chunk_size)
+                    await asyncio.sleep(0.1)  # flushed data
+                    chunk = remote_file.read()
                     if chunk:
                         await local_file.write(chunk)
                     remote_file.close()
@@ -352,7 +356,7 @@ class Logger(Watcher):
                     parsed_buffers.append(_parsed_buffer)
 
                 except struct.error as e:
-                    print_error(e)
+                    print_error(str(e))
                     break  # No more data to read
 
         return {
