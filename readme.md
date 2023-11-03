@@ -8,7 +8,7 @@ This library is currently under development and has been tested with Bela at `de
 
 ### 1. Installing the python package
 
-#### Option A [unavailable as package hasn't been uploaded to pyPI yet]:
+#### Option A:
 
 You can install this library using `pip` (replace `pip` with `pipenv` if you are using a pipenv environment):
 
@@ -16,9 +16,9 @@ You can install this library using `pip` (replace `pip` with `pipenv` if you are
 pip install pybela
 ```
 
-#### Option B [unavailable as package hasn't been uploaded to releases yet]:
+#### Option B:
 
-You can also download the built package from the [releases]() section and run (replace `pip` with `pipenv` if you are using a pipenv environment):
+You can also download the built package from the releases section and run (replace `pip` with `pipenv` if you are using a pipenv environment):
 
 ```bash
 pip install pybela-<version>.tar.gz
