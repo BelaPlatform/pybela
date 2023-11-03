@@ -2,7 +2,7 @@ import unittest
 import asyncio
 import os
 import numpy as np
-from pyBela import Watcher, Streamer, Logger, Monitor
+from pybela import Watcher, Streamer, Logger, Monitor
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 

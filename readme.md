@@ -1,6 +1,6 @@
-# pyBela
+# pybela
 
-pyBela is a Python library that allows you to interface with [Bela](https://bela.io/), the embedded audio platform, using Python. This library provides a convenient way to stream, log, and monitor sensor data from your Bela device to your laptop.
+pybela is a Python library that allows you to interface with [Bela](https://bela.io/), the embedded audio platform, using Python. This library provides a convenient way to stream, log, and monitor sensor data from your Bela device to your laptop.
 
 This library is currently under development and has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
 
@@ -29,14 +29,14 @@ pip install pybela-<version>.tar.gz
 You can also install this library using [pipenv](https://pipenv.pypa.io/en/latest/installation/) by cloning this repository and running:
 
 ```bash
-git clone  --recurse-submodules https://github.com/BelaPlatform/pyBela
-cd pyBela
+git clone  --recurse-submodules https://github.com/BelaPlatform/pybela
+cd pybela
 pipenv install
 ```
 
 ### 2. Set the Bela branch to `dev`
 
-In order to use pyBela, you will need to use the `dev` branch of the Bela code.
+In order to use pybela, you will need to use the `dev` branch of the Bela code.
 
 #### Option A:
 
@@ -81,7 +81,7 @@ You can check the commit hash by running `git rev-parse --short HEAD` either on 
 
 ### 3. Add the watcher library to your project
 
-For pyBela to be able to communicate with your Bela device, you will need to add the watcher library to your Bela project. To do so, you will need to add the files `Watcher.h` and `Watcher.cpp` to your Bela project. You can do this by copying the files from the `watcher` repository into your Bela project. To do so, you can run:
+For pybela to be able to communicate with your Bela device, you will need to add the watcher library to your Bela project. To do so, you will need to add the files `Watcher.h` and `Watcher.cpp` to your Bela project. You can do this by copying the files from the `watcher` repository into your Bela project. To do so, you can run:
 
 ```bash
 scp watcher/Watcher.h watcher/Watcher.cpp root@bela.local:Bela/projects/your-project/
@@ -91,7 +91,7 @@ scp watcher/Watcher.h watcher/Watcher.cpp root@bela.local:Bela/projects/your-pro
 
 ### Modes of operation
 
-pyBela has three different modes of operation:
+pybela has three different modes of operation:
 
 - **Streaming**: continuously send data from your Bela device to your laptop.
 - **Logging**: log data in your Bela device and then retrieve it from your laptop.
@@ -117,7 +117,7 @@ This should open a window in your browser from which you can look for the `tutor
 
 ### Basic usage
 
-pyBela allows you to access variables defined in your Bela code from python. To do so, you need to define the variables you want to access in your Bela code using the `Watcher` library.
+pybela allows you to access variables defined in your Bela code from python. To do so, you need to define the variables you want to access in your Bela code using the `Watcher` library.
 
 #### Bela side
 
@@ -159,7 +159,7 @@ you can see an example [here](./test/bela-test/render.cpp).
 Once the variable is defined "in the watcher", you can stream, log and monitor its value from python. For example, to stream the value of `myvar` from python, you can do:
 
 ```python
-from pyBela import Streamer
+from pybela import Streamer
 streamer = Streamer()
 streamer.connect()
 streamer.start_streaming("myvar")
@@ -173,7 +173,7 @@ streamer.stop_streaming()
 
 ## Testing
 
-To run pyBela's tests first copy the `bela-test` code into your Bela, compile and run it:
+To run pybela's tests first copy the `bela-test` code into your Bela, compile and run it:
 
 ```bash
 rsync -rvL  test/bela-test root@bela.local:Bela/projects/
@@ -188,7 +188,7 @@ python test/test.py # or `pipenv run python test/test.py` if you are using a pip
 
 ## Building
 
-You can build pyBela using pipenv:
+You can build pybela using pipenv:
 
 ```bash
 pipenv install -d # installs all dependencies including dev dependencies

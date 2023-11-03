@@ -1,14 +1,14 @@
 import setuptools
 
 setuptools.setup(
-    name="pyBela",
+    name="pybela",
     version="0.0.0",  # Update with your package version
     author="Teresa Pelinski",
     author_email="teresapelinski@gmail.com",
-    description="pyBela",
-    long_description="pyBela",
+    description="pybela",
+    long_description="pybela",
     long_description_content_type="text/markdown",
-    url="https://github.com/BelaPlatform/pyBela",
+    url="https://github.com/BelaPlatform/pybela",
     packages=setuptools.find_packages(),
     install_requires=[
         "jupyter",

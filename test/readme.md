@@ -1,13 +1,13 @@
 # testing
 
-pyBela has been tested with [Bela](https://github.com/BelaPlatform/Bela) at `dev` branch commit `69cdf75a` and [watcher](https://github.com/BelaPlatform/watcher) at `main` commit `903573a`.
+pybela has been tested with [Bela](https://github.com/BelaPlatform/Bela) at `dev` branch commit `69cdf75a` and [watcher](https://github.com/BelaPlatform/watcher) at `main` commit `903573a`.
 
 The watcher code is already included in `bela-test`. You can update your Bela API code following [these instructions](readme.md).
 
 To run the tests, copy the `bela-test` code into your Bela, add the `Watcher`` library compile and run it:
 
 ```bash
-rsync -rv  test/bela-test root@bela.local:Bela/projects/ 
+rsync -rv  test/bela-test root@bela.local:Bela/projects/
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
 
