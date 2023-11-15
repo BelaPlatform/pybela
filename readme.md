@@ -1,7 +1,5 @@
 # pybela
 
-pybela allows interfacing with Bela, the embedded audio platform, using Python. pybela provides a convenient way to stream, log, and monitor sensor data from your Bela device to your laptop.
-
 pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, and monitor sensor data from your Bela device to your laptop.
 
 This library is currently under development and has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
