@@ -5,7 +5,7 @@ long_description = open(f"{Path(__file__).parent}/readme.md").read()
 
 setuptools.setup(
     name="pybela",
-    version="0.0.0.post1",
+    version="0.0.1",
     author="Teresa Pelinski",
     author_email="teresapelinski@gmail.com",
     description="pybela allows interfacing with Bela, the embedded audio platform, using Python. pybela provides a convenient way to stream, log, and monitor sensor data from Bela to the host machine.",
