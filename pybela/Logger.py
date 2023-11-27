@@ -281,11 +281,12 @@ class Logger(Watcher):
                         chunk = remote_file.read(chunk_size)
                         # keep checking file whilst logging is still going on (in case a variable fills the buffers slowly)
                         if not chunk and self._logging_mode == "OFF":
+                            await asyncio.sleep(0.1)  # flushed data
                             break
                         await local_file.write(chunk)
                         print_ok(
                             f"\rTransferring {remote_path}-->{local_path}...", end="", flush=True)
-                    await asyncio.sleep(0.1)  # flushed data
+                        await asyncio.sleep(0.1)
                     chunk = remote_file.read()
                     if chunk:
                         await local_file.write(chunk)
