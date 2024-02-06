@@ -7,7 +7,7 @@ The watcher code is already included in `bela-test`. You can update your Bela AP
 To run the tests, copy the `bela-test` code into your Bela, add the `Watcher`` library compile and run it:
 
 ```bash
-rsync -rv  test/bela-test root@bela.local:Bela/projects/
+rsync -rvL  test/bela-test root@bela.local:Bela/projects/
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
 
