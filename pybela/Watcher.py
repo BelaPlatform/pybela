@@ -48,7 +48,8 @@ class Watcher:
             _pybela_ws_register = {"WATCH": {},
                                    "STREAM":  {},
                                    "LOG":  {},
-                                   "MONITOR":  {}}
+                                   "MONITOR":  {},
+                                   "CONTROL":  {}}
 
         self._pybela_ws_register = _pybela_ws_register
 
@@ -300,7 +301,7 @@ class Watcher:
 
                 ref_timestamp, * \
                     data = struct.unpack(
-                        'Q' + f"{_type}"*int((len(binary_data) - struct.calcsize('Q'))/struct.calcsize(_type)), binary_data) 
+                        'Q' + f"{_type}"*int((len(binary_data) - struct.calcsize('Q'))/struct.calcsize(_type)), binary_data)
 
                 parsed_buffer = {
                     "ref_timestamp": ref_timestamp, "data": data}
@@ -342,7 +343,7 @@ class Watcher:
         return [{
             "name": var["name"],
             "type": var["type"],
-            "timestamp_mode":"sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
+            "timestamp_mode": "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
             # "log_filename": var["logFileName"], # this is updated every time log is called so better not to store it
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,),
             "monitor": var["monitor"]

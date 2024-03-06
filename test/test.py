@@ -2,7 +2,7 @@ import unittest
 import asyncio
 import os
 import numpy as np
-from pybela import Watcher, Streamer, Logger, Monitor
+from pybela import Watcher, Streamer, Logger, Monitor, Controller
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
@@ -353,6 +353,79 @@ class test_Monitor(unittest.TestCase):
         asyncio.run(async_test_save_monitor())
 
 
+class test_Controller(unittest.TestCase):
+    def setUp(self):
+        self.controlled_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
+
+        self.controller = Controller()
+        self.controller.connect()
+        self.controller._printall_responses = True
+
+        self.monitor = Monitor()
+        self.period = 1000
+        self.monitor.connect()
+
+    def tearDown(self):
+        self.controller.__del__()
+
+    def get_controlled_status(self):
+        return [i['controlled'] for i in self.controller.list()['watchers']]
+
+    def test_start_stop_controlling(self):
+
+        async def async_test_start_stop_controlling():
+
+            self.controller.start_controlling(variables=self.controlled_vars)
+
+            await asyncio.sleep(2) # TODO remove once start_controlling synchronously waits 
+
+            self.assertEqual(self.get_controlled_status(), [
+                True]*len(self.controlled_vars), "The controlled status of the variables should be True after start_controlling")
+
+            self.controller.stop_controlling(variables=self.controlled_vars)
+            await asyncio.sleep(5) # TODO remove once stop_controlling synchronously waits 
+
+            self.assertEqual(self.get_controlled_status(), [
+                False]*len(self.controlled_vars), "The controlled status of the variables should be False after stop_controlling")
+
+        asyncio.run(async_test_start_stop_controlling())
+
+    def test_send_ctrl_value(self):
+        async def async_test_send_ctrl_value():
+            # TODO add streamer to check values are being sent
+            self.controller.start_controlling(variables=self.controlled_vars)
+
+            set_values = [4]*len(self.controlled_vars)
+
+            self.controller.send_ctrl_value(
+                variables=self.controlled_vars, values=set_values)
+            await asyncio.sleep(3)
+            n_values = 25
+            monitored_buffer = self.monitor.monitor_n_values(
+                variables=self.controlled_vars,
+                periods=[self.period]*len(self.controlled_vars), n_values=n_values)
+
+            list_values = {i['name']: i['value']
+                           for i in self.controller.list()['watchers']}
+
+            monitored_values = {
+                var: monitored_buffer[var]["values"] for var in self.controlled_vars}
+
+            print(list_values)
+            print(monitored_values)
+
+            for idx, var in enumerate(list_values):
+                self.assertTrue(
+                    list_values[var] == set_values[idx], "The controlled value should be 4")
+                # self.assertTrue(
+                #     all(monitored_values[var] == set_values[idx]), "The monitored values should be 4")
+
+            self.controller.stop_controlling(variables=self.controlled_vars)
+            self.assertEqual(self.get_controlled_status(), [
+                             False]*len(self.controlled_vars), "The controlled status of the variables should be False after stop_controlling")
+        asyncio.run(async_test_send_ctrl_value())
+
+
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -370,25 +443,29 @@ if __name__ == '__main__':
 
         if 1:
             suite = unittest.TestSuite()
-            if 1:
+            if 0:
                 suite.addTest(test_Watcher('test_list'))
                 suite.addTest(test_Watcher('test_start_stop'))
 
-            if 1:
+            if 0:
                 suite.addTest(test_Streamer('test_stream_n_values'))
                 suite.addTest(test_Streamer('test_start_stop_streaming'))
                 suite.addTest(test_Streamer('test_scheduling_streaming'))
 
-            if 1:
+            if 0:
                 suite.addTest(test_Logger('test_logged_files_with_transfer'))
                 suite.addTest(test_Logger('test_logged_files_wo_transfer'))
                 suite.addTest(test_Logger('test_scheduling_logging'))
 
-            if 1:
+            if 0:
                 suite.addTest(test_Monitor('test_peek'))
                 suite.addTest(test_Monitor('test_period_monitor'))
                 suite.addTest(test_Monitor('test_monitor_n_values'))
                 suite.addTest(test_Monitor('test_save_monitor'))
+
+            if 1:
+                suite.addTest(test_Controller('test_start_stop_controlling'))
+                # suite.addTest(test_Controller('test_send_ctrl_value'))
 
             runner = unittest.TextTestRunner(verbosity=2)
             runner.run(suite)
