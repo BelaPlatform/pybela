@@ -359,17 +359,9 @@ class test_Controller(unittest.TestCase):
 
         self.controller = Controller()
         self.controller.connect()
-        self.controller._printall_responses = True
-
-        self.monitor = Monitor()
-        self.period = 1000
-        self.monitor.connect()
 
     def tearDown(self):
         self.controller.__del__()
-
-    def get_controlled_status(self):
-        return [i['controlled'] for i in self.controller.list()['watchers']]
 
     def test_start_stop_controlling(self):
 
@@ -377,16 +369,13 @@ class test_Controller(unittest.TestCase):
 
             self.controller.start_controlling(variables=self.controlled_vars)
 
-            await asyncio.sleep(2) # TODO remove once start_controlling synchronously waits 
-
-            self.assertEqual(self.get_controlled_status(), [
-                True]*len(self.controlled_vars), "The controlled status of the variables should be True after start_controlling")
+            self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars), {
+                             var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
 
             self.controller.stop_controlling(variables=self.controlled_vars)
-            await asyncio.sleep(5) # TODO remove once stop_controlling synchronously waits 
 
-            self.assertEqual(self.get_controlled_status(), [
-                False]*len(self.controlled_vars), "The controlled status of the variables should be False after stop_controlling")
+            self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars),  {
+                             var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
 
         asyncio.run(async_test_start_stop_controlling())
 
@@ -395,34 +384,23 @@ class test_Controller(unittest.TestCase):
             # TODO add streamer to check values are being sent
             self.controller.start_controlling(variables=self.controlled_vars)
 
-            set_values = [4]*len(self.controlled_vars)
+            set_value = 4.6
 
             self.controller.send_ctrl_value(
-                variables=self.controlled_vars, values=set_values)
-            await asyncio.sleep(3)
-            n_values = 25
-            monitored_buffer = self.monitor.monitor_n_values(
-                variables=self.controlled_vars,
-                periods=[self.period]*len(self.controlled_vars), n_values=n_values)
+                variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
+            await asyncio.sleep(0.1)  # wait for the values to be set
 
-            list_values = {i['name']: i['value']
-                           for i in self.controller.list()['watchers']}
+            _controlled_values = self.controller.get_controlled_value(
+                variables=self.controlled_vars)  # avoid multiple calls to list
 
-            monitored_values = {
-                var: monitored_buffer[var]["values"] for var in self.controlled_vars}
+            integer_types = ["i", "j"]
+            expected_values = [int(set_value) if self.controller.get_prop_of_var(
+                var, "type") in integer_types else set_value for var in self.controlled_vars]
 
-            print(list_values)
-            print(monitored_values)
-
-            for idx, var in enumerate(list_values):
+            for idx, var in enumerate(self.controlled_vars):
                 self.assertTrue(
-                    list_values[var] == set_values[idx], "The controlled value should be 4")
-                # self.assertTrue(
-                #     all(monitored_values[var] == set_values[idx]), "The monitored values should be 4")
+                    _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
 
-            self.controller.stop_controlling(variables=self.controlled_vars)
-            self.assertEqual(self.get_controlled_status(), [
-                             False]*len(self.controlled_vars), "The controlled status of the variables should be False after stop_controlling")
         asyncio.run(async_test_send_ctrl_value())
 
 
@@ -443,21 +421,21 @@ if __name__ == '__main__':
 
         if 1:
             suite = unittest.TestSuite()
-            if 0:
+            if 1:
                 suite.addTest(test_Watcher('test_list'))
                 suite.addTest(test_Watcher('test_start_stop'))
 
-            if 0:
+            if 1:
                 suite.addTest(test_Streamer('test_stream_n_values'))
                 suite.addTest(test_Streamer('test_start_stop_streaming'))
                 suite.addTest(test_Streamer('test_scheduling_streaming'))
 
-            if 0:
+            if 1:
                 suite.addTest(test_Logger('test_logged_files_with_transfer'))
                 suite.addTest(test_Logger('test_logged_files_wo_transfer'))
                 suite.addTest(test_Logger('test_scheduling_logging'))
 
-            if 0:
+            if 1:
                 suite.addTest(test_Monitor('test_peek'))
                 suite.addTest(test_Monitor('test_period_monitor'))
                 suite.addTest(test_Monitor('test_monitor_n_values'))
@@ -465,7 +443,7 @@ if __name__ == '__main__':
 
             if 1:
                 suite.addTest(test_Controller('test_start_stop_controlling'))
-                # suite.addTest(test_Controller('test_send_ctrl_value'))
+                suite.addTest(test_Controller('test_send_ctrl_value'))
 
             runner = unittest.TextTestRunner(verbosity=2)
             runner.run(suite)

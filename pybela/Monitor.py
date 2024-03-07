@@ -18,9 +18,9 @@ class Monitor(Streamer):
         self._mode = "MONITOR"
 
     def connect(self):
-        super().connect()
-        # longer queue for monitor since each buffer has only one value
-        self.streaming_buffers_queue_length = 2000
+        if (super().connect()):
+            # longer queue for monitor since each buffer has only one value
+            self.streaming_buffers_queue_length = 2000
 
     @property
     def values(self):
