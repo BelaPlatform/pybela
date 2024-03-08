@@ -6,7 +6,7 @@ from .utils import print_info, print_warning
 class Controller(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
         """Controller class
-        Note: All values set with the controller class will be only visible through the "get_controlled_value" function, or the "value" field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.
+        Note: All values set with the controller class will be only visible through the "get_value()" method, or the "value" field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.
 
         Args:
                 ip (str, optional): Remote address IP. If using internet over USB, the IP won't work, pass "bela.local". Defaults to "192.168.7.2".
@@ -20,7 +20,7 @@ class Controller(Watcher):
 
     def start_controlling(self, variables=[]):
         """Starts controlling given variables. This function will block until all requested variables are set to 'controlled' in the list. 
-        Note: All values set with the controller class will be only visible through the "get_controlled_value" function, or the "value" field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.
+        Note: All values set with the controller class will be only visible through the "get_value()" method, or the "value" field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.
 
         Args:
             variables (list, optional): List of variables to control. If no variables are specified, stream all watcher variables (default).        
@@ -45,7 +45,7 @@ class Controller(Watcher):
 
     def stop_controlling(self, variables=[]):
         """Stops controlling given variables. This function will block until all requested variables are set to 'uncontrolled' in the list. 
-        Note: All values set with the controller class will be only visible through the "get_controlled_value" function, or the "value" field in the list() function.
+        Note: All values set with the controller class will be only visible through the "get_value()" method, or the "value" field in the list() function.
 
         Args:
             variables (list, optional): List of variables to control. If no variables are specified, stream all watcher variables (default).        
@@ -67,9 +67,9 @@ class Controller(Watcher):
 
         print_info(f"Stopped controlling variables {variables}.")
 
-    def send_ctrl_value(self, variables, values):
+    def send_value(self, variables, values):
         """Send a value to the given variables. 
-        Note: All values set with this function will be only visible through the "get_controlled_value" function, or the "value" field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected. 
+        Note: All values set with this function will be only visible through the "get_value()" method, or the "value" field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected. 
 
         Args:
             variables (list, required): List of variables to control.
@@ -89,31 +89,33 @@ class Controller(Watcher):
 
             value = values[variables.index(var)]
 
-            if value % 1 is not 0 and _type in ["i", "j"]:
+            if value % 1 != 0 and _type in ["i", "j"]:
                 print_warning(
                     f"Value {value} is not an integer, but the variable {var} is of type {_type}. Only the integer part will be sent.")
 
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "set", "watchers": variables, "values": values}]})
 
-    def get_controlled_status(self, variables):
+    def get_controlled_status(self, variables=[]):
         """Gets the controlled status (controlled or uncontrolled) of the variables
 
         Args:
-            variables (list of str): List of variables to check
+            variables (list of str, optional): List of variables to check. Defaults to all variables in the watcher.
 
         Returns:
             list of str: List of controlled status of the variables
         """
+        variables = self._var_arg_checker(variables)
         return {var['name']: var['controlled'] for var in self.list()['watchers'] if var['name'] in variables}
 
-    def get_controlled_value(self, variables):
-        """ Gets the controlled value of the variables
+    def get_value(self, variables=[]):
+        """ Gets the value of the variables
 
         Args:
-            variables (list of str): List of variables to get the controlled value
+            variables (list of str, optional): List of variables to get the value from. Defaults to all variables in the watcher. 
 
         Returns:
             list of numbers: List of controlled values of the variables
         """
+        variables = self._var_arg_checker(variables)
         return {var['name']: var['value'] for var in self.list()['watchers'] if var['name'] in variables}

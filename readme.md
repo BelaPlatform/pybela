@@ -1,10 +1,13 @@
 # pybela
 
-pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, and monitor sensor data from your Bela device to your laptop.
+pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, monitor sensor data from your Bela device to your laptop. It also allows you to control the value of variables in your Bela code from your laptop.
 
-This library is currently under development and has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
+Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`. 
+
+pybela was developed with a machine learning use case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial).
 
 ## [Installation and set up](#installation)
+You will need to (1) install the python package in your laptop,  (2) set the Bela branch to `dev` and (3) add the watcher library to your Bela project.
 
 ### 1. Installing the python package
 
@@ -95,9 +98,10 @@ pybela has three different modes of operation:
 
 - **Streaming**: continuously send data from your Bela device to your laptop.
 - **Logging**: log data in your Bela device and then retrieve it from your laptop.
-- **Monitoring**: monitor the state of variables in the Bela code from your laptop.
+- **Monitoring**: monitor the value of variables in the Bela code from your laptop.
+- **Controlling**: control the value of variables in the Bela code from your laptop.
 
-You can check the **tutorials** at `tutorials/` for more detailed information and usage of each of the modes.
+You can check the **tutorials** at `tutorials/` for more detailed information and usage of each of the modes. You can also check the `test/test.py` for a quick overview of the library. 
 
 ### Running the examples
 
@@ -173,6 +177,8 @@ streamer.stop_streaming()
 
 ## Testing
 
+This library has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
+
 To run pybela's tests first copy the `bela-test` code into your Bela, compile and run it:
 
 ```bash
@@ -198,7 +204,7 @@ pipenv run python -m build --sdist # builds the .tar.gz file
 
 ## To do and known issues
 
-- [ ] **Issue:** Monitor and streamer can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
+- [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
 - [ ] **Issue**: The plotting routine does not work for the monitor (it only works for the streamer)
 - [ ] **Code refactor:** There are two routines for generating filenames (for Streamer and for Logger). This should be unified.

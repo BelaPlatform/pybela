@@ -379,18 +379,18 @@ class test_Controller(unittest.TestCase):
 
         asyncio.run(async_test_start_stop_controlling())
 
-    def test_send_ctrl_value(self):
-        async def async_test_send_ctrl_value():
+    def test_send_value(self):
+        async def async_test_send_value():
             # TODO add streamer to check values are being sent
             self.controller.start_controlling(variables=self.controlled_vars)
 
             set_value = 4.6
 
-            self.controller.send_ctrl_value(
+            self.controller.send_value(
                 variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
             await asyncio.sleep(0.1)  # wait for the values to be set
 
-            _controlled_values = self.controller.get_controlled_value(
+            _controlled_values = self.controller.get_value(
                 variables=self.controlled_vars)  # avoid multiple calls to list
 
             integer_types = ["i", "j"]
@@ -401,7 +401,7 @@ class test_Controller(unittest.TestCase):
                 self.assertTrue(
                     _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
 
-        asyncio.run(async_test_send_ctrl_value())
+        asyncio.run(async_test_send_value())
 
 
 def remove_file(file_path):
@@ -443,7 +443,7 @@ if __name__ == '__main__':
 
             if 1:
                 suite.addTest(test_Controller('test_start_stop_controlling'))
-                suite.addTest(test_Controller('test_send_ctrl_value'))
+                suite.addTest(test_Controller('test_send_value'))
 
             runner = unittest.TextTestRunner(verbosity=2)
             runner.run(suite)
