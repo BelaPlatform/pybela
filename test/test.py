@@ -2,7 +2,7 @@ import unittest
 import asyncio
 import os
 import numpy as np
-from pybela import Watcher, Streamer, Logger, Monitor
+from pybela import Watcher, Streamer, Logger, Monitor, Controller
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
@@ -353,6 +353,57 @@ class test_Monitor(unittest.TestCase):
         asyncio.run(async_test_save_monitor())
 
 
+class test_Controller(unittest.TestCase):
+    def setUp(self):
+        self.controlled_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
+
+        self.controller = Controller()
+        self.controller.connect()
+
+    def tearDown(self):
+        self.controller.__del__()
+
+    def test_start_stop_controlling(self):
+
+        async def async_test_start_stop_controlling():
+
+            self.controller.start_controlling(variables=self.controlled_vars)
+
+            self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars), {
+                             var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
+
+            self.controller.stop_controlling(variables=self.controlled_vars)
+
+            self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars),  {
+                             var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
+
+        asyncio.run(async_test_start_stop_controlling())
+
+    def test_send_value(self):
+        async def async_test_send_value():
+            # TODO add streamer to check values are being sent
+            self.controller.start_controlling(variables=self.controlled_vars)
+
+            set_value = 4.6
+
+            self.controller.send_value(
+                variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
+            await asyncio.sleep(0.1)  # wait for the values to be set
+
+            _controlled_values = self.controller.get_value(
+                variables=self.controlled_vars)  # avoid multiple calls to list
+
+            integer_types = ["i", "j"]
+            expected_values = [int(set_value) if self.controller.get_prop_of_var(
+                var, "type") in integer_types else set_value for var in self.controlled_vars]
+
+            for idx, var in enumerate(self.controlled_vars):
+                self.assertTrue(
+                    _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
+
+        asyncio.run(async_test_send_value())
+
+
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -389,6 +440,10 @@ if __name__ == '__main__':
                 suite.addTest(test_Monitor('test_period_monitor'))
                 suite.addTest(test_Monitor('test_monitor_n_values'))
                 suite.addTest(test_Monitor('test_save_monitor'))
+
+            if 1:
+                suite.addTest(test_Controller('test_start_stop_controlling'))
+                suite.addTest(test_Controller('test_send_value'))
 
             runner = unittest.TextTestRunner(verbosity=2)
             runner.run(suite)

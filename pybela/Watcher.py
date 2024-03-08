@@ -48,7 +48,8 @@ class Watcher:
             _pybela_ws_register = {"WATCH": {},
                                    "STREAM":  {},
                                    "LOG":  {},
-                                   "MONITOR":  {}}
+                                   "MONITOR":  {},
+                                   "CONTROL":  {}}
 
         self._pybela_ws_register = _pybela_ws_register
 
@@ -106,11 +107,18 @@ class Watcher:
 
         async def _async_connect():
             try:
-                # Close any open ctrl websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
+                # Close any open ctrl websocket open for the same mode (STREAM, LOG, MONITOR, WATCH)
                 if self._pybela_ws_register[self._mode].get(self.ws_ctrl_add) is not None and self._pybela_ws_register[self._mode][self.ws_ctrl_add].open:
                     print_warning(
                         f"pybela doesn't support more than one active connection at a time for a given mode. Closing previous connection for {self._mode} at {self.ws_ctrl_add}.")
                     await self._pybela_ws_register[self._mode][self.ws_ctrl_add].close()
+
+                # Control and monitor can't be used at the same time
+                if (self._mode == "MONITOR" and self._pybela_ws_register["CONTROL"].get(self.ws_ctrl_add) is not None and self._pybela_ws_register["CONTROL"][self.ws_ctrl_add].open) or (self._mode == "CONTROL" and self._pybela_ws_register["MONITOR"].get(self.ws_ctrl_add) is not None and self._pybela_ws_register["MONITOR"][self.ws_ctrl_add].open):
+                    print_warning(
+                        f"pybela doesn't support running control and monitor modes at the same time. You are currently running {'CONTROL' if self._mode=='MONITOR' else 'MONITOR'} at {self.ws_ctrl_add}. You can close it running controller.disconnect()")
+                    print_error("Connection failed")
+                    return 0
 
                 # Connect to the control websocket
                 self.ws_ctrl = await websockets.connect(self.ws_ctrl_add)
@@ -122,12 +130,6 @@ class Watcher:
                     self.project_name = response["projectName"]
                     # Send connection reply to establish the connection
                     self.send_ctrl_msg({"event": "connection-reply"})
-
-                    # Close any open data websocket for the same mode (STREAM, LOG, MONITOR, WATCH)
-                    if self._pybela_ws_register[self._mode].get(self.ws_data_add) is not None and self._pybela_ws_register[self._mode][self.ws_data_add].open:
-                        print_warning(
-                            f"pybela doesn't support more than one active connection at a time for a given mode. Closing previous connection for {self._mode} at {self.data_add}.")
-                        await self._pybela_ws_register[self._mode][self.ws_data_add].close()
 
                     # Connect to the data websocket
                     self.ws_data = await websockets.connect(self.ws_data_add)
@@ -142,8 +144,10 @@ class Watcher:
                     self._watcher_vars = self._filtered_watcher_vars(self._list["watchers"],
                                                                      lambda var: True)
                     print_ok("Connection successful")
+                    return 1
                 else:
                     print_error("Connection failed")
+                    return 0
             except Exception as e:
                 raise ConnectionError(f"Connection failed: {str(e)}.")
 
@@ -300,7 +304,7 @@ class Watcher:
 
                 ref_timestamp, * \
                     data = struct.unpack(
-                        'Q' + f"{_type}"*int((len(binary_data) - struct.calcsize('Q'))/struct.calcsize(_type)), binary_data) 
+                        'Q' + f"{_type}"*int((len(binary_data) - struct.calcsize('Q'))/struct.calcsize(_type)), binary_data)
 
                 parsed_buffer = {
                     "ref_timestamp": ref_timestamp, "data": data}
@@ -342,7 +346,7 @@ class Watcher:
         return [{
             "name": var["name"],
             "type": var["type"],
-            "timestamp_mode":"sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
+            "timestamp_mode": "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,
             # "log_filename": var["logFileName"], # this is updated every time log is called so better not to store it
             "data_length": self.get_data_length(var["type"], "sparse" if var["timestampMode"] == 1 else "dense" if var["timestampMode"] == 0 else None,),
             "monitor": var["monitor"]
@@ -357,7 +361,7 @@ class Watcher:
         """
 
         if len(variables) == 0:
-            # if no variables are specified, stream all watcher variables (default)
+            # if no variables are specified, return all watcher variables (default)
             return [var["name"] for var in self.watcher_vars]
 
         variables = variables if isinstance(variables, list) else [
