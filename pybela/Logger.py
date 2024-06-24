@@ -177,6 +177,9 @@ class Logger(Watcher):
             remote_files[var] = asyncio.run(_async_send_logging_cmd_and_wait_for_response(var))[
                 "logFileName"]
             remote_paths[var] = f'/root/Bela/projects/{self.project_name}/{remote_files[var]}'
+        
+        print_info(
+            f"Started logging variables {variables}... Run stop_logging() to stop logging.")
 
         return remote_paths
 
@@ -194,6 +197,8 @@ class Logger(Watcher):
 
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "unlog", "watchers": variables}]})
+            
+            print_info(f"Stopped streaming variables {variables}...")
 
             await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
             self._active_copying_tasks.clear()

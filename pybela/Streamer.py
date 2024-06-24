@@ -36,6 +36,7 @@ class Streamer(Watcher):
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 1000
         self._streaming_buffers_queue = None
+        self._streaming_buffers_queue_insertion_counts = {}
         self.last_streamed_buffer = {}
 
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_VALUES, PEEK :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
@@ -87,6 +88,7 @@ class Streamer(Watcher):
         self._streaming_buffers_queue_length = value
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}  # resize streaming buffer
+        self._streaming_buffers_queue_insertion_counts = {var["name"]: 0 for var in self.watcher_vars}
 
     @property
     def streaming_buffers_queue(self):
@@ -110,7 +112,8 @@ class Streamer(Watcher):
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
             var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
-
+        self._streaming_buffers_queue_insertion_counts = {var["name"]: 0 for var in self.watcher_vars}
+        
     @property
     def streaming_buffers_data(self):
         """Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
@@ -144,7 +147,7 @@ class Streamer(Watcher):
             saving_filename, saving_dir) if saving_enabled else None
 
         # checks types and if no variables are specified, stream all watcher variables (default)
-        variables = self._var_arg_checker(variables)
+        return self._var_arg_checker(variables)
 
     def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./"):
         """
@@ -159,7 +162,7 @@ class Streamer(Watcher):
             saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
         """
 
-        self.__streaming_common_routine(
+        variables = self.__streaming_common_routine(
             variables, saving_enabled, saving_filename, saving_dir)
 
         self._streaming_mode = "FOREVER" if self._peek_response is None else "PEEK"
@@ -233,7 +236,7 @@ class Streamer(Watcher):
             saving_dir (str, optional): Directory for saving the streamed data files. Defaults to "./".
         """
 
-        self.__streaming_common_routine(
+        variables = self.__streaming_common_routine(
             variables, saving_enabled, saving_filename, saving_dir)
 
         self._streaming_mode = "SCHEDULE"
@@ -311,7 +314,7 @@ class Streamer(Watcher):
         """
         # resizes the streaming buffer size to n_values and returns it when full
 
-        self.__streaming_common_routine(
+        variables = self.__streaming_common_routine(
             variables=variables, saving_enabled=saving_enabled, saving_filename=saving_filename, saving_dir=saving_dir)
 
         self._streaming_mode = "N_VALUES"  # flag cleared in __rec_msg_callback
@@ -544,6 +547,8 @@ class Streamer(Watcher):
                     self._streaming_buffers_queue[var_name])
                 _var_streaming_buffers_queue.append(parsed_buffer)
                 self._streaming_buffers_queue[var_name] = _var_streaming_buffers_queue
+                _var_streaming_buffers_queue_insertion_counts = copy.deepcopy(self._streaming_buffers_queue_insertion_counts[var_name]) + 1
+                self._streaming_buffers_queue_insertion_counts[var_name] = _var_streaming_buffers_queue_insertion_counts
 
                 # populate last streamed buffer
                 if self._mode == "STREAM":
