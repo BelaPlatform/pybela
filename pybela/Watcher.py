@@ -184,7 +184,7 @@ class Watcher:
         Args:
             msg (str): Message to send to the Bela watcher. Example: {"watcher": [{"cmd": "list"}]}
         """
-        self._send_msg(self.ws_ctrl_add, msg)
+        self._send_msg(self.ws_ctrl_add, json.dumps(msg))
 
     # --- private methods --- #
 
@@ -222,16 +222,15 @@ class Watcher:
         """Send message to websocket
 
         Args:
-            ws (websocket): Websocket object
             ws_address (str): Websocket address
             msg (str): Message to send
         """
         async def _async_send_msg(ws_address, msg):
             try:
                 if ws_address == self.ws_data_add and self.ws_data is not None and self.ws_data.open:
-                    await self.ws_data.send(json.dumps(msg))
+                    await self.ws_data.send(msg)
                 elif ws_address == self.ws_ctrl_add and self.ws_ctrl is not None and self.ws_ctrl.open:
-                    await self.ws_ctrl.send(json.dumps(msg))
+                    await self.ws_ctrl.send(msg)
             except Exception as e:
                 handle_connection_exception(ws_address, e, "sending message")
                 return 0

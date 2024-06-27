@@ -8,6 +8,7 @@ from collections import deque  # circular buffers
 from itertools import cycle
 import warnings
 import re
+import struct
 
 import bokeh.plotting
 import bokeh.io
@@ -88,7 +89,8 @@ class Streamer(Watcher):
         self._streaming_buffers_queue_length = value
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}  # resize streaming buffer
-        self._streaming_buffers_queue_insertion_counts = {var["name"]: 0 for var in self.watcher_vars}
+        self._streaming_buffers_queue_insertion_counts = {
+            var["name"]: 0 for var in self.watcher_vars}
 
     @property
     def streaming_buffers_queue(self):
@@ -112,8 +114,9 @@ class Streamer(Watcher):
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         self.last_streamed_buffer = {
             var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
-        self._streaming_buffers_queue_insertion_counts = {var["name"]: 0 for var in self.watcher_vars}
-        
+        self._streaming_buffers_queue_insertion_counts = {
+            var["name"]: 0 for var in self.watcher_vars}
+
     @property
     def streaming_buffers_data(self):
         """Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
@@ -165,6 +168,16 @@ class Streamer(Watcher):
         variables = self.__streaming_common_routine(
             variables, saving_enabled, saving_filename, saving_dir)
 
+        # commented because then you can only start streaming on variables whose values have been previously assigned in the Bela code
+        # not useful for the Sender function (send a buffer from the laptop and stream it through the watcher)
+        # async def async_wait_for_streaming_to_start():  # ensures that when function returns streaming has started
+        # if self._mode == "STREAM":
+        #     while set([var["name"] for var in self.watched_vars]) != set(variables):
+        #         await asyncio.sleep(0.1)
+        # elif self._mode == "MONITOR":
+        #     while not all(self._streaming_buffers_queue_insertion_counts[var] > 0 for var in variables):
+        #             await asyncio.sleep(0.1)
+
         self._streaming_mode = "FOREVER" if self._peek_response is None else "PEEK"
         if self._mode == "STREAM":
             if periods != []:
@@ -172,12 +185,14 @@ class Streamer(Watcher):
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "watch", "watchers": variables}]})
+            # asyncio.run(async_wait_for_streaming_to_start())
             print_info(
                 f"Started streaming variables {variables}... Run stop_streaming() to stop streaming.")
         elif self._mode == "MONITOR":
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
+            # asyncio.run(async_wait_for_streaming_to_start())
             if self._streaming_mode == "FOREVER":
                 print_info(
                     f"Started monitoring variables {variables}... Run stop_monitoring() to stop monitoring.")
@@ -363,6 +378,27 @@ class Streamer(Watcher):
 
         return self.streaming_buffers_queue
 
+    def send_buffer(self, buffer_id, buffer_type, buffer_length, data_list):
+        """
+        Sends a buffer to Bela. The buffer is packed into binary format and sent over the websocket.
+
+        Args:
+            buffer_id (int): Buffer id
+            buffer_type (str): Buffer type. Supported types are 'i' (int), 'f' (float), 'j' (uint), 'd' (double), 'c' (char).
+            buffer_length (int): Buffer length
+            data_list (list): List of data to be sent
+        """
+        # Pack the data into binary format
+        # >I means big-endian unsigned int, 4s means 4-byte string, pad with x for empty bytes
+
+        idtypestr = struct.pack('<I4sI4x', buffer_id,
+                                buffer_type.encode(), buffer_length)
+        format_str = buffer_type * len(data_list)
+        binary_data = struct.pack(format_str, *data_list)
+        self._send_msg(self.ws_data_add, idtypestr + binary_data)
+        print_info(
+            f"Sent buffer {buffer_id} of type {buffer_type} with length {buffer_length}...")
+
     # - utils
 
     def is_streaming(self):
@@ -547,8 +583,10 @@ class Streamer(Watcher):
                     self._streaming_buffers_queue[var_name])
                 _var_streaming_buffers_queue.append(parsed_buffer)
                 self._streaming_buffers_queue[var_name] = _var_streaming_buffers_queue
-                _var_streaming_buffers_queue_insertion_counts = copy.deepcopy(self._streaming_buffers_queue_insertion_counts[var_name]) + 1
-                self._streaming_buffers_queue_insertion_counts[var_name] = _var_streaming_buffers_queue_insertion_counts
+                _var_streaming_buffers_queue_insertion_counts = copy.deepcopy(
+                    self._streaming_buffers_queue_insertion_counts[var_name]) + 1
+                self._streaming_buffers_queue_insertion_counts[
+                    var_name] = _var_streaming_buffers_queue_insertion_counts
 
                 # populate last streamed buffer
                 if self._mode == "STREAM":

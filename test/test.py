@@ -410,8 +410,7 @@ def remove_file(file_path):
 
 
 if __name__ == '__main__':
-    if 0:
-        unittest.main(verbosity=2)
+    unittest.main(verbosity=2)
 
     # select which tests to run
     n = 1

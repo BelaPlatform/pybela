@@ -12,3 +12,4 @@ build/
 *.fzz
 dist/
 *.sh
+.clang-format

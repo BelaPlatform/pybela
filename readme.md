@@ -1,6 +1,6 @@
 # pybela
 
-pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, monitor sensor data from your Bela device to your laptop. It also allows you to control the value of variables in your Bela code from your laptop.
+pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, monitor sensor data from Bela to python. It also allows you to send buffers of data from python to Bela or control the value of variables in your Bela code from python.
 
 Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`. 
 
@@ -96,12 +96,12 @@ scp watcher/Watcher.h watcher/Watcher.cpp root@bela.local:Bela/projects/your-pro
 
 pybela has three different modes of operation:
 
-- **Streaming**: continuously send data from your Bela device to your laptop.
-- **Logging**: log data in your Bela device and then retrieve it from your laptop.
-- **Monitoring**: monitor the value of variables in the Bela code from your laptop.
-- **Controlling**: control the value of variables in the Bela code from your laptop.
+- **Streaming**: continuously send data from Bela to python (**NEW: or vice versa!** check the [tutorial](tutorials/notebooks/2_Streamer-python-to-Bela.ipynb)).
+- **Logging**: log data in a file in Bela and then retrieve it in python.
+- **Monitoring**: monitor the value of variables in the Bela code from python.
+- **Controlling**: control the value of variables in the Bela code from python.
 
-You can check the **tutorials** at `tutorials/` for more detailed information and usage of each of the modes. You can also check the `test/test.py` for a quick overview of the library. 
+You can check the **tutorials** at tutorials/` for more detailed information and usage of each of the modes. You can also check `test/test.py` for a quick overview of the library. 
 
 ### Running the examples
 
