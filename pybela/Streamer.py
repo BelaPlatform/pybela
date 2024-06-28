@@ -410,21 +410,21 @@ class Streamer(Watcher):
                 print(buffer["data"].shape)
             stop_after (int, optional): Stop after processing "stop_after" buffers. If 0, will run forever. Defaults to 0.
         """
-        data_len = {}
+        data_len, data_type, timestamp_mode = [], [], []
         for var in variables:
-            data_len[var] = self.get_prop_of_var(var, "data_length")
+            data_len.append(self.get_prop_of_var(var, "data_length"))
+            data_type.append(self.get_prop_of_var(var, "type"))
+            timestamp_mode.append(self.get_prop_of_var(var, "timestamp_mode"))
+        assert len(set(data_len)
+                   ) == 1, "Variables have different buffer sizes"
+        assert len(set(data_type)) == 1, "Variables have different data types"
+        assert len(set(timestamp_mode)
+                   ) == 1, "Variables have different timestamp modes"
 
-        print(data_len)
-
-        # very experimental
         async def async_on_data_callback(variables, callback, stop_after=stop_after, *args, **kwargs):
 
-            _loop = 0
-            _in_count = {}  # insertion count
-            _p_count = {}  # processed count
-            _p_idx = {}  # processed index
-            _old_in_count = {}  # old insertion count
-
+            _in_count, _p_count, _rp_count, _p_idx, _old_in_count = {}, {}, {}, {}, {}  # insertion count, processed count, real processed count (without init bias), processed index, old insertion count
+            _rp_count = {var: 0 for var in variables}
             for var in variables:
                 _in_count[var] = self._streaming_buffers_queue_insertion_counts[var]
                 _p_count[var] = _in_count[var]
@@ -434,6 +434,7 @@ class Streamer(Watcher):
                 else:
                     _p_idx[var] = -1 + _p_count[var]
                 _old_in_count[var] = _in_count[var]
+                
             while True:
                 # insertion count and streaming buffer should be copied at the same time
                 await asyncio.sleep(0.01)
@@ -460,6 +461,7 @@ class Streamer(Watcher):
                         _p_idx[var] = 0
 
                     _buffer = _queue[var][_p_idx[var]]
+                    _rp_count[var] += 1
 
                     # print(var, "in_count", _in_count[var], "_d_in_count",
                     #       _d_in_count, "p_count", _p_count[var],  "_p_idx", _p_idx[var])
@@ -479,7 +481,8 @@ class Streamer(Watcher):
                 if self._mode == "OFF":
                     return  # stop if streaming has been stopped
 
-                if stop_after > 0 and all(count >= stop_after for count in _p_count.values()):
+                if stop_after > 0 and all(count >= stop_after for count in _rp_count.values()):
+                    print_info(f"on_data_callback stopped after processing {stop_after} buffers")
                     return
 
         asyncio.run(async_on_data_callback(
