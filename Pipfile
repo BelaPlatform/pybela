@@ -23,6 +23,7 @@ twine = "*"
 
 [scripts]
 test = "python test/test.py"
+test-send = "python test/test-send.py"
 
 [requires]
 python_version = "3.9"

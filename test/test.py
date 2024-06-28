@@ -137,6 +137,32 @@ class test_Streamer(unittest.TestCase):
         asyncio.run(async_test_scheduling_streaming())
         self.__test_buffers(mode="schedule")
 
+    def test_on_data_callback(self):  # TODO test with more than one var
+        variables = ["myvar", "myvar5"] # dense double
+
+        async def async_test_on_data_callback():
+
+            # test only on vars of the same type
+            self.streamer.start_streaming(variables, saving_enabled=False)
+
+            timestamps = {var: [] for var in variables}
+
+            def callback(buffer, var):
+                timestamps[var].append(
+                    int(buffer["ref_timestamp"]/len(buffer["data"])))
+
+            self.streamer.on_data_callback(variables, callback, stop_after=10)
+
+            self.streamer.stop_streaming(variables)
+
+            for var in variables:
+                self.assertEqual(len(timestamps[var]), 10,
+                                 "The callback should be called 10 times")
+                self.assertEqual(timestamps[var][-1] - timestamps[var][0], len(timestamps[var]) - 1,
+                                 "Timestamps are not continuous. The callback is missing some buffer")
+
+        asyncio.run(async_test_on_data_callback())
+
 
 class test_Logger(unittest.TestCase):
 
@@ -410,7 +436,9 @@ def remove_file(file_path):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    # run all tests
+    if 0:
+        unittest.main(verbosity=2)
 
     # select which tests to run
     n = 1
