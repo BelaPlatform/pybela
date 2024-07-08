@@ -202,8 +202,17 @@ pipenv lock && pipenv sync # updates packages hashes
 pipenv run python -m build --sdist # builds the .tar.gz file
 ```
 
+
 ## To do and known issues
 
+**Before next release**
+
+- [ ] **Add** a tutorial for `.send_buffer`, `.on_data_callback` and `.on_block_callback`
+- [ ] **Check** what happens when `.on_data_callback` or `on_buffer_callback` are called before `start_streaming`
+
+**Long term**
+
+- [ ] **Add**: example projects
 - [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
 - [ ] **Issue**: The plotting routine does not work for the monitor (it only works for the streamer)
