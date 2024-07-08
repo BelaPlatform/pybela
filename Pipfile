@@ -16,10 +16,12 @@ nest-asyncio = "*"
 aiofiles = "*"
 pybela = {editable = true, path = "."}
 paramiko = "*"
+numpy = "==1.26"
 
 [dev-packages]
 build = "*"
 twine = "*"
+pip-chill = "*"
 
 [scripts]
 test = "python test/test.py"

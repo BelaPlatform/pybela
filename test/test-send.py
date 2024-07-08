@@ -11,7 +11,7 @@ variables = ["myvar1", "myvar2"]
 async def wait():
     await asyncio.sleep(0.1)
 
-# can't be merged with test.py because in the render.cpp the watcher needs to be 'ticked' when iterating the buffer, not at every audio frame! 
+# can't be merged with test.py because in the render.cpp the watcher needs to be 'ticked' when iterating the buffer, not at every audio frame!
 
 # TOOD test other types (int, double, uint, char)
 

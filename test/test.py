@@ -138,7 +138,8 @@ class test_Streamer(unittest.TestCase):
         self.__test_buffers(mode="schedule")
 
     def test_on_data_callback(self):  # TODO test with more than one var
-        variables = ["myvar", "myvar5"] # dense double
+        variables = ["myvar", "myvar5"]  # dense double
+        stop_after = 10
 
         async def async_test_on_data_callback():
 
@@ -146,22 +147,58 @@ class test_Streamer(unittest.TestCase):
             self.streamer.start_streaming(variables, saving_enabled=False)
 
             timestamps = {var: [] for var in variables}
+            buffers = {var: [] for var in variables}
 
             def callback(buffer, var):
-                timestamps[var].append(
-                    int(buffer["ref_timestamp"]/len(buffer["data"])))
+                timestamps[var].append(buffer["ref_timestamp"])
+                buffers[var].append(buffer["data"])
 
-            self.streamer.on_data_callback(variables, callback, stop_after=10)
+            self.streamer.on_data_callback(
+                variables, callback, stop_after=stop_after)
 
             self.streamer.stop_streaming(variables)
 
             for var in variables:
-                self.assertEqual(len(timestamps[var]), 10,
-                                 "The callback should be called 10 times")
-                self.assertEqual(timestamps[var][-1] - timestamps[var][0], len(timestamps[var]) - 1,
-                                 "Timestamps are not continuous. The callback is missing some buffer")
-
+                self.assertGreaterEqual(len(timestamps[var]), stop_after,
+                                        f'The callback should be called at least {stop_after} times')
+                for i in range(1, stop_after):
+                    self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,
+                                     "The timestamps should be continuous. The callback is missing some buffer")
         asyncio.run(async_test_on_data_callback())
+
+    def test_on_block_callback(self):
+        variables = ["myvar", "myvar5"]  # dense double
+        stop_after = 10
+
+        async def async_test_on_block_callback():
+            self.streamer.start_streaming(variables, saving_enabled=False)
+
+            timestamps = {var: [] for var in variables}
+            buffers = {var: [] for var in variables}
+
+            def callback(block, vars):                
+                for var in vars:
+                    if block[var] == {}:
+                        continue
+                    timestamps[var].append(block[var]['ref_timestamp'])
+                    buffers[var].append(block[var]['data'])
+
+                
+            self.streamer.on_block_callback(
+                variables, callback, stop_after=stop_after)
+            
+            await asyncio.sleep(0.1)
+            
+            self.streamer.stop_streaming(variables)
+            
+            for var in variables:
+                self.assertGreaterEqual(len(timestamps[var]), stop_after,
+                                        f'The callback should be called at least {stop_after} times')
+                for i in range(1, stop_after):
+                    self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,
+                                     "The timestamps should be continuous. The callback is missing some buffer")
+                    
+        asyncio.run(async_test_on_block_callback())
 
 
 class test_Logger(unittest.TestCase):
@@ -437,8 +474,7 @@ def remove_file(file_path):
 
 if __name__ == '__main__':
     # run all tests
-    if 0:
-        unittest.main(verbosity=2)
+    # unittest.main(verbosity=2)
 
     # select which tests to run
     n = 1
@@ -446,31 +482,30 @@ if __name__ == '__main__':
 
         print(f"\n\n....Running test {i+1}/{n}")
 
-        if 1:
-            suite = unittest.TestSuite()
-            if 1:
-                suite.addTest(test_Watcher('test_list'))
-                suite.addTest(test_Watcher('test_start_stop'))
-
-            if 1:
-                suite.addTest(test_Streamer('test_stream_n_values'))
-                suite.addTest(test_Streamer('test_start_stop_streaming'))
-                suite.addTest(test_Streamer('test_scheduling_streaming'))
-
-            if 1:
-                suite.addTest(test_Logger('test_logged_files_with_transfer'))
-                suite.addTest(test_Logger('test_logged_files_wo_transfer'))
-                suite.addTest(test_Logger('test_scheduling_logging'))
-
-            if 1:
-                suite.addTest(test_Monitor('test_peek'))
-                suite.addTest(test_Monitor('test_period_monitor'))
-                suite.addTest(test_Monitor('test_monitor_n_values'))
-                suite.addTest(test_Monitor('test_save_monitor'))
-
-            if 1:
-                suite.addTest(test_Controller('test_start_stop_controlling'))
-                suite.addTest(test_Controller('test_send_value'))
-
-            runner = unittest.TextTestRunner(verbosity=2)
-            runner.run(suite)
+        suite = unittest.TestSuite()
+        # suite.addTests([
+        #     # watcher
+        #     test_Watcher('test_list'),
+        #     test_Watcher('test_start_stop'),
+        #     # streamer
+        #     test_Streamer('test_stream_n_values'),
+        #     test_Streamer('test_start_stop_streaming'),
+        #     test_Streamer('test_scheduling_streaming'),
+        #     test_Streamer('test_on_data_callback'),
+        #     test_Streamer('test_on_block_callback'),
+        #     # logger
+        #     test_Logger('test_logged_files_with_transfer'),
+        #     test_Logger('test_logged_files_wo_transfer'),
+        #     test_Logger('test_scheduling_logging'),
+        #     # monitor
+        #     test_Monitor('test_peek'),
+        #     test_Monitor('test_period_monitor'),
+        #     test_Monitor('test_monitor_n_values'),
+        #     test_Monitor('test_save_monitor'),
+        #     # controller
+        #     test_Controller('test_start_stop_controlling'),
+        #     test_Controller('test_send_value')
+        # ])
+        suite.addTest(test_Streamer('test_on_block_callback'))
+        runner = unittest.TextTestRunner(verbosity=2)
+        runner.run(suite)

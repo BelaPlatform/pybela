@@ -404,12 +404,33 @@ class Streamer(Watcher):
 
         Args:
             variables (list): List of variables to run the callback on. Important: the current implementation assumes that variables are of the same type and that buffers are of the same length (i.e. also same timestamping mode). Check the buffer length of each variable with get_prop_of_var(var, "data_length").
-            callback (function): Function to be run on each buffer. It takes the buffer and the variable name as arguments. Callback can be blocking or non-blocking.  Example: 
+            callback (function): Function to be run on each buffer. It takes the buffer and the variable name as arguments. Callback can be a coroutine (async def ...).  Example: 
             def callback(buffer, var): 
+                    (buffer is a dict and var is a string)
                 print(var, buffer["ref_timestamp"])
                 print(buffer["data"].shape)
             stop_after (int, optional): Stop after processing "stop_after" buffers. If 0, will run forever. Defaults to 0.
         """
+        self.__on_data_callback(
+            variables, callback, call_callback_per_variable=True, stop_after=stop_after, *args, **kwargs)
+
+    def on_block_callback(self, variables, callback, stop_after=0, *args, **kwargs):
+        """ Run a callback on each block of buffers received.
+
+        Args:
+            variables (list): List of variables to run the callback on. Important: the current implementation assumes that variables are of the same type and that buffers are of the same length (i.e. also same timestamping mode). Check the buffer length of each variable with get_prop_of_var(var, "data_length").
+            callback (function): Function to be run on each block of buffers. It takes the block and the variables as arguments. Callback can be a coroutine (async def ...).  Example: 
+            def callback(block, variables): 
+                (block is a dict and variables is a list of strings)
+                print(variables)
+                print(block.keys())
+            stop_after (int, optional): Stop after processing "stop_after" buffers. If 0, will run forever. Defaults to 0.
+        """
+        self.__on_data_callback(
+            variables, callback, call_callback_per_variable=False, stop_after=stop_after, *args, **kwargs)
+
+    def __on_data_callback(self, variables, callback, call_callback_per_variable=True, stop_after=0, *args, **kwargs):
+
         data_len, data_type, timestamp_mode = [], [], []
         for var in variables:
             data_len.append(self.get_prop_of_var(var, "data_length"))
@@ -421,10 +442,15 @@ class Streamer(Watcher):
         assert len(set(timestamp_mode)
                    ) == 1, "Variables have different timestamp modes"
 
-        async def async_on_data_callback(variables, callback, stop_after=stop_after, *args, **kwargs):
+        data_len = {var: self.get_prop_of_var(
+            var, "data_length") for var in variables}
 
-            _in_count, _p_count, _rp_count, _p_idx, _old_in_count = {}, {}, {}, {}, {}  # insertion count, processed count, real processed count (without init bias), processed index, old insertion count
+        async def async_on_data_callback(variables, callback, call_callback_per_variable=True, stop_after=stop_after, *args, **kwargs):
+
+            # insertion count, processed count, real processed count (without init bias), processed index, old insertion count, insertion count delta
+            _in_count, _p_count, _rp_count, _p_idx, _old_in_count, _d_in_count = {}, {}, {}, {}, {}, {}
             _rp_count = {var: 0 for var in variables}
+            _d_in_count = {var: 0 for var in variables}
             for var in variables:
                 _in_count[var] = self._streaming_buffers_queue_insertion_counts[var]
                 _p_count[var] = _in_count[var]
@@ -434,19 +460,22 @@ class Streamer(Watcher):
                 else:
                     _p_idx[var] = -1 + _p_count[var]
                 _old_in_count[var] = _in_count[var]
-                
+
             while True:
                 # insertion count and streaming buffer should be copied at the same time
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(0.00001)
 
                 _old_in_count = _in_count
-                _in_count = copy.deepcopy(
+                # _in_count = {var: value for (var, value) in self._streaming_buffers_queue_insertion_counts.items()}
+                # _queue = {var: value for (var, value) in self._streaming_buffers_queue.items()}
+                _in_count = copy.copy(
                     self._streaming_buffers_queue_insertion_counts)
-                _queue = copy.deepcopy(self._streaming_buffers_queue)
+                _queue = copy.copy(self._streaming_buffers_queue)
 
+                _block = {var: {} for var in variables}
                 for var in variables:
 
-                    _d_in_count = _in_count[var] - _old_in_count[var]
+                    _d_in_count[var] = _in_count[var] - _old_in_count[var]
 
                     # if all buffers have been processed
                     if _in_count[var] == _p_count[var]:
@@ -461,32 +490,44 @@ class Streamer(Watcher):
                         _p_idx[var] = 0
 
                     _buffer = _queue[var][_p_idx[var]]
+                    _block[var] = _buffer
                     _rp_count[var] += 1
 
+                    # debug
                     # print(var, "in_count", _in_count[var], "_d_in_count",
                     #       _d_in_count, "p_count", _p_count[var],  "_p_idx", _p_idx[var])
 
                     # print(_p_idx[var], _buffer["ref_timestamp"],
                     #       _buffer["ref_timestamp"] // data_len[var])
 
-                    # callback here to process data
-                    if asyncio.iscoroutinefunction(callback):
-                        await callback(_buffer, var, *args, **kwargs)
-                    else:
-                        callback(_buffer, var, *args, **kwargs)
-                    # end callback
-
                     _p_count[var] += 1
 
-                if self._mode == "OFF":
+                    if call_callback_per_variable:
+                        if asyncio.iscoroutinefunction(callback):
+                            # non-blocking
+                            asyncio.run(
+                                callback(_buffer, var, *args, **kwargs))
+                        else:
+                            callback(_buffer, var, *args, **kwargs)
+
+                # if call_per_block is enabled, if there are processed buffers and if there are new buffers
+                if not call_callback_per_variable and any(_rp_count.values()) and any(_d_in_count.values()):
+                    if asyncio.iscoroutinefunction(callback):
+                        asyncio.run(callback(_block, variables, *
+                                    args, **kwargs))  # non-blocking
+                    else:
+                        callback(_block, variables, *args, **kwargs)
+
+                if not self.is_streaming():
                     return  # stop if streaming has been stopped
 
                 if stop_after > 0 and all(count >= stop_after for count in _rp_count.values()):
-                    print_info(f"on_data_callback stopped after processing {stop_after} buffers")
+                    print_info(
+                        f"on_data_callback stopped after processing {stop_after} buffers")
                     return
 
         asyncio.run(async_on_data_callback(
-            variables, callback, stop_after=stop_after))
+            variables, callback, call_callback_per_variable, stop_after=stop_after))
 
     # - utils
 
@@ -497,6 +538,14 @@ class Streamer(Watcher):
             bool: Streaming status bool
         """
         return True if self._streaming_mode != "OFF" else False
+
+    def flush_queue(self):
+        """Flushes the streaming buffers queue. The queue is emptied and the insertion counts are reset to 0.
+        """
+        self._streaming_buffers_queue = {var["name"]: deque(
+            maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
+        self._streaming_buffers_queue_insertion_counts = {
+            var["name"]: 0 for var in self.watcher_vars}
 
     def load_data_from_file(self, filename):
         """
