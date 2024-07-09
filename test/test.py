@@ -483,29 +483,29 @@ if __name__ == '__main__':
         print(f"\n\n....Running test {i+1}/{n}")
 
         suite = unittest.TestSuite()
-        # suite.addTests([
-        #     # watcher
-        #     test_Watcher('test_list'),
-        #     test_Watcher('test_start_stop'),
-        #     # streamer
-        #     test_Streamer('test_stream_n_values'),
-        #     test_Streamer('test_start_stop_streaming'),
-        #     test_Streamer('test_scheduling_streaming'),
-        #     test_Streamer('test_on_data_callback'),
-        #     test_Streamer('test_on_block_callback'),
-        #     # logger
-        #     test_Logger('test_logged_files_with_transfer'),
-        #     test_Logger('test_logged_files_wo_transfer'),
-        #     test_Logger('test_scheduling_logging'),
-        #     # monitor
-        #     test_Monitor('test_peek'),
-        #     test_Monitor('test_period_monitor'),
-        #     test_Monitor('test_monitor_n_values'),
-        #     test_Monitor('test_save_monitor'),
-        #     # controller
-        #     test_Controller('test_start_stop_controlling'),
-        #     test_Controller('test_send_value')
-        # ])
-        suite.addTest(test_Streamer('test_on_block_callback'))
+        suite.addTests([
+            # watcher
+            test_Watcher('test_list'),
+            test_Watcher('test_start_stop'),
+            # streamer
+            test_Streamer('test_stream_n_values'),
+            test_Streamer('test_start_stop_streaming'),
+            test_Streamer('test_scheduling_streaming'),
+            test_Streamer('test_on_data_callback'),
+            test_Streamer('test_on_block_callback'),
+            # logger
+            test_Logger('test_logged_files_with_transfer'),
+            test_Logger('test_logged_files_wo_transfer'),
+            test_Logger('test_scheduling_logging'),
+            # monitor
+            test_Monitor('test_peek'),
+            test_Monitor('test_period_monitor'),
+            test_Monitor('test_monitor_n_values'),
+            test_Monitor('test_save_monitor'),
+            # controller
+            test_Controller('test_start_stop_controlling'),
+            test_Controller('test_send_value')
+        ])
+        # suite.addTest(test_Streamer('test_on_block_callback'))
         runner = unittest.TextTestRunner(verbosity=2)
         runner.run(suite)

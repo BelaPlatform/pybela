@@ -461,9 +461,9 @@ class Streamer(Watcher):
                     _p_idx[var] = -1 + _p_count[var]
                 _old_in_count[var] = _in_count[var]
 
-            while True:
+            while self.is_streaming():
                 # insertion count and streaming buffer should be copied at the same time
-                await asyncio.sleep(0.00001)
+                await asyncio.sleep(0.000001)
 
                 _old_in_count = _in_count
                 # _in_count = {var: value for (var, value) in self._streaming_buffers_queue_insertion_counts.items()}
@@ -484,7 +484,7 @@ class Streamer(Watcher):
                         if _in_count[var] <= self.streaming_buffers_queue_length:
                             _p_idx[var] += 1
                         else:
-                            _p_idx[var] += 1 - _d_in_count
+                            _p_idx[var] += 1 - _d_in_count[var]
 
                     if _p_idx[var] < 0:
                         _p_idx[var] = 0
@@ -495,7 +495,7 @@ class Streamer(Watcher):
 
                     # debug
                     # print(var, "in_count", _in_count[var], "_d_in_count",
-                    #       _d_in_count, "p_count", _p_count[var],  "_p_idx", _p_idx[var])
+                    #       _d_in_count[var], "p_count", _p_count[var],  "_p_idx", _p_idx[var])
 
                     # print(_p_idx[var], _buffer["ref_timestamp"],
                     #       _buffer["ref_timestamp"] // data_len[var])
@@ -517,9 +517,6 @@ class Streamer(Watcher):
                                     args, **kwargs))  # non-blocking
                     else:
                         callback(_block, variables, *args, **kwargs)
-
-                if not self.is_streaming():
-                    return  # stop if streaming has been stopped
 
                 if stop_after > 0 and all(count >= stop_after for count in _rp_count.values()):
                     print_info(
@@ -717,11 +714,11 @@ class Streamer(Watcher):
                     msg, var_timestamp_mode, _type).copy()
 
                 # fixes bug where data is shifted by period
-                _var_streaming_buffers_queue = copy.deepcopy(
+                _var_streaming_buffers_queue = copy.copy(
                     self._streaming_buffers_queue[var_name])
                 _var_streaming_buffers_queue.append(parsed_buffer)
                 self._streaming_buffers_queue[var_name] = _var_streaming_buffers_queue
-                _var_streaming_buffers_queue_insertion_counts = copy.deepcopy(
+                _var_streaming_buffers_queue_insertion_counts = copy.copy(
                     self._streaming_buffers_queue_insertion_counts[var_name]) + 1
                 self._streaming_buffers_queue_insertion_counts[
                     var_name] = _var_streaming_buffers_queue_insertion_counts
