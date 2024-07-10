@@ -465,7 +465,7 @@ class Streamer(Watcher):
 
             while self.is_streaming():
                 # insertion count and streaming buffer should be copied at the same time
-                await asyncio.sleep(0.000001)
+                await asyncio.sleep(0.0001)
 
                 _old_in_count = _in_count
                 # _in_count = {var: value for (var, value) in self._streaming_buffers_queue_insertion_counts.items()}

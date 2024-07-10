@@ -38,6 +38,8 @@ class test_Sender(unittest.TestCase):
                 assert np.array_equal(
                     streamer.streaming_buffers_data[var], data_list), "Data sent and received are not the same"
 
+            streamer.stop_streaming()
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

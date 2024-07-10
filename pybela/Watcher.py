@@ -33,9 +33,12 @@ class Watcher:
         self.ws_data = None
     
 
-        self._data_msg_queue = asyncio.Queue()
-        self._process_data_msg_worker_task = None
-
+        self._received_data_msg_queue = asyncio.Queue()
+        self._process_received_data_msg_worker_task = None
+        
+        self._to_send_data_msg_queue = asyncio.Queue()
+        self._sending_data_msg_worker_task = None  
+    
         self._list_response_available = asyncio.Event()
         self._list_response = None
         self._log_response_available = asyncio.Event()
@@ -137,7 +140,8 @@ class Watcher:
 
                     # Connect to the data websocket
                     self.ws_data = await websockets.connect(self.ws_data_add)
-                    self._process_data_msg_worker_task = asyncio.create_task(self._process_data_msg_worker())
+                    self._process_received_data_msg_worker_task = asyncio.create_task(self._process_data_msg_worker())
+                    self._sending_data_msg_worker_task = asyncio.create_task(self._send_data_msg_worker())
 
                     # Start listener loops
                     self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
@@ -166,7 +170,8 @@ class Watcher:
                 await self.ws_ctrl.close()
             if self.ws_data is not None and self.ws_data.open:
                 await self.ws_data.close()
-                self._process_data_msg_worker_task.cancel()
+                self._process_received_data_msg_worker_task.cancel()
+                self._sending_data_msg_worker_task.cancel()
         return asyncio.run(_async_stop())
 
     def is_connected(self):
@@ -210,7 +215,7 @@ class Watcher:
                     if self._printall_responses:
                         print(msg)
                     if ws_address == self.ws_data_add:
-                        await self._data_msg_queue.put(msg)
+                        await self._received_data_msg_queue.put(msg)
                         # self._process_data_msg(msg)
                     elif ws_address == self.ws_ctrl_add:
                         self._process_ctrl_msg(msg)
@@ -235,13 +240,21 @@ class Watcher:
         async def _async_send_msg(ws_address, msg):
             try:
                 if ws_address == self.ws_data_add and self.ws_data is not None and self.ws_data.open:
-                    await self.ws_data.send(msg)
+                    await self._to_send_data_msg_queue.put(msg)
                 elif ws_address == self.ws_ctrl_add and self.ws_ctrl is not None and self.ws_ctrl.open:
                     await self.ws_ctrl.send(msg)
             except Exception as e:
                 handle_connection_exception(ws_address, e, "sending message")
                 return 0
         asyncio.run(_async_send_msg(ws_address, msg))
+    
+    # send messages
+    
+    async def _send_data_msg_worker(self):
+        while self.ws_data is not None and self.ws_data.open:
+            msg = await self._to_send_data_msg_queue.get()
+            await self.ws_data.send(msg)
+            self._to_send_data_msg_queue.task_done()
 
     # process messages
 
@@ -252,10 +265,10 @@ class Watcher:
             msg (str): Bytestring with data
         """
         
-        while  self.ws_data is not None and self.ws_data.open:
-            msg = await self._data_msg_queue.get()
+        while self.ws_data is not None and self.ws_data.open:
+            msg = await self._received_data_msg_queue.get()
             await self._process_data_msg(msg)
-            self._data_msg_queue.task_done()
+            self._received_data_msg_queue.task_done()
             
     async def _process_data_msg(self, msg):
         """Process data message. This method is overwritten by the streamer.
