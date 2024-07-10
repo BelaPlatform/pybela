@@ -31,6 +31,10 @@ class Watcher:
         self.ws_data_add = f"ws://{self.ip}:{self.port}/{self.data_add}"
         self.ws_ctrl = None
         self.ws_data = None
+    
+
+        self._data_msg_queue = asyncio.Queue()
+        self._process_data_msg_worker_task = None
 
         self._list_response_available = asyncio.Event()
         self._list_response = None
@@ -133,6 +137,7 @@ class Watcher:
 
                     # Connect to the data websocket
                     self.ws_data = await websockets.connect(self.ws_data_add)
+                    self._process_data_msg_worker_task = asyncio.create_task(self._process_data_msg_worker())
 
                     # Start listener loops
                     self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
@@ -161,6 +166,7 @@ class Watcher:
                 await self.ws_ctrl.close()
             if self.ws_data is not None and self.ws_data.open:
                 await self.ws_data.close()
+                self._process_data_msg_worker_task.cancel()
         return asyncio.run(_async_stop())
 
     def is_connected(self):
@@ -204,7 +210,8 @@ class Watcher:
                     if self._printall_responses:
                         print(msg)
                     if ws_address == self.ws_data_add:
-                        self._process_data_msg(msg)
+                        await self._data_msg_queue.put(msg)
+                        # self._process_data_msg(msg)
                     elif ws_address == self.ws_ctrl_add:
                         self._process_ctrl_msg(msg)
                     else:
@@ -238,13 +245,26 @@ class Watcher:
 
     # process messages
 
-    def _process_data_msg(self, msg):  # method overwritten by streamer
+    async def _process_data_msg_worker(self):  # method overwritten by streamer
+        """Process data message. This method is overwritten by the streamer.
+
+        Args:
+            msg (str): Bytestring with data
+        """
+        
+        while  self.ws_data is not None and self.ws_data.open:
+            msg = await self._data_msg_queue.get()
+            await self._process_data_msg(msg)
+            self._data_msg_queue.task_done()
+            
+    async def _process_data_msg(self, msg):
         """Process data message. This method is overwritten by the streamer.
 
         Args:
             msg (str): Bytestring with data
         """
         pass
+        
 
     def _process_ctrl_msg(self, msg):
         """Process control message

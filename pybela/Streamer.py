@@ -30,25 +30,26 @@ class Streamer(Watcher):
         """
 
         super(Streamer, self).__init__(ip, port, data_add, control_add)
-
-        # stores the list of monitored variables for each monitored session. cleaned after each monitoring session. used to avoid calling list() every time a new message is parsed
-        self._monitored_vars = None
-
+        
+        # -- streaming --
+        self._streaming_mode = "OFF"  # OFF, FOREVER, N_VALUES, PEEK :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
+        self._streaming_buffer_available = asyncio.Event()
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 1000
         self._streaming_buffers_queue = None
         self._streaming_buffers_queue_insertion_counts = {}
         self.last_streamed_buffer = {}
 
-        self._streaming_mode = "OFF"  # OFF, FOREVER, N_VALUES, PEEK :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
-        self._streaming_buffer_available = asyncio.Event()
-
+        # -- save --
         self._saving_enabled = False
         self._saving_filename = None
         self._saving_task = None
         self._active_saving_tasks = []
         self._saving_file_locks = {}
 
+        # -- monitor --
+        # stores the list of monitored variables for each monitored session. cleaned after each monitoring session. used to avoid calling list() every time a new message is parsed
+        self._monitored_vars = None
         self._peek_response_available = asyncio.Event()
         self._peek_response = None
 
@@ -378,7 +379,7 @@ class Streamer(Watcher):
 
         return self.streaming_buffers_queue
 
-    def send_buffer(self, buffer_id, buffer_type, buffer_length, data_list):
+    def send_buffer(self, buffer_id, buffer_type, buffer_length, data_list, verbose=False):
         """
         Sends a buffer to Bela. The buffer is packed into binary format and sent over the websocket.
 
@@ -396,8 +397,9 @@ class Streamer(Watcher):
         format_str = buffer_type * len(data_list)
         binary_data = struct.pack(format_str, *data_list)
         self._send_msg(self.ws_data_add, idtypestr + binary_data)
-        print_info(
-            f"Sent buffer {buffer_id} of type {buffer_type} with length {buffer_length}...")
+        if verbose:
+            print_info(
+                f"Sent buffer {buffer_id} of type {buffer_type} with length {buffer_length}...")
 
     def on_data_callback(self, variables, callback, stop_after=0, *args, **kwargs):
         """ Run a callback on each buffer received.
@@ -674,12 +676,13 @@ class Streamer(Watcher):
 
     # --- private methods --- #
 
-    def _process_data_msg(self, msg):
+    async def _process_data_msg(self, msg):
         """ Process data message received from Bela. This function is called by the websocket listener when a data message is received.
 
         Args:
             msg (bytestring): Data message received from Bela
         """
+
         global _channel, _type
         try:
             _, __ = _channel, _type
@@ -697,7 +700,7 @@ class Streamer(Watcher):
                 _channel = int(_channel)
 
                 assert _type in ['i', 'f', 'j', 'd',
-                                 'c'], f"Unsupported type: {_type}"
+                                'c'], f"Unsupported type: {_type}"
 
                 assert _type == self._watcher_vars[_channel][
                     'type'], f"Type mismatch: {_type} != {self._watcher_vars[_channel]['type']}"
