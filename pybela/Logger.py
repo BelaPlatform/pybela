@@ -46,17 +46,20 @@ class Logger(Watcher):
 
         local_paths = {}
         if transfer:
-            for var in [v for v in self.watcher_vars if v["name"] in variables]:
-                var = var["name"]
-                local_path = os.path.join(
-                    logging_dir, os.path.basename(remote_paths[var]))
+            async def copying_tasks(): # FIXME can we remove this async?
+                for var in [v for v in self.watcher_vars if v["name"] in variables]:
+                    var = var["name"]
+                    local_path = os.path.join(
+                        logging_dir, os.path.basename(remote_paths[var]))
 
-                # if file already exists, throw a warning and add number at the end of the filename
-                local_paths[var] = self._generate_local_filename(local_path)
+                    # if file already exists, throw a warning and add number at the end of the filename
+                    local_paths[var] = self._generate_local_filename(local_path)
 
-                copying_task = self.__copy_file_in_chunks(
-                    remote_paths[var], local_paths[var])
-                self._active_copying_tasks.append(copying_task)
+                    copying_task = self.__copy_file_in_chunks(
+                            remote_paths[var], local_paths[var])
+                    self._active_copying_tasks.append(copying_task)
+            
+            asyncio.run(copying_tasks())
 
         return {"local_paths": local_paths, "remote_paths": remote_paths}
 
@@ -157,25 +160,18 @@ class Logger(Watcher):
         if self.is_logging():
             self.stop_logging()
 
-        # self.start()  # start websocket connection -- done with .connect()
         self.connect_ssh()  # start ssh connection
 
         self._logging_mode = mode
 
-        async def _async_send_logging_cmd_and_wait_for_response(var):
-            # the logger responds with the name of the file where the variable is being logged in Bela
-            # the logger responds with one message per variable -- so to keep track of responses it is easier to ask for a variable at a time rather than all at once
-            self.send_ctrl_msg(
-                {"watcher": [{"cmd": "log", "timestamps": timestamps, "durations": durations, "watchers": [var]}]})
-            await self._log_response_available.wait()
-            self._log_response_available.clear()
-            return self._log_response
+        remote_files, remote_paths = {}, {}
 
-        remote_files = {}
-        remote_paths = {}
-        for var in variables:
-            remote_files[var] = asyncio.run(_async_send_logging_cmd_and_wait_for_response(var))[
-                "logFileName"]
+        self.send_ctrl_msg({"watcher": [
+                           {"cmd": "log", "timestamps": timestamps, "durations": durations, "watchers": variables}]})
+        list_res = self.list()
+
+        for idx, var in enumerate(variables):
+            remote_files[var] = list_res["watchers"][idx]["logFileName"]
             remote_paths[var] = f'/root/Bela/projects/{self.project_name}/{remote_files[var]}'
 
         print_info(
@@ -375,8 +371,9 @@ class Logger(Watcher):
 
             finally:
                 await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
-
+        
         return asyncio.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
+        
 
     def copy_file_from_bela(self, remote_path, local_path, verbose=True):
         """Copy a file from Bela onto the local machine.
@@ -561,19 +558,23 @@ class Logger(Watcher):
 
         # Iterate through the files and delete .bin files
         tasks = []
-        for file_name in file_list:
-            if file_name.endswith('.bin'):
-                remote_file_path = f"{remote_path}/{file_name}"
-                if action == "delete":
-                    task = asyncio.create_task(
-                        self._async_delete_file_from_bela(remote_file_path))
-                elif action == "copy":
-                    local_filename = os.path.join(local_dir, file_name)
-                    task = asyncio.create_task(
-                        self._async_copy_file_from_bela(remote_file_path, local_filename))
-                else:
-                    raise ValueError(f"Invalid action: {action}")
-                tasks.append(task)
+        async def _async_action_action_on_all_bin_files_in_project(): # FIXME can we avoid this async?
+            for file_name in file_list:
+                if file_name.endswith('.bin'):
+                    remote_file_path = f"{remote_path}/{file_name}"
+                    if action == "delete":
+                        task = asyncio.create_task(
+                            self._async_delete_file_from_bela(remote_file_path))
+                    elif action == "copy":
+                        local_filename = os.path.join(local_dir, file_name)
+                        task = asyncio.create_task(
+                            self._async_copy_file_from_bela(remote_file_path, local_filename))
+                    else:
+                        raise ValueError(f"Invalid action: {action}")
+                    tasks.append(task)
+        
+        asyncio.run(_async_action_action_on_all_bin_files_in_project())
+            
 
         return tasks
 

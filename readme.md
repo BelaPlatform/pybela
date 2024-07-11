@@ -2,12 +2,13 @@
 
 pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, monitor sensor data from Bela to python. It also allows you to send buffers of data from python to Bela or control the value of variables in your Bela code from python.
 
-Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`. 
+Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`.
 
 pybela was developed with a machine learning use case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial).
 
 ## [Installation and set up](#installation)
-You will need to (1) install the python package in your laptop,  (2) set the Bela branch to `dev` and (3) add the watcher library to your Bela project.
+
+You will need to (1) install the python package in your laptop, (2) set the Bela branch to `dev` and (3) add the watcher library to your Bela project.
 
 ### 1. Installing the python package
 
@@ -101,7 +102,7 @@ pybela has three different modes of operation:
 - **Monitoring**: monitor the value of variables in the Bela code from python.
 - **Controlling**: control the value of variables in the Bela code from python.
 
-You can check the **tutorials** at tutorials/` for more detailed information and usage of each of the modes. You can also check `test/test.py` for a quick overview of the library. 
+You can check the **tutorials** at tutorials/`for more detailed information and usage of each of the modes. You can also check`test/test.py` for a quick overview of the library.
 
 ### Running the examples
 
@@ -202,16 +203,15 @@ pipenv lock && pipenv sync # updates packages hashes
 pipenv run python -m build --sdist # builds the .tar.gz file
 ```
 
-
 ## To do and known issues
 
 **Before next release**
 
-- [ ] **Add** a tutorial for `.send_buffer`, `.on_data_callback` and `.on_block_callback`
-- [ ] **Check** what happens when `.on_data_callback` or `on_buffer_callback` are called before `start_streaming`
+- [ ] **Add** a tutorial for `.send_buffer`, and data and buffers callback
 
 **Long term**
 
+- [ ] **Design**: remove nest_asyncio?
 - [ ] **Add**: example projects
 - [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
