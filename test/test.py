@@ -177,7 +177,9 @@ class test_Streamer(unittest.TestCase):
         asyncio.run(asyncio.sleep(0.5))
 
         self.streamer.stop_streaming(variables)
-
+        
+        self.assertGreater(len(timestamps["myvar"]), 0, "The on_block_callback should have been called at least once")
+        
         for var in variables:
             for i in range(1, len(timestamps[var])):
                 self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,

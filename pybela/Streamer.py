@@ -137,7 +137,7 @@ class Streamer(Watcher):
 
     # - streaming methods
 
-    def __streaming_common_routine(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None):
+    def __streaming_common_routine(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
 
         if self.is_streaming():
             print_warning("Stopping previous streaming session...")
@@ -155,31 +155,28 @@ class Streamer(Watcher):
 
         self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
 
-        async def callback_workers():
+        async def async_callback_workers():
 
             if on_block_callback and on_buffer_callback:
                 print_error(
-                    "Both on_buffer_callback and on_block_callback cannot be enabled at the same time.")
+                    "Error: Both on_buffer_callback and on_block_callback cannot be enabled at the same time.")
                 return 0
-
             if on_buffer_callback:
                 self._on_buffer_callback_is_active = True
-
                 self._on_buffer_callback_worker_task = asyncio.create_task(
-                    self.__async_on_buffer_callback_worker(on_buffer_callback))
+                    self.__async_on_buffer_callback_worker(on_buffer_callback, callback_args))
 
             elif on_block_callback:
                 self._on_block_callback_is_active = True
-
                 self._on_block_callback_worker_task = asyncio.create_task(
-                    self.__async_on_block_callback_worker(on_block_callback, variables))
+                    self.__async_on_block_callback_worker(on_block_callback, callback_args, variables))
 
-        asyncio.run(callback_workers())
+        asyncio.run(async_callback_workers())
 
         # checks types and if no variables are specified, stream all watcher variables (default)
         return self._var_arg_checker(variables)
 
-    def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None):
+    def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """
         Starts the streaming session. The session can be stopped with stop_streaming().
 
@@ -192,10 +189,12 @@ class Streamer(Watcher):
             saving_filename (str, optional) Filename for saving the streamed data. Defaults to None.
             on_buffer_callback (function, optional). Callback function that is called every time a buffer is received. The callback function should take a single argument, the buffer. Accepts asynchronous functions (defined with async def). Defaults to None.
             on_block_callback (function, optional). Callback function that is called every time a block of buffers is received. A block of buffers is a list of buffers, one for each streamed variable. The callback function should take a single argument, a list of buffers. Accepts asynchronous functions (defined with async def). Defaults to None.
+            callback_args (tuple, optional): Arguments to pass to the callback functions. Defaults to ().
+
         """
 
         variables = self.__streaming_common_routine(
-            variables, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback)
+            variables, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args)
 
         # commented because then you can only start streaming on variables whose values have been previously assigned in the Bela code
         # not useful for the Sender function (send a buffer from the laptop and stream it through the watcher)
@@ -275,7 +274,7 @@ class Streamer(Watcher):
 
         return asyncio.run(async_stop_streaming(variables))
 
-    def schedule_streaming(self, variables=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None):
+    def schedule_streaming(self, variables=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """Schedule streaming of variables. The streaming session can be stopped with stop_streaming().
 
         Args:
@@ -288,10 +287,11 @@ class Streamer(Watcher):
             saving_dir (str, optional): Directory for saving the streamed data files. Defaults to "./".
             on_buffer_callback (function, optional). Callback function that is called every time a buffer is received. The callback function should take a single argument, the buffer. Accepts asynchronous functions (defined with async def). Defaults to None.
             on_block_callback (function, optional). Callback function that is called every time a block of buffers is received. A block of buffers is a list of buffers, one for each streamed variable. The callback function should take a single argument, a list of buffers. Accepts asynchronous functions (defined with async def). Defaults to None.
+            callback_args (tuple, optional): Arguments to pass to the callback functions. Defaults to ().
         """
 
         variables = self.__streaming_common_routine(
-            variables, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback)
+            variables, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args)
 
         self._streaming_mode = "SCHEDULE"
 
@@ -322,7 +322,7 @@ class Streamer(Watcher):
         asyncio.run(
             async_check_if_variables_have_been_streamed_and_stop())
 
-    def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None, saving_dir="./", on_buffer_callback=None, on_block_callback=None):
+    def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None, saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """
         Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
 
@@ -343,13 +343,14 @@ class Streamer(Watcher):
             saving_dir (str, optional): Directory for saving the streamed data. Defaults to "./".
             on_buffer_callback (function, optional). Callback function that is called every time a buffer is received. The callback function should take a single argument, the buffer. Accepts asynchronous functions (defined with async def). Defaults to None.
             on_block_callback (function, optional). Callback function that is called every time a block of buffers is received. A block of buffers is a list of buffers, one for each streamed variable. The callback function should take a single argument, a list of buffers. Accepts asynchronous functions (defined with async def). Defaults to None.
+            callback_args (tuple, optional): Arguments to pass to the callback functions. Defaults to ().
 
         Returns:
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
-        return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename, saving_dir))
+        return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args))
 
-    async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None):
+    async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """ 
         Asynchronous version of stream_n_values(). Usage: 
             stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename)) 
@@ -366,6 +367,7 @@ class Streamer(Watcher):
             saving_dir (str, optional): Directory for saving the streamed data. Defaults to "./".
             on_buffer_callback (function, optional). Callback function that is called every time a buffer is received. The callback function should take a single argument, the buffer. Accepts asynchronous functions (defined with async def). Defaults to None.
             on_block_callback (function, optional). Callback function that is called every time a block of buffers is received. A block of buffers is a list of buffers, one for each streamed variable. The callback function should take a single argument, a list of buffers. Accepts asynchronous functions (defined with async def). Defaults to None.
+            callback_args (tuple, optional): Arguments to pass to the callback functions. Defaults to ().
 
         Returns:
             deque: Streaming buffers queue
@@ -373,7 +375,7 @@ class Streamer(Watcher):
         # resizes the streaming buffer size to n_values and returns it when full
 
         variables = self.__streaming_common_routine(
-            variables=variables, saving_enabled=saving_enabled, saving_filename=saving_filename, saving_dir=saving_dir, on_buffer_callback=on_buffer_callback, on_block_callback=on_block_callback)
+            variables, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args)
 
         self._streaming_mode = "N_VALUES"  # flag cleared in __rec_msg_callback
 
@@ -423,19 +425,33 @@ class Streamer(Watcher):
 
     # callbacks
 
-    async def __async_on_buffer_callback_worker(self, on_buffer_callback):
+    async def __async_on_buffer_callback_worker(self, on_buffer_callback, callback_args):
         while self._on_buffer_callback_is_active and self.is_streaming():
             if not self._processed_data_msg_queue.empty():
                 msg = await self._processed_data_msg_queue.get()
                 self._processed_data_msg_queue.task_done()
-                if asyncio.iscoroutinefunction(on_buffer_callback):
-                    await on_buffer_callback(msg)
-                else:
-                    on_buffer_callback(msg)
+                try:
+                    if asyncio.iscoroutinefunction(on_buffer_callback):
+                        if callback_args != () and type(callback_args) == tuple:
+                            await on_buffer_callback(msg, *callback_args)
+                        elif callback_args != ():
+                            await on_buffer_callback(msg, callback_args)
+                        else:
+                            await on_buffer_callback(msg)
+                    else:
+                        if callback_args != () and type(callback_args) == tuple:
+                            on_buffer_callback(msg, *callback_args)
+                        elif callback_args != ():
+                            on_buffer_callback(msg, callback_args)
+                        else:
+                            on_buffer_callback(msg)
+                except Exception as e:
+                    print_error(
+                        f"Error in on_buffer_callback: {e}")
 
             await asyncio.sleep(0.0001)
 
-    async def __async_on_block_callback_worker(self, on_block_callback, variables):
+    async def __async_on_block_callback_worker(self, on_block_callback, callback_args, variables):
         while self._on_block_callback_is_active and self.is_streaming():
             msgs = []
             for var in variables:
@@ -444,10 +460,25 @@ class Streamer(Watcher):
                 msgs.append(msg)
                 self._processed_data_msg_queue.task_done()
             if len(msgs) == len(variables):
-                if asyncio.iscoroutinefunction(on_block_callback):
-                    await on_block_callback(msgs)
-                else:
-                    on_block_callback(msgs)
+                try:
+                    if asyncio.iscoroutinefunction(on_block_callback):
+                        if callback_args != () and type(callback_args) == tuple:
+                            await on_block_callback(msgs, *callback_args)
+                        elif callback_args != ():
+                            await on_block_callback(msgs, callback_args)
+                        else:
+                            await on_block_callback(msgs)
+                    else:
+                        if callback_args != () and type(callback_args) == tuple:
+                            on_block_callback(msgs, *callback_args)
+                        elif callback_args != ():
+                            on_block_callback(msgs, callback_args)
+                        else:
+                            on_block_callback(msgs)
+
+                except Exception as e:
+                    print_error(
+                        f"Error in on_block_callback: {e}")
 
             await asyncio.sleep(0.001)
 
