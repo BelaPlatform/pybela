@@ -1,5 +1,5 @@
 
-class bcolors:
+class _bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -11,17 +11,17 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def print_error(message):
-    print(bcolors.FAIL + message + bcolors.ENDC)
+def _print_error(message):
+    print(_bcolors.FAIL + message + _bcolors.ENDC)
 
 
-def print_info(message):
-    print(bcolors.OKBLUE + message + bcolors.ENDC)
+def _print_info(message):
+    print(_bcolors.OKBLUE + message + _bcolors.ENDC)
 
 
-def print_warning(message):
-    print(bcolors.WARNING + message + bcolors.ENDC)
+def _print_warning(message):
+    print(_bcolors.WARNING + message + _bcolors.ENDC)
 
 
-def print_ok(message, end='\n', flush=False):
-    print(bcolors.OKGREEN + message + bcolors.ENDC, end=end, flush=flush)
+def _print_ok(message, end='\n', flush=False):
+    print(_bcolors.OKGREEN + message + _bcolors.ENDC, end=end, flush=flush)

@@ -16,7 +16,7 @@ import bokeh.io
 import bokeh.driving
 from bokeh.resources import INLINE
 from .Watcher import Watcher
-from .utils import print_info, print_error, print_warning
+from .utils import _print_info, _print_error, _print_warning
 
 
 class Streamer(Watcher):
@@ -113,7 +113,7 @@ class Streamer(Watcher):
         """
         # self.connect()
         if not self.is_connected():
-            print_warning(
+            _print_warning(
                 f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
             return 0
         self._streaming_buffers_queue = {var["name"]: deque(
@@ -140,7 +140,7 @@ class Streamer(Watcher):
     def __streaming_common_routine(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
 
         if self.is_streaming():
-            print_warning("Stopping previous streaming session...")
+            _print_warning("Stopping previous streaming session...")
             self.stop_streaming()  # stop any previous streaming
 
         if self.start() == 0:  # bela is not connected
@@ -158,7 +158,7 @@ class Streamer(Watcher):
         async def async_callback_workers():
 
             if on_block_callback and on_buffer_callback:
-                print_error(
+                _print_error(
                     "Error: Both on_buffer_callback and on_block_callback cannot be enabled at the same time.")
                 return 0
             if on_buffer_callback:
@@ -214,7 +214,7 @@ class Streamer(Watcher):
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "watch", "watchers": variables}]})
             # asyncio.run(async_wait_for_streaming_to_start())
-            print_info(
+            _print_info(
                 f"Started streaming variables {variables}... Run stop_streaming() to stop streaming.")
         elif self._mode == "MONITOR":
             periods = self._check_periods(periods, variables)
@@ -222,10 +222,10 @@ class Streamer(Watcher):
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
             # asyncio.run(async_wait_for_streaming_to_start())
             if self._streaming_mode == "FOREVER":
-                print_info(
+                _print_info(
                     f"Started monitoring variables {variables}... Run stop_monitoring() to stop monitoring.")
             elif self._streaming_mode == "PEEK":
-                print_info(f"Peeking at variables {variables}...")
+                _print_info(f"Peeking at variables {variables}...")
 
     def stop_streaming(self, variables=[]):
         """
@@ -258,12 +258,12 @@ class Streamer(Watcher):
             if self._mode == "STREAM" and _previous_streaming_mode != "SCHEDULE":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
-                print_info(f"Stopped streaming variables {variables}...")
+                _print_info(f"Stopped streaming variables {variables}...")
             elif self._mode == "MONITOR" and _previous_streaming_mode != "SCHEDULE":
                 self.send_ctrl_msg(
                     {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
                 if not _previous_streaming_mode == "PEEK":
-                    print_info(f"Stopped monitoring variables {variables}...")
+                    _print_info(f"Stopped monitoring variables {variables}...")
                     self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
                 self._on_buffer_callback_is_active = False
                 if self._on_buffer_callback_worker_task:
@@ -308,12 +308,12 @@ class Streamer(Watcher):
                 for var in [v["name"] for v in self.watched_vars]:
                     if var not in started_streaming_vars:
                         started_streaming_vars.append(var)
-                        print_info(f"Started streaming {var}...")
+                        _print_info(f"Started streaming {var}...")
 
                 for var in started_streaming_vars:
                     if var not in [v["name"] for v in self.watched_vars]:
                         finished_streaming_vars.append(var)
-                        print_info(f"Stopped streaming {var}")
+                        _print_info(f"Stopped streaming {var}")
 
                 await asyncio.sleep(0.1)
 
@@ -399,7 +399,7 @@ class Streamer(Watcher):
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
-            print_info(
+            _print_info(
                 f"Streaming {n_values} values for variables {variables}...")
 
         elif self._mode == "MONITOR":
@@ -409,7 +409,7 @@ class Streamer(Watcher):
             periods = self._check_periods(periods, variables)
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
-            print_info(
+            _print_info(
                 f"Monitoring {n_values} values for variables {variables} with periods {periods}...")
 
         # await until streaming buffer is full
@@ -446,7 +446,7 @@ class Streamer(Watcher):
                         else:
                             on_buffer_callback(msg)
                 except Exception as e:
-                    print_error(
+                    _print_error(
                         f"Error in on_buffer_callback: {e}")
 
             await asyncio.sleep(0.0001)
@@ -477,7 +477,7 @@ class Streamer(Watcher):
                             on_block_callback(msgs)
 
                 except Exception as e:
-                    print_error(
+                    _print_error(
                         f"Error in on_block_callback: {e}")
 
             await asyncio.sleep(0.001)
@@ -503,7 +503,7 @@ class Streamer(Watcher):
         binary_data = struct.pack(format_str, *data_list)
         self._send_msg(self.ws_data_add, idtypestr + binary_data)
         if verbose:
-            print_info(
+            _print_info(
                 f"Sent buffer {buffer_id} of type {buffer_type} with length {buffer_length}...")
 
     # - utils
@@ -543,7 +543,7 @@ class Streamer(Watcher):
                     except EOFError:  # reached end of file
                         break
         except Exception as e:
-            print_error(f"Error while loading data from file: {e}")
+            _print_error(f"Error while loading data from file: {e}")
             return None
 
         return data
@@ -629,7 +629,7 @@ class Streamer(Watcher):
         # check that x_var and y_vars are either streamed or monitored
         for _var in [x_var, *y_vars]:
             if not (_var in [var["name"] for var in self.watched_vars] or _var in [var["name"] for var in self.monitored_vars]):
-                print_error(
+                _print_error(
                     f"PlottingError: {_var} is not being streamed or monitored.")
                 return
 
@@ -641,7 +641,7 @@ class Streamer(Watcher):
                 await asyncio.sleep(0.1)
         asyncio.run(wait_for_streaming_buffers_to_arrive())
         if len(y_vars) > 1 and not all([len(self.last_streamed_buffer[y_var]) == len(self.last_streamed_buffer[y_vars[0]]) for y_var in y_vars[1:]]):
-            print_error(
+            _print_error(
                 "PlottingError: plotting buffers of different length is not supported yet. Try using the same timestamp mode and type for your variables...")
             return
 
@@ -761,7 +761,7 @@ class Streamer(Watcher):
                     await f.write(_json+"\n")
 
         except Exception as e:
-            print_error(f"Error while saving data to file: {e}")
+            _print_error(f"Error while saving data to file: {e}")
 
         finally:
             await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
@@ -812,7 +812,7 @@ class Streamer(Watcher):
         if isinstance(periods, int):
             periods = [periods]*len(variables)
         elif periods == []:
-            print_warning("No periods passed, using default value of 1000")
+            _print_warning("No periods passed, using default value of 1000")
             periods = [1000]*len(variables)
 
         for period in periods:

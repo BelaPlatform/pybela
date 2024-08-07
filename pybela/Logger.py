@@ -4,7 +4,7 @@ import aiofiles
 import struct
 import paramiko
 from .Watcher import Watcher
-from .utils import bcolors, print_error, print_info, print_ok, print_warning
+from .utils import _bcolors, _print_error, _print_info, _print_ok, _print_warning
 
 
 class Logger(Watcher):
@@ -46,19 +46,20 @@ class Logger(Watcher):
 
         local_paths = {}
         if transfer:
-            async def copying_tasks(): # FIXME can we remove this async?
+            async def copying_tasks():  # FIXME can we remove this async?
                 for var in [v for v in self.watcher_vars if v["name"] in variables]:
                     var = var["name"]
                     local_path = os.path.join(
                         logging_dir, os.path.basename(remote_paths[var]))
 
                     # if file already exists, throw a warning and add number at the end of the filename
-                    local_paths[var] = self._generate_local_filename(local_path)
+                    local_paths[var] = self._generate_local_filename(
+                        local_path)
 
                     copying_task = self.__copy_file_in_chunks(
-                            remote_paths[var], local_paths[var])
+                        remote_paths[var], local_paths[var])
                     self._active_copying_tasks.append(copying_task)
-            
+
             asyncio.run(copying_tasks())
 
         return {"local_paths": local_paths, "remote_paths": remote_paths}
@@ -99,7 +100,7 @@ class Logger(Watcher):
 
                         if remote_file_size > 0:  # white till first buffers are written into the file
                             _has_file_been_created = 1
-                            print_info(
+                            _print_info(
                                 f"Logging started for {var}...")
                             break  # Break the loop if the remote file size is non-zero
 
@@ -174,7 +175,7 @@ class Logger(Watcher):
             remote_files[var] = list_res["watchers"][idx]["logFileName"]
             remote_paths[var] = f'/root/Bela/projects/{self.project_name}/{remote_files[var]}'
 
-        print_info(
+        _print_info(
             f"Started logging variables {variables}... Run stop_logging() to stop logging.")
 
         return remote_paths
@@ -194,7 +195,7 @@ class Logger(Watcher):
             self.send_ctrl_msg(
                 {"watcher": [{"cmd": "unlog", "watchers": variables}]})
 
-            print_info(f"Stopped logging variables {variables}...")
+            _print_info(f"Stopped logging variables {variables}...")
 
             await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
             self._active_copying_tasks.clear()
@@ -223,7 +224,7 @@ class Logger(Watcher):
         except paramiko.SSHException as e:
             self.ssh_client.get_transport().auth_none("root")
         except Exception as e:
-            print_error(
+            _print_error(
                 f"Error while connecting to Bela via ssh: {e} {bcolors.ENDC}")
             return
 
@@ -299,7 +300,7 @@ class Logger(Watcher):
                     parsed_buffers.append(_parsed_buffer)
 
                 except struct.error as e:
-                    print_error(str(e))
+                    _print_error(str(e))
                     break  # No more data to read
 
         return {
@@ -342,7 +343,7 @@ class Logger(Watcher):
                         break  # Break the loop if the remote file size is non-zero
 
                 except FileNotFoundError:
-                    print_error(
+                    _print_error(
                         f"Remote file '{remote_path}' does not exist.")
                     return None
 
@@ -355,25 +356,24 @@ class Logger(Watcher):
                             await asyncio.sleep(0.1)  # flushed data
                             break
                         await local_file.write(chunk)
-                        print_ok(
+                        _print_ok(
                             f"\rTransferring {remote_path}-->{local_path}...", end="", flush=True)
                         await asyncio.sleep(0.1)
                     chunk = remote_file.read()
                     if chunk:
                         await local_file.write(chunk)
                     remote_file.close()
-                    print_ok("Done.")
+                    _print_ok("Done.")
 
             except Exception as e:
-                print_error(
+                _print_error(
                     f"Error while transferring file: {e}.")
                 return None
 
             finally:
                 await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
-        
+
         return asyncio.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
-        
 
     def copy_file_from_bela(self, remote_path, local_path, verbose=True):
         """Copy a file from Bela onto the local machine.
@@ -406,10 +406,10 @@ class Logger(Watcher):
                 *copy_tasks, return_exceptions=True))
 
             if verbose:
-                print_ok(
+                _print_ok(
                     f"All .bin files in {remote_path} have been copied to {dir}.")
         except Exception as e:
-            print_error(
+            _print_error(
                 f"Error copying .bin files in {remote_path}: {e}")
         finally:
             self.disconnect_ssh()
@@ -430,14 +430,14 @@ class Logger(Watcher):
             self.sftp_client.get(remote_path, local_path, callback=callback)
             await asyncio.wait_for(transferred_event.wait(), timeout=3)
             if verbose:
-                print_ok(
+                _print_ok(
                     f"\rTransferring {remote_path}-->{local_path}... Done.")
             return transferred_event.is_set()
         except asyncio.TimeoutError:
-            print_error("Timeout while transferring file.")
+            _print_error("Timeout while transferring file.")
             return False  # File copy did not complete within the timeout
         except Exception as e:
-            print_error(f"Error while transferring file: {e}")
+            _print_error(f"Error while transferring file: {e}")
             return False
 
     def finish_copying_file(self, remote_path, local_path):  # TODO test
@@ -454,12 +454,12 @@ class Logger(Watcher):
             remote_file_size = self.sftp_client.stat(
                 remote_path).st_size
         except FileNotFoundError:
-            print_error(
+            _print_error(
                 f"Remote file '{remote_path}' does not exist.")
             self.disconnect_ssh()
             return None
         if not os.path.exists(local_path):
-            print_error(
+            _print_error(
                 f"Local file '{local_path}' does not exist. If you want to copy a file that hasn't been partially copied yet, use copy_file_from_bela() instead.")
             self.disconnect_ssh()
             return None
@@ -473,17 +473,17 @@ class Logger(Watcher):
                 chunks = [(local_file_size, remaining_size)]
                 data = remote_file.readv(chunks)
 
-                print_ok(
+                _print_ok(
                     f"\rTransferring {remote_path}-->{local_path}...", end="", flush=True)
                 # Append the data to the local file
                 with open(local_path, 'ab') as local_file:
                     local_file.write(data)
-                print_ok("Done.")
+                _print_ok("Done.")
             else:
-                print_error(
+                _print_error(
                     "Local file is already up-to-date or larger than the remote file.")
         except Exception as e:
-            print_error(f"Error finishing file copy: {e}")
+            _print_error(f"Error finishing file copy: {e}")
 
         self.disconnect_ssh()
 
@@ -513,10 +513,10 @@ class Logger(Watcher):
                 *deletion_tasks, return_exceptions=True))
 
             if verbose:
-                print_ok(
+                _print_ok(
                     f"All .bin files in {remote_path} have been removed.")
         except Exception as e:
-            print_error(
+            _print_error(
                 f"Error deleting .bin files in {remote_path}: {e}")
         finally:
             self.disconnect_ssh()
@@ -526,7 +526,7 @@ class Logger(Watcher):
         try:
             self.sftp_client.stat(remote_path)  # check if file exists
         except FileNotFoundError:
-            print_error(
+            _print_error(
                 f"Error: Remote file '{remote_path}' does not exist.")
             return
 
@@ -538,11 +538,11 @@ class Logger(Watcher):
             except FileNotFoundError:
                 # File does not exist, it has been successfully removed
                 if verbose:
-                    print_ok(
+                    _print_ok(
                         f"File '{remote_path}' has been removed from Bela.")
                 break
             except Exception as e:
-                print_error(
+                _print_error(
                     f"Error while deleting file in Bela: {e} ")
                 break
 
@@ -553,12 +553,13 @@ class Logger(Watcher):
         remote_path = f'/root/Bela/projects/{self.project_name}'
         file_list = self.sftp_client.listdir(remote_path)
         if len(file_list) == 0:
-            print_warning(f"No .bin files in {remote_path}.")
+            _print_warning(f"No .bin files in {remote_path}.")
             return
 
         # Iterate through the files and delete .bin files
         tasks = []
-        async def _async_action_action_on_all_bin_files_in_project(): # FIXME can we avoid this async?
+
+        async def _async_action_action_on_all_bin_files_in_project():  # FIXME can we avoid this async?
             for file_name in file_list:
                 if file_name.endswith('.bin'):
                     remote_file_path = f"{remote_path}/{file_name}"
@@ -572,9 +573,8 @@ class Logger(Watcher):
                     else:
                         raise ValueError(f"Invalid action: {action}")
                     tasks.append(task)
-        
+
         asyncio.run(_async_action_action_on_all_bin_files_in_project())
-            
 
         return tasks
 

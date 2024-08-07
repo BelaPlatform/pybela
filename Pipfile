@@ -19,9 +19,12 @@ paramiko = "*"
 numpy = "==1.26"
 
 [dev-packages]
-build = "*"
 twine = "*"
 pip-chill = "*"
+sphinx = "*"
+pandoc = "*"
+sphinx-rtd-theme = "*"
+build = "*"
 
 [scripts]
 test = "python test/test.py"

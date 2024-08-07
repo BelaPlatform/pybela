@@ -5,7 +5,6 @@ dev/
 *.err
 .vscode/
 __pycache__/
-*.txt
 build/
 *.egg-info
 *.bin
@@ -13,3 +12,5 @@ build/
 dist/
 *.sh
 .clang-format
+docs/_build/*
+docs/readme.rst

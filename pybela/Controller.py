@@ -1,6 +1,6 @@
 import asyncio
 from .Watcher import Watcher
-from .utils import print_info, print_warning
+from .utils import _print_info, _print_warning
 
 
 class Controller(Watcher):
@@ -40,7 +40,7 @@ class Controller(Watcher):
 
         asyncio.run(async_wait_for_control_mode_to_be_set(variables=variables))
 
-        print_info(
+        _print_info(
             f"Started controlling variables {variables}... Run stop_controlling() to stop controlling the variable values.")
 
     def stop_controlling(self, variables=[]):
@@ -65,7 +65,7 @@ class Controller(Watcher):
 
         asyncio.run(async_wait_for_control_mode_to_be_set(variables=variables))
 
-        print_info(f"Stopped controlling variables {variables}.")
+        _print_info(f"Stopped controlling variables {variables}.")
 
     def send_value(self, variables, values):
         """Send a value to the given variables. 
@@ -90,7 +90,7 @@ class Controller(Watcher):
             value = values[variables.index(var)]
 
             if value % 1 != 0 and _type in ["i", "j"]:
-                print_warning(
+                _print_warning(
                     f"Value {value} is not an integer, but the variable {var} is of type {_type}. Only the integer part will be sent.")
 
         self.send_ctrl_msg(

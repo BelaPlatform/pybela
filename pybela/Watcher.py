@@ -5,7 +5,7 @@ import json
 import errno
 import struct
 import os
-from .utils import print_error, print_warning, print_ok
+from .utils import _print_error, _print_warning, _print_ok
 
 
 class Watcher:
@@ -31,7 +31,7 @@ class Watcher:
         self.ws_data_add = f"ws://{self.ip}:{self.port}/{self.data_add}"
         self.ws_ctrl = None
         self.ws_data = None
-        
+
         self._list_response_queue = asyncio.Queue()
 
         # receive data message queue
@@ -41,7 +41,6 @@ class Watcher:
         # send data message queue
         self._to_send_data_msg_queue = asyncio.Queue()
         self._sending_data_msg_worker_task = None
-        
 
         self._watcher_vars = None
 
@@ -115,15 +114,15 @@ class Watcher:
             try:
                 # Close any open ctrl websocket open for the same mode (STREAM, LOG, MONITOR, WATCH)
                 if self._pybela_ws_register[self._mode].get(self.ws_ctrl_add) is not None and self._pybela_ws_register[self._mode][self.ws_ctrl_add].open:
-                    print_warning(
+                    _print_warning(
                         f"pybela doesn't support more than one active connection at a time for a given mode. Closing previous connection for {self._mode} at {self.ws_ctrl_add}.")
                     await self._pybela_ws_register[self._mode][self.ws_ctrl_add].close()
 
                 # Control and monitor can't be used at the same time
                 if (self._mode == "MONITOR" and self._pybela_ws_register["CONTROL"].get(self.ws_ctrl_add) is not None and self._pybela_ws_register["CONTROL"][self.ws_ctrl_add].open) or (self._mode == "CONTROL" and self._pybela_ws_register["MONITOR"].get(self.ws_ctrl_add) is not None and self._pybela_ws_register["MONITOR"][self.ws_ctrl_add].open):
-                    print_warning(
+                    _print_warning(
                         f"pybela doesn't support running control and monitor modes at the same time. You are currently running {'CONTROL' if self._mode=='MONITOR' else 'MONITOR'} at {self.ws_ctrl_add}. You can close it running controller.disconnect()")
-                    print_error("Connection failed")
+                    _print_error("Connection failed")
                     return 0
 
                 # Connect to the control websocket
@@ -153,10 +152,10 @@ class Watcher:
                     self._sample_rate = self._list["sampleRate"]
                     self._watcher_vars = self._filtered_watcher_vars(self._list["watchers"],
                                                                      lambda var: True)
-                    print_ok("Connection successful")
+                    _print_ok("Connection successful")
                     return 1
                 else:
-                    print_error("Connection failed")
+                    _print_error("Connection failed")
                     return 0
             except Exception as e:
                 raise ConnectionError(f"Connection failed: {str(e)}.")
@@ -224,7 +223,7 @@ class Watcher:
                         print(msg)
             except Exception as e:
                 if ws.open:  # otherwise websocket was closed intentionally
-                    handle_connection_exception(
+                    _handle_connection_exception(
                         ws_address, e, "receiving message")
         asyncio.create_task(
             _async_start_listener(ws, ws_address))
@@ -245,7 +244,7 @@ class Watcher:
                 elif ws_address == self.ws_ctrl_add and self.ws_ctrl is not None and self.ws_ctrl.open:
                     await self.ws_ctrl.send(msg)
             except Exception as e:
-                handle_connection_exception(ws_address, e, "sending message")
+                _handle_connection_exception(ws_address, e, "sending message")
                 return 0
         asyncio.run(_async_send_msg(ws_address, msg))
 
@@ -415,7 +414,7 @@ class Watcher:
             while os.path.exists(new_local_path):
                 new_local_path = f"{base}_{counter}{ext}"
                 counter += 1
-            print_warning(
+            _print_warning(
                 f"{local_path} already exists. Renaming file to {new_local_path}")
 
         return new_local_path
@@ -513,9 +512,9 @@ class Watcher:
         self.stop()  # stop websockets
 
 
-def handle_connection_exception(ws_address, exception, action):
+def _handle_connection_exception(ws_address, exception, action):
     bela_msg = "Make sure Bela is connected to the same network as your computer, that the IP address is correct, and that there is a project running on Bela."
-    print_error(
+    _print_error(
         f"WebSocket exception while connecting to {ws_address}: {exception}.  {bela_msg}")
     if isinstance(exception, OSError):
         if exception.errno == errno.ECONNREFUSED:
@@ -528,4 +527,4 @@ def handle_connection_exception(ws_address, exception, action):
             raise ConnectionError(
                 f"Error {exception.errno} while connecting to {ws_address}.  {bela_msg}")
     else:
-        print_error(f"Error while {action}: {exception}.  {bela_msg}")
+        _print_error(f"Error while {action}: {exception}.  {bela_msg}")

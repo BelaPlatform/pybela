@@ -6,43 +6,23 @@ Below, you can find instructions to install pybela. You can find code examples a
 
 pybela was developed with a machine learning use case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial).
 
-## [Installation and set up](#installation)
+## Installation and set up
 
 You will need to (1) install the python package in your laptop, (2) set the Bela branch to `dev` and (3) add the watcher library to your Bela project.
 
 ### 1. Installing the python package
 
-#### Option A:
-
-You can install this library using `pip` (replace `pip` with `pipenv` if you are using a pipenv environment):
+You can install this library using `pip`:
 
 ```python
 pip install pybela
-```
-
-#### Option B:
-
-You can also download the built package from the releases section and run (replace `pip` with `pipenv` if you are using a pipenv environment):
-
-```bash
-pip install pybela-<version>.tar.gz
-```
-
-#### Option C:
-
-You can also install this library using [pipenv](https://pipenv.pypa.io/en/latest/installation/) by cloning this repository and running:
-
-```bash
-git clone  --recurse-submodules https://github.com/BelaPlatform/pybela
-cd pybela
-pipenv install
 ```
 
 ### 2. Set the Bela branch to `dev`
 
 In order to use pybela, you will need to use the `dev` branch of the Bela code.
 
-#### Option A:
+#### Option A: Bela connected to internat
 
 If your Bela is connected to internet, you can ssh into your Bela (`ssh root@bela.local`) and change the branch:
 
@@ -53,7 +33,7 @@ git checkout dev
 git pull
 ```
 
-#### Option B:
+#### Option B: Bela not connected to internet
 
 If your Bela is not connected to internet, you can change the branch by cloning the Bela repository into your laptop and then pushing the `dev` branch to your Bela.
 To do that, first clone the Bela repository into your laptop:
@@ -106,7 +86,7 @@ You can check the **tutorials** at tutorials/`for more detailed information and 
 
 ### Running the examples
 
-The quickest way to get started is to start a jupyter notebook server and run the examples. If you haven't done it yet, install the python package as explained in the [installation section](#installation). If you don't have the `jupyter notebook` package installed, you can installed by running (replace `pip` with `pipenv` if you are using a pipenv environment):
+The quickest way to get started is to start a jupyter notebook server and run the examples. If you haven't done it yet, install the python package as explained in the Installation section. If you don't have the `jupyter notebook` package installed, you can install it by running (replace `pip` with `pipenv` if you are using a pipenv environment):
 
 ```bash
 pip install notebook
