@@ -5,7 +5,7 @@
 
 pybela docs
 ===========
-Welcome to pybela’s documentation! You can find the 
+Welcome to pybela’s documentation!
 
 .. include:: readme.rst
 

@@ -22,7 +22,7 @@ pip install pybela
 
 In order to use pybela, you will need to use the `dev` branch of the Bela code.
 
-#### Option A: Bela connected to internat
+#### Option A: Bela connected to internet
 
 If your Bela is connected to internet, you can ssh into your Bela (`ssh root@bela.local`) and change the branch:
 
