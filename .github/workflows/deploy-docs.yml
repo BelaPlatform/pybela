@@ -25,12 +25,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install pipenv
         pipenv install -d
-        echo "VENV_HOME_DIR=$(pipenv --venv)" >> $GITHUB_ENV
 
     - name: Build documentation
       run: |
-        ${{ env.VENV_HOME_DIR }}/bin/pandoc -s readme.md -o docs/readme.rst
-        ${{ env.VENV_HOME_DIR }}/bin/sphinx-build -M html docs/ docs/_build
+        pipenv run sphinx-build -M html docs/ docs/_build
 
 
     - name: Deploy to GitHub Pages

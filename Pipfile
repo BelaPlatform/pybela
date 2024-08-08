@@ -22,9 +22,9 @@ numpy = "==1.26"
 twine = "*"
 pip-chill = "*"
 sphinx = "*"
-pandoc = "*"
 sphinx-rtd-theme = "*"
 build = "*"
+pypandoc = "*"
 
 [scripts]
 test = "python test/test.py"
