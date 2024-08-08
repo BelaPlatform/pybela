@@ -29,9 +29,8 @@ jobs:
 
     - name: Build documentation
       run: |
-        pipenv shell
-        pandoc -s readme.md -o docs/readme.rst
-        sphinx-build -M html docs/ docs/_build
+        ./venv/bin/pandoc -s readme.md -o docs/readme.rst
+        ./venv/bin/sphinx-build -M html docs/ docs/_build
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
