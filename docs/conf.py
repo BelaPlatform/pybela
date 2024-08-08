@@ -9,9 +9,7 @@
 import os
 import sys
 import re
-import pypandoc
 sys.path.insert(0, os.path.abspath('../pybela'))
-pypandoc.convert_file('../readme.md', 'rst', outputfile="readme.rst")
 
 author = 'Teresa Pelinski'
 copyright = '2024'

@@ -24,7 +24,6 @@ pip-chill = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 build = "*"
-pypandoc = "*"
 
 [scripts]
 test = "python test/test.py"

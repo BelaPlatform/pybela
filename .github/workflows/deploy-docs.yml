@@ -25,9 +25,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install pipenv
         pipenv install -d
+        apt-get install pandoc
 
     - name: Build documentation
       run: |
+        pandoc -s readme.md -o docs/readme.rst
         pipenv run sphinx-build -M html docs/ docs/_build
 
 

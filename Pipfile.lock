@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "71a1b0acb42a7239ac213a2ec848a69b25834a118de18424ad2f97e6f6c113d4"
+            "sha256": "642dced66ad7678ff331766e41cb1c33d791a67b2d4949bb99ddf003ec615cdf"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -2351,14 +2351,6 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2.18.0"
-        },
-        "pypandoc": {
-            "hashes": [
-                "sha256:31652073c7960c2b03570bd1e94f602ca9bc3e70099df5ead4cea98ff5151c1e",
-                "sha256:4c7d71bf2f1ed122aac287113b5c4d537a33bbc3c1df5aed11a7d4a7ac074681"
-            ],
-            "index": "pypi",
-            "version": "==1.13"
         },
         "pyproject-hooks": {
             "hashes": [
