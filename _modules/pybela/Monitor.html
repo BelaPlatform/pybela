@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybela.Monitor &mdash; pybela 0.1.0 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pybela 0.1.0
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started with pybela</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation and set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../readme.html#installing-the-python-package">1. Installing the python package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../readme.html#set-the-bela-branch-to-dev">2. Set the Bela branch to <code class="docutils literal notranslate"><span class="pre">dev</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../readme.html#option-a-bela-connected-to-internet">Option A: Bela connected to internet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../readme.html#option-b-bela-not-connected-to-internet">Option B: Bela not connected to internet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../readme.html#add-the-watcher-library-to-your-project">3. Add the watcher library to your project</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#getting-started">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../readme.html#modes-of-operation">Modes of operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../readme.html#running-the-examples">Running the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../readme.html#basic-usage">Basic usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../readme.html#bela-side">Bela side</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../readme.html#python-side">Python side</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#building">Building</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#to-do-and-known-issues">To do and known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#license">License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.connect"><code class="docutils literal notranslate"><span class="pre">Watcher.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_buffer_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_buffer_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_data_byte_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_byte_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_data_length"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_length()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_latest_timestamp"><code class="docutils literal notranslate"><span class="pre">Watcher.get_latest_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_prop_of_var"><code class="docutils literal notranslate"><span class="pre">Watcher.get_prop_of_var()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.is_connected"><code class="docutils literal notranslate"><span class="pre">Watcher.is_connected()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.list"><code class="docutils literal notranslate"><span class="pre">Watcher.list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.sample_rate"><code class="docutils literal notranslate"><span class="pre">Watcher.sample_rate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.send_ctrl_msg"><code class="docutils literal notranslate"><span class="pre">Watcher.send_ctrl_msg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.stop"><code class="docutils literal notranslate"><span class="pre">Watcher.stop()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.unwatched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.unwatched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.watched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.watcher_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watcher_vars</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer"><code class="docutils literal notranslate"><span class="pre">Streamer</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.async_stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.async_stream_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.flush_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.flush_queue()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.is_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.is_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Streamer.load_data_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.monitored_vars"><code class="docutils literal notranslate"><span class="pre">Streamer.monitored_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.plot_data"><code class="docutils literal notranslate"><span class="pre">Streamer.plot_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.schedule_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.schedule_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.send_buffer"><code class="docutils literal notranslate"><span class="pre">Streamer.send_buffer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.start"><code class="docutils literal notranslate"><span class="pre">Streamer.start()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.start_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.start_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.stop_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.stop_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.stream_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.streaming_buffers_data"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_data</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.streaming_buffers_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_queue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.streaming_buffers_queue_length"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_queue_length</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.connect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.copy_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.copy_all_bin_files_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.copy_file_from_bela()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.delete_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.delete_all_bin_files_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.delete_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.delete_file_from_bela()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.disconnect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.finish_copying_file"><code class="docutils literal notranslate"><span class="pre">Logger.finish_copying_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.is_logging"><code class="docutils literal notranslate"><span class="pre">Logger.is_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.read_binary_file"><code class="docutils literal notranslate"><span class="pre">Logger.read_binary_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.schedule_logging"><code class="docutils literal notranslate"><span class="pre">Logger.schedule_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.start_logging"><code class="docutils literal notranslate"><span class="pre">Logger.start_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.stop_logging"><code class="docutils literal notranslate"><span class="pre">Logger.stop_logging()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor"><code class="docutils literal notranslate"><span class="pre">Monitor</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.async_monitor_n_values"><code class="docutils literal notranslate"><span class="pre">Monitor.async_monitor_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.connect"><code class="docutils literal notranslate"><span class="pre">Monitor.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Monitor.load_data_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.monitor_n_values"><code class="docutils literal notranslate"><span class="pre">Monitor.monitor_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.peek"><code class="docutils literal notranslate"><span class="pre">Monitor.peek()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.start_monitoring"><code class="docutils literal notranslate"><span class="pre">Monitor.start_monitoring()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.stop_monitoring"><code class="docutils literal notranslate"><span class="pre">Monitor.stop_monitoring()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Monitor.Monitor.values"><code class="docutils literal notranslate"><span class="pre">Monitor.values</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html#pybela.Controller.Controller"><code class="docutils literal notranslate"><span class="pre">Controller</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Controller.Controller.get_controlled_status"><code class="docutils literal notranslate"><span class="pre">Controller.get_controlled_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Controller.Controller.get_value"><code class="docutils literal notranslate"><span class="pre">Controller.get_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Controller.Controller.send_value"><code class="docutils literal notranslate"><span class="pre">Controller.send_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Controller.Controller.start_controlling"><code class="docutils literal notranslate"><span class="pre">Controller.start_controlling()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Controller.Controller.stop_controlling"><code class="docutils literal notranslate"><span class="pre">Controller.stop_controlling()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pybela 0.1.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pybela.Monitor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pybela.Monitor</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.Streamer</span> <span class="kn">import</span> <span class="n">Streamer</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
+
+
+<div class="viewcode-block" id="Monitor">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor">[docs]</a>
+<span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="n">Streamer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Monitor class</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                ip (str, optional): Remote address IP. If using internet over USB, the IP won&#39;t work, pass &quot;bela.local&quot;. Defaults to &quot;192.168.7.2&quot;.</span>
+<span class="sd">                port (int, optional): Remote address port. Defaults to 5555.</span>
+<span class="sd">                data_add (str, optional): Data endpoint. Defaults to &quot;gui_data&quot;.</span>
+<span class="sd">                control_add (str, optional): Control endpoint. Defaults to &quot;gui_control&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Monitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">data_add</span><span class="p">,</span> <span class="n">control_add</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span> <span class="o">=</span> <span class="s2">&quot;MONITOR&quot;</span>
+
+<div class="viewcode-block" id="Monitor.connect">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.connect">[docs]</a>
+    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">connect</span><span class="p">()):</span>
+            <span class="c1"># longer queue for monitor since each buffer has only one value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">streaming_buffers_queue_length</span> <span class="o">=</span> <span class="mi">2000</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Get monitored values from last monitoring session</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict of dicts of list: Dict containing the monitored buffers for each variable in the watcher</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming_buffers_queue</span><span class="p">:</span>
+            <span class="n">values</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timestamps&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+            <span class="k">for</span> <span class="n">_buffer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming_buffers_queue</span><span class="p">[</span><span class="n">var</span><span class="p">]:</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="s2">&quot;timestamps&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_buffer</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">])</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="s2">&quot;values&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_buffer</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">values</span>
+
+<div class="viewcode-block" id="Monitor.peek">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.peek">[docs]</a>
+    <span class="k">def</span> <span class="nf">peek</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Peek at variables</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                variables (list, optional): List of variables to peek at. If no variables are specified, stream all watcher variables (default).</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                dict: Dictionary of variables with their values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_peek</span><span class="p">(</span><span class="n">variables</span><span class="p">):</span>
+            <span class="c1"># checks types and if no variables are specified, stream all watcher variables (default)</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_arg_checker</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_peek_response</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_monitoring</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">))</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peek_response_available</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_peek_response_available</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">peeked_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peek_response</span>
+            <span class="c1"># set _peek_response again to None so that peek is not notified every time a new buffer is received (see Streamer._process_data_msg)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_peek_response</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_monitoring</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">peeked_values</span>
+
+        <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_async_peek</span><span class="p">(</span><span class="n">variables</span><span class="p">))</span></div>
+
+
+        <span class="c1"># using list</span>
+        <span class="c1"># res = self.list()</span>
+        <span class="c1"># return {var: next(r[&quot;value&quot;] for r in res if r[&quot;name&quot;] == var) for var in variables}</span>
+
+<div class="viewcode-block" id="Monitor.start_monitoring">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.start_monitoring">[docs]</a>
+    <span class="k">def</span> <span class="nf">start_monitoring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;monitor.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;/.&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Starts the monitoring session. The session can be stopped with stop_monitoring().</span>
+
+<span class="sd">        If no variables are specified, all watcher variables are monitored. If saving_enabled is True, the monitored data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variables (list, optional): List of variables to be streamed. Defaults to [].</span>
+<span class="sd">            periods (list, optional): List of monitoring periods. Defaults to [].</span>
+<span class="sd">            saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.</span>
+<span class="sd">            saving_filename (str, optional) Filename for saving the monitored data. Defaults to None.</span>
+<span class="sd">            saving_dir (str, optional): Directory for saving the monitored data. Defaults to &quot;/.&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_arg_checker</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+        <span class="n">periods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_periods</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">(</span>
+            <span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">periods</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="n">saving_enabled</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="n">saving_dir</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Monitor.monitor_n_values">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.monitor_n_values">[docs]</a>
+    <span class="k">def</span> <span class="nf">monitor_n_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">n_values</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;monitor.txt&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Monitors a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be monitored (unless the number of frames is a multiple of the buffer size). </span>
+
+<span class="sd">        Note: This function will block the main thread until n_values have been monitored. Since the monitored values come in blocks, the actual number of returned frames monitored may be higher than n_values, unless n_values is a multiple of the block size (monitor._streaming_block_size).</span>
+
+<span class="sd">        To avoid blocking, use the async version of this function:</span>
+<span class="sd">            monitor_task = asyncio.create_task(monitor.async_monitor_n_values(variables, n_values, periods, saving_enabled, saving_filename))</span>
+<span class="sd">        and retrieve the monitored buffer using:</span>
+<span class="sd">             monitored_buffers_queue = await monitor_task</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variables (list, optional): List of variables to be monitored. Defaults to [].</span>
+<span class="sd">            periods (list, optional): List of monitoring periods. Defaults to [].</span>
+<span class="sd">            n_values (int, optional): Number of values to monitor for each variable. Defaults to 1000.</span>
+<span class="sd">            delay (int, optional): _description_. Defaults to 0.</span>
+<span class="sd">            saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.</span>
+<span class="sd">            saving_filename (_type_, optional) Filename for saving the monitored data. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            monitored_buffers_queue (dict): Dict containing the monitored buffers for each streamed variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_arg_checker</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+        <span class="n">periods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_periods</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream_n_values</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">periods</span><span class="p">,</span> <span class="n">n_values</span><span class="p">,</span>
+                             <span class="n">saving_enabled</span><span class="p">,</span> <span class="n">saving_filename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span></div>
+
+
+<div class="viewcode-block" id="Monitor.async_monitor_n_values">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.async_monitor_n_values">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">async_monitor_n_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">n_values</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Asynchronous version of monitor_n_values(). Usage: </span>
+<span class="sd">            monitor_task = asyncio.create_task(monitor.async_monitor_n_values(variables, periods, n_values, saving_enabled, saving_filename)) </span>
+<span class="sd">        and retrieve the monitored buffer using:</span>
+<span class="sd">            monitoring_buffers_queue = await monitor_task</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            variables (list, optional): List of variables to be monitored. Defaults to [].</span>
+<span class="sd">            periods (list, optional): List of monitoring period. Defaults to [].</span>
+<span class="sd">            n_values (int, optional): Number of values to monitor for each variable. Defaults to 1000.</span>
+<span class="sd">            saving_enabled (bool, optional): Enables/disables saving monitored data to local file. Defaults to False.</span>
+<span class="sd">            saving_filename (_type_, optional) Filename for saving the monitored data. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            deque: Monitored buffers queue</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_arg_checker</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+        <span class="n">periods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_periods</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_stream_n_values</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">periods</span><span class="p">,</span> <span class="n">n_values</span><span class="p">,</span>
+                                   <span class="n">saving_enabled</span><span class="p">,</span> <span class="n">saving_filename</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Monitor.stop_monitoring">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.stop_monitoring">[docs]</a>
+    <span class="k">def</span> <span class="nf">stop_monitoring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stops the current monitoring session for the given variables. If no variables are passed, the monitoring of all variables is interrupted.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variables (list, optional): List of variables to stop monitoring. Defaults to [].</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict of dicts of lists: Dict containing the monitored buffers for each monitored variable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_streaming</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_monitored_vars</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># reset monitored variables</span>
+        <span class="c1"># return only nonempty variables</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">var</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="s2">&quot;timestamps&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="p">[]}</span></div>
+
+
+<div class="viewcode-block" id="Monitor.load_data_from_file">
+<a class="viewcode-back" href="../../modules.html#pybela.Monitor.Monitor.load_data_from_file">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_data_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads data from a file saved through the saving_enabled function in start_monitoring() or monitor_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            filename (str): Filename</span>
+<span class="sd">            flatten (bool, optional): If True, the returned list of values is flattened. Defaults to True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict of lists: Dict with &quot;timestamps&quot; and &quot;values&quot; list if flatten is True, otherwise a list of dicts with &quot;timestamp&quot; and &quot;value&quot; keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loaded_buffers</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_data_from_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flatten</span><span class="p">:</span>
+            <span class="n">flatten_loaded_buffers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timestamps&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+            <span class="k">for</span> <span class="n">_buffer</span> <span class="ow">in</span> <span class="n">loaded_buffers</span><span class="p">:</span>
+                <span class="n">flatten_loaded_buffers</span><span class="p">[</span><span class="s2">&quot;timestamps&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">_buffer</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">])</span>
+                <span class="n">flatten_loaded_buffers</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_buffer</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">flatten_loaded_buffers</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">loaded_buffers</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

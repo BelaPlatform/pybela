@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybela docs &mdash; pybela 0.1.0 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b217d7a7" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation and set up" href="readme.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            pybela 0.1.0
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started with pybela</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation and set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#installing-the-python-package">1. Installing the python package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-the-bela-branch-to-dev">2. Set the Bela branch to <code class="docutils literal notranslate"><span class="pre">dev</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#option-a-bela-connected-to-internet">Option A: Bela connected to internet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#option-b-bela-not-connected-to-internet">Option B: Bela not connected to internet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#add-the-watcher-library-to-your-project">3. Add the watcher library to your project</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#getting-started">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#modes-of-operation">Modes of operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#running-the-examples">Running the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#basic-usage">Basic usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#bela-side">Bela side</a></li>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#python-side">Python side</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#building">Building</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#to-do-and-known-issues">To do and known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.connect"><code class="docutils literal notranslate"><span class="pre">Watcher.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.get_buffer_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_buffer_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.get_data_byte_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_byte_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.get_data_length"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_length()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.get_latest_timestamp"><code class="docutils literal notranslate"><span class="pre">Watcher.get_latest_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.get_prop_of_var"><code class="docutils literal notranslate"><span class="pre">Watcher.get_prop_of_var()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.is_connected"><code class="docutils literal notranslate"><span class="pre">Watcher.is_connected()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.list"><code class="docutils literal notranslate"><span class="pre">Watcher.list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.sample_rate"><code class="docutils literal notranslate"><span class="pre">Watcher.sample_rate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.send_ctrl_msg"><code class="docutils literal notranslate"><span class="pre">Watcher.send_ctrl_msg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.stop"><code class="docutils literal notranslate"><span class="pre">Watcher.stop()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.unwatched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.unwatched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.watched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Watcher.Watcher.watcher_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watcher_vars</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer"><code class="docutils literal notranslate"><span class="pre">Streamer</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.async_stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.async_stream_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.flush_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.flush_queue()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.is_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.is_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Streamer.load_data_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.monitored_vars"><code class="docutils literal notranslate"><span class="pre">Streamer.monitored_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.plot_data"><code class="docutils literal notranslate"><span class="pre">Streamer.plot_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.schedule_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.schedule_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.send_buffer"><code class="docutils literal notranslate"><span class="pre">Streamer.send_buffer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.start"><code class="docutils literal notranslate"><span class="pre">Streamer.start()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.start_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.start_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.stop_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.stop_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.stream_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.streaming_buffers_data"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_data</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.streaming_buffers_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_queue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.streaming_buffers_queue_length"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_queue_length</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#pybela.Logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.connect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.copy_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.copy_all_bin_files_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.copy_file_from_bela()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.delete_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.delete_all_bin_files_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.delete_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.delete_file_from_bela()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.disconnect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.finish_copying_file"><code class="docutils literal notranslate"><span class="pre">Logger.finish_copying_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.is_logging"><code class="docutils literal notranslate"><span class="pre">Logger.is_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.read_binary_file"><code class="docutils literal notranslate"><span class="pre">Logger.read_binary_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.schedule_logging"><code class="docutils literal notranslate"><span class="pre">Logger.schedule_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.start_logging"><code class="docutils literal notranslate"><span class="pre">Logger.start_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Logger.Logger.stop_logging"><code class="docutils literal notranslate"><span class="pre">Logger.stop_logging()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor"><code class="docutils literal notranslate"><span class="pre">Monitor</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.async_monitor_n_values"><code class="docutils literal notranslate"><span class="pre">Monitor.async_monitor_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.connect"><code class="docutils literal notranslate"><span class="pre">Monitor.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Monitor.load_data_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.monitor_n_values"><code class="docutils literal notranslate"><span class="pre">Monitor.monitor_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.peek"><code class="docutils literal notranslate"><span class="pre">Monitor.peek()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.start_monitoring"><code class="docutils literal notranslate"><span class="pre">Monitor.start_monitoring()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.stop_monitoring"><code class="docutils literal notranslate"><span class="pre">Monitor.stop_monitoring()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Monitor.Monitor.values"><code class="docutils literal notranslate"><span class="pre">Monitor.values</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html#pybela.Controller.Controller"><code class="docutils literal notranslate"><span class="pre">Controller</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Controller.Controller.get_controlled_status"><code class="docutils literal notranslate"><span class="pre">Controller.get_controlled_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Controller.Controller.get_value"><code class="docutils literal notranslate"><span class="pre">Controller.get_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Controller.Controller.send_value"><code class="docutils literal notranslate"><span class="pre">Controller.send_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Controller.Controller.start_controlling"><code class="docutils literal notranslate"><span class="pre">Controller.start_controlling()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Controller.Controller.stop_controlling"><code class="docutils literal notranslate"><span class="pre">Controller.stop_controlling()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">pybela 0.1.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pybela docs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pybela-docs">
+<h1>pybela docs<a class="headerlink" href="#pybela-docs" title="Link to this heading"></a></h1>
+<p>Welcome to pybela’s documentation!</p>
+<p>pybela allows interfacing with <a class="reference external" href="https://bela.io/">Bela</a>, the embedded
+audio platform, using Python. pybela provides a convenient way to
+stream, log, monitor sensor data from Bela to python. It also allows you
+to send buffers of data from python to Bela or control the value of
+variables in your Bela code from python.</p>
+<p>Below, you can find instructions to install pybela. You can find code
+examples at <code class="docutils literal notranslate"><span class="pre">tutorials/</span></code> and <code class="docutils literal notranslate"><span class="pre">test/</span></code>.</p>
+<p>pybela was developed with a machine learning use case in mind. For a
+complete pipeline including data acquisition, processing, model
+training, and deployment (including rapid cross-compilation) check the
+<a class="reference external" href="https://github.com/pelinski/pybela-pytorch-xc-tutorial">pybela-pytorch-xc-tutorial</a>.</p>
+<section id="installation-and-set-up">
+<h2>Installation and set up<a class="headerlink" href="#installation-and-set-up" title="Link to this heading"></a></h2>
+<p>You will need to (1) install the python package in your laptop, (2) set
+the Bela branch to <code class="docutils literal notranslate"><span class="pre">dev</span></code> and (3) add the watcher library to your Bela
+project.</p>
+<section id="installing-the-python-package">
+<h3>1. Installing the python package<a class="headerlink" href="#installing-the-python-package" title="Link to this heading"></a></h3>
+<p>You can install this library using <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pybela</span>
+</pre></div>
+</div>
+</section>
+<section id="set-the-bela-branch-to-dev">
+<h3>2. Set the Bela branch to <code class="docutils literal notranslate"><span class="pre">dev</span></code><a class="headerlink" href="#set-the-bela-branch-to-dev" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">pybela</span></code> is relies on the <code class="docutils literal notranslate"><span class="pre">watcher</span></code> library, which currently only
+works with the Bela <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch. To set your Bela to the <code class="docutils literal notranslate"><span class="pre">dev</span></code>
+branch, you can follow the instructions below.</p>
+<p><strong>Note:</strong> if you just flashed the Bela image, the date and time on the
+Bela board might be wrong, and the Bela libraries might not build
+correctly after changing the Bela branch. To set the correct date, you
+can either run (in the host)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>root@bela.local<span class="w"> </span><span class="s2">&quot;date -s \&quot;`date &#39;+%Y%m%d %T %z&#39;`\&quot;&quot;</span>
+</pre></div>
+</div>
+<p>or just open the IDE in your browser (type <code class="docutils literal notranslate"><span class="pre">bela.local</span></code> in the address
+bar).</p>
+<section id="option-a-bela-connected-to-internet">
+<h4>Option A: Bela connected to internet<a class="headerlink" href="#option-a-bela-connected-to-internet" title="Link to this heading"></a></h4>
+<p>If your Bela is connected to internet, you can ssh into your Bela
+(<code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">root&#64;bela.local</span></code>) and change the branch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in Bela</span>
+<span class="nb">cd</span><span class="w"> </span>Bela
+git<span class="w"> </span>checkout<span class="w"> </span>dev
+make<span class="w"> </span>-f<span class="w"> </span>Makefile.libraries<span class="w"> </span>cleanall<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>coreclean
+</pre></div>
+</div>
+</section>
+<section id="option-b-bela-not-connected-to-internet">
+<h4>Option B: Bela not connected to internet<a class="headerlink" href="#option-b-bela-not-connected-to-internet" title="Link to this heading"></a></h4>
+<p>If your Bela is not connected to internet, you can change the branch by
+cloning the Bela repository into your laptop and then pushing the
+<code class="docutils literal notranslate"><span class="pre">dev</span></code> branch to your Bela. To do that, first clone the Bela repository
+into your laptop:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in laptop</span>
+git<span class="w"> </span>clone<span class="w">  </span>--recurse-submodules<span class="w"> </span>https://github.com/belaPlatform/bela
+<span class="nb">cd</span><span class="w"> </span>Bela
+</pre></div>
+</div>
+<p>Then add your Bela as a remote and push the <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch to your Bela:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in laptop</span>
+git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>board<span class="w"> </span>root@bela.local:Bela/
+git<span class="w"> </span>checkout<span class="w"> </span>dev
+git<span class="w"> </span>push<span class="w"> </span>-f<span class="w"> </span>board<span class="w"> </span>dev:tmp
+</pre></div>
+</div>
+<p>Then ssh into your Bela (<code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">root&#64;bela.local</span></code>) and change the branch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in Bela</span>
+<span class="nb">cd</span><span class="w"> </span>Bela
+git<span class="w"> </span>checkout<span class="w"> </span>tmp
+make<span class="w"> </span>-f<span class="w"> </span>Makefile.libraries<span class="w"> </span>cleanall<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>coreclean
+</pre></div>
+</div>
+<p>You can check the commit hash by running <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rev-parse</span> <span class="pre">--short</span> <span class="pre">HEAD</span></code>
+either on Bela or your laptop.</p>
+</section>
+</section>
+<section id="add-the-watcher-library-to-your-project">
+<h3>3. Add the watcher library to your project<a class="headerlink" href="#add-the-watcher-library-to-your-project" title="Link to this heading"></a></h3>
+<p>For pybela to be able to communicate with your Bela device, you will
+need to add the watcher library to your Bela project. To do so, you will
+need to add the files <code class="docutils literal notranslate"><span class="pre">Watcher.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Watcher.cpp</span></code> to your Bela
+project. You can do this by copying the files from the <code class="docutils literal notranslate"><span class="pre">watcher</span></code>
+repository into your Bela project. To do so, you can run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scp<span class="w"> </span>watcher/Watcher.h<span class="w"> </span>watcher/Watcher.cpp<span class="w"> </span>root@bela.local:Bela/projects/your-project/
+</pre></div>
+</div>
+</section>
+</section>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<section id="modes-of-operation">
+<h3>Modes of operation<a class="headerlink" href="#modes-of-operation" title="Link to this heading"></a></h3>
+<p>pybela has three different modes of operation:</p>
+<ul class="simple">
+<li><p><strong>Streaming</strong>: continuously send data from Bela to python (<strong>NEW: or
+vice versa!</strong> check the
+<a class="reference external" href="tutorials/notebooks/2_Streamer-python-to-Bela.ipynb">tutorial</a>).</p></li>
+<li><p><strong>Logging</strong>: log data in a file in Bela and then retrieve it in
+python.</p></li>
+<li><p><strong>Monitoring</strong>: monitor the value of variables in the Bela code from
+python.</p></li>
+<li><p><strong>Controlling</strong>: control the value of variables in the Bela code from
+python.</p></li>
+</ul>
+<p>You can check the <strong>tutorials</strong> at
+tutorials/<code class="docutils literal notranslate"><span class="pre">for</span> <span class="pre">more</span> <span class="pre">detailed</span> <span class="pre">information</span> <span class="pre">and</span> <span class="pre">usage</span> <span class="pre">of</span> <span class="pre">each</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">modes.</span> <span class="pre">You</span> <span class="pre">can</span> <span class="pre">also</span> <span class="pre">check</span></code>test/test.py`
+for a quick overview of the library.</p>
+</section>
+<section id="running-the-examples">
+<h3>Running the examples<a class="headerlink" href="#running-the-examples" title="Link to this heading"></a></h3>
+<p>The quickest way to get started is to start a jupyter notebook server
+and run the examples. If you haven’t done it yet, install the python
+package as explained in the Installation section. If you don’t have the
+<code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code> package installed, you can install it by running
+(replace <code class="docutils literal notranslate"><span class="pre">pip</span></code> with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> if you are using a pipenv environment):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>notebook
+</pre></div>
+</div>
+<p>Once installed, start a jupyter notebook server by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>jupyter<span class="w"> </span>notebook<span class="w"> </span><span class="c1"># or `pipenv run jupyter notebook` if you are using a pipenv environment</span>
+</pre></div>
+</div>
+<p>This should open a window in your browser from which you can look for
+the <code class="docutils literal notranslate"><span class="pre">tutorials/notebooks</span></code> folder and open the examples.</p>
+</section>
+<section id="basic-usage">
+<h3>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<p>pybela allows you to access variables defined in your Bela code from
+python. To do so, you need to define the variables you want to access in
+your Bela code using the <code class="docutils literal notranslate"><span class="pre">Watcher</span></code> library.</p>
+<section id="bela-side">
+<h4>Bela side<a class="headerlink" href="#bela-side" title="Link to this heading"></a></h4>
+<p>For example, if you want to access the variable <code class="docutils literal notranslate"><span class="pre">myvar</span></code> from python,
+you need to define the variable in your Bela code as follows:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Watcher.h&gt;</span>
+<span class="n">Watcher</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">myvar</span><span class="p">(</span><span class="s">&quot;myvar&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>You will also need to add the following lines to your <code class="docutils literal notranslate"><span class="pre">setup</span></code> loop:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">BelaContext</span><span class="w"> </span><span class="o">*</span><span class="n">context</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">userData</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">Bela_getDefaultWatcherManager</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">getGui</span><span class="p">().</span><span class="n">setup</span><span class="p">(</span><span class="n">context</span><span class="o">-&gt;</span><span class="n">projectName</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Bela_getDefaultWatcherManager</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">setup</span><span class="p">(</span><span class="n">context</span><span class="o">-&gt;</span><span class="n">audioSampleRate</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// your code here...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>You will also need to add the following lines to your render loop:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="n">BelaContext</span><span class="w"> </span><span class="o">*</span><span class="n">context</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">userData</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">context</span><span class="o">-&gt;</span><span class="n">audioFrames</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">frames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="o">-&gt;</span><span class="n">audioFramesElapsed</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Bela_getDefaultWatcherManager</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">tick</span><span class="p">(</span><span class="n">frames</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// your code here...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>you can see an example <a class="reference external" href="./test/bela-test/render.cpp">here</a>.</p>
+</section>
+<section id="python-side">
+<h4>Python side<a class="headerlink" href="#python-side" title="Link to this heading"></a></h4>
+<p>Once the variable is defined “in the watcher”, you can stream, log and
+monitor its value from python. For example, to stream the value of
+<code class="docutils literal notranslate"><span class="pre">myvar</span></code> from python, you can do:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pybela</span> <span class="kn">import</span> <span class="n">Streamer</span>
+<span class="n">streamer</span> <span class="o">=</span> <span class="n">Streamer</span><span class="p">()</span>
+<span class="n">streamer</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">streamer</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">(</span><span class="s2">&quot;myvar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>to terminate the streaming, you can run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">streamer</span><span class="o">.</span><span class="n">stop_streaming</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
+<p>This library has been tested with Bela at <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch commit
+<code class="docutils literal notranslate"><span class="pre">69cdf75a</span></code> and watcher at <code class="docutils literal notranslate"><span class="pre">main</span></code> commit <code class="docutils literal notranslate"><span class="pre">903573a</span></code>.</p>
+<p>To run pybela’s tests first copy the <code class="docutils literal notranslate"><span class="pre">bela-test</span></code> code into your Bela,
+compile and run it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rsync<span class="w"> </span>-rvL<span class="w">  </span>test/bela-test<span class="w"> </span>root@bela.local:Bela/projects/
+ssh<span class="w"> </span>root@bela.local<span class="w"> </span><span class="s2">&quot;make -C Bela stop Bela PROJECT=bela-test run&quot;</span>
+</pre></div>
+</div>
+<p>you can run the python tests by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>test/test.py<span class="w"> </span><span class="c1"># or `pipenv run python test/test.py` if you are using a pipenv environment</span>
+</pre></div>
+</div>
+</section>
+<section id="building">
+<h2>Building<a class="headerlink" href="#building" title="Link to this heading"></a></h2>
+<p>You can build pybela using pipenv:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pipenv<span class="w"> </span>install<span class="w"> </span>-d<span class="w"> </span><span class="c1"># installs all dependencies including dev dependencies</span>
+pipenv<span class="w"> </span>lock<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pipenv<span class="w"> </span>sync<span class="w"> </span><span class="c1"># updates packages hashes</span>
+pipenv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--sdist<span class="w"> </span><span class="c1"># builds the .tar.gz file</span>
+</pre></div>
+</div>
+</section>
+<section id="to-do-and-known-issues">
+<h2>To do and known issues<a class="headerlink" href="#to-do-and-known-issues" title="Link to this heading"></a></h2>
+<p><strong>Before next release</strong></p>
+<ul class="simple">
+<li><p>☐ <strong>Add</strong> a tutorial for <code class="docutils literal notranslate"><span class="pre">.send_buffer</span></code>, and data and buffers
+callback</p></li>
+</ul>
+<p><strong>Long term</strong></p>
+<ul class="simple">
+<li><p>☐ <strong>Design</strong>: remove nest_asyncio?</p></li>
+<li><p>☐ <strong>Add</strong>: example projects</p></li>
+<li><p>☐ <strong>Issue:</strong> Monitor and streamer/controller can’t be used
+simultaneously –  This is due to both monitor and streamer both using
+the same websocket connection and message format. This could be fixed
+by having a different message format for the monitor and the streamer
+(e.g., adding a header to the message)</p></li>
+<li><p>☐ <strong>Issue:</strong> The plotting routine does not work when variables are
+updated at different rates.</p></li>
+<li><p>☐ <strong>Issue</strong>: The plotting routine does not work for the monitor (it
+only works for the streamer)</p></li>
+<li><p>☐ <strong>Code refactor:</strong> There are two routines for generating filenames
+(for Streamer and for Logger). This should be unified.</p></li>
+<li><p>☐ <strong>Possible feature:</strong> Flexible backend buffer size for streaming:
+if the assign rate of variables is too slow, the buffers might not be
+filled and hence not sent (since the data flushed is not collected in
+the frontend), and there will be long delays between the variable
+assign and the data being sent to the frontend.</p></li>
+<li><p>☐ <strong>Issue:</strong> Flushed buffers are not collected after
+<code class="docutils literal notranslate"><span class="pre">stop_streaming</span></code> in the frontend.</p></li>
+<li><p>☐ <strong>Bug:</strong> <code class="docutils literal notranslate"><span class="pre">OSError:</span> <span class="pre">[Errno</span> <span class="pre">12]</span> <span class="pre">Cannot</span> <span class="pre">allocate</span> <span class="pre">memory</span></code></p></li>
+</ul>
+</section>
+<section id="license">
+<h2>License<a class="headerlink" href="#license" title="Link to this heading"></a></h2>
+<p>This library is distributed under LGPL, the GNU Lesser General Public
+License (LGPL 3.0), available
+<a class="reference external" href="https://www.gnu.org/licenses/lgpl-3.0.en.html">here</a>.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

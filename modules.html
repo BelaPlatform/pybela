@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; pybela 0.1.0 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b217d7a7" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pybela 0.1.0
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started with pybela</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation and set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#installing-the-python-package">1. Installing the python package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#set-the-bela-branch-to-dev">2. Set the Bela branch to <code class="docutils literal notranslate"><span class="pre">dev</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#option-a-bela-connected-to-internet">Option A: Bela connected to internet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#option-b-bela-not-connected-to-internet">Option B: Bela not connected to internet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#add-the-watcher-library-to-your-project">3. Add the watcher library to your project</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#getting-started">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#modes-of-operation">Modes of operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#running-the-examples">Running the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#basic-usage">Basic usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#bela-side">Bela side</a></li>
+<li class="toctree-l3"><a class="reference internal" href="readme.html#python-side">Python side</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#testing">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#building">Building</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#to-do-and-known-issues">To do and known issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#license">License</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Module documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.connect"><code class="docutils literal notranslate"><span class="pre">Watcher.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_buffer_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_buffer_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_data_byte_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_byte_size()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_data_length"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_length()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_latest_timestamp"><code class="docutils literal notranslate"><span class="pre">Watcher.get_latest_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_prop_of_var"><code class="docutils literal notranslate"><span class="pre">Watcher.get_prop_of_var()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.is_connected"><code class="docutils literal notranslate"><span class="pre">Watcher.is_connected()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.list"><code class="docutils literal notranslate"><span class="pre">Watcher.list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.sample_rate"><code class="docutils literal notranslate"><span class="pre">Watcher.sample_rate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.send_ctrl_msg"><code class="docutils literal notranslate"><span class="pre">Watcher.send_ctrl_msg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.stop"><code class="docutils literal notranslate"><span class="pre">Watcher.stop()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.unwatched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.unwatched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.watched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.watcher_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watcher_vars</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#pybela.Streamer.Streamer"><code class="docutils literal notranslate"><span class="pre">Streamer</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.async_stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.async_stream_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.flush_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.flush_queue()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.is_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.is_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Streamer.load_data_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.monitored_vars"><code class="docutils literal notranslate"><span class="pre">Streamer.monitored_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.plot_data"><code class="docutils literal notranslate"><span class="pre">Streamer.plot_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.schedule_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.schedule_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.send_buffer"><code class="docutils literal notranslate"><span class="pre">Streamer.send_buffer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.start"><code class="docutils literal notranslate"><span class="pre">Streamer.start()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.start_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.start_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.stop_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.stop_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.stream_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.streaming_buffers_data"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_data</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.streaming_buffers_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_queue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.streaming_buffers_queue_length"><code class="docutils literal notranslate"><span class="pre">Streamer.streaming_buffers_queue_length</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#pybela.Logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.connect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.copy_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.copy_all_bin_files_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.copy_file_from_bela()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.delete_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.delete_all_bin_files_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.delete_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.delete_file_from_bela()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.disconnect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.finish_copying_file"><code class="docutils literal notranslate"><span class="pre">Logger.finish_copying_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.is_logging"><code class="docutils literal notranslate"><span class="pre">Logger.is_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.read_binary_file"><code class="docutils literal notranslate"><span class="pre">Logger.read_binary_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.schedule_logging"><code class="docutils literal notranslate"><span class="pre">Logger.schedule_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.start_logging"><code class="docutils literal notranslate"><span class="pre">Logger.start_logging()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.stop_logging"><code class="docutils literal notranslate"><span class="pre">Logger.stop_logging()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#pybela.Monitor.Monitor"><code class="docutils literal notranslate"><span class="pre">Monitor</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.async_monitor_n_values"><code class="docutils literal notranslate"><span class="pre">Monitor.async_monitor_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.connect"><code class="docutils literal notranslate"><span class="pre">Monitor.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Monitor.load_data_from_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.monitor_n_values"><code class="docutils literal notranslate"><span class="pre">Monitor.monitor_n_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.peek"><code class="docutils literal notranslate"><span class="pre">Monitor.peek()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.start_monitoring"><code class="docutils literal notranslate"><span class="pre">Monitor.start_monitoring()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.stop_monitoring"><code class="docutils literal notranslate"><span class="pre">Monitor.stop_monitoring()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Monitor.Monitor.values"><code class="docutils literal notranslate"><span class="pre">Monitor.values</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#pybela.Controller.Controller"><code class="docutils literal notranslate"><span class="pre">Controller</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Controller.Controller.get_controlled_status"><code class="docutils literal notranslate"><span class="pre">Controller.get_controlled_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Controller.Controller.get_value"><code class="docutils literal notranslate"><span class="pre">Controller.get_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Controller.Controller.send_value"><code class="docutils literal notranslate"><span class="pre">Controller.send_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Controller.Controller.start_controlling"><code class="docutils literal notranslate"><span class="pre">Controller.start_controlling()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Controller.Controller.stop_controlling"><code class="docutils literal notranslate"><span class="pre">Controller.stop_controlling()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pybela 0.1.0</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <dl class="py class" id="module-pybela.Watcher">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Watcher.</span></span><span class="sig-name descname"><span class="pre">Watcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.connect" title="Link to this definition"></a></dt>
+<dd><p>Attempts to establish a WebSocket connection and prints a message indicating success or failure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_buffer_size">
+<span class="sig-name descname"><span class="pre">get_buffer_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp_mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.get_buffer_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.get_buffer_size" title="Link to this definition"></a></dt>
+<dd><p>Returns the buffer size in bytes for buffers stored in a log file. This is the size of the buffer that is sent over websockets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_type</strong> (<em>str</em>) – Variable type</p></li>
+<li><p><strong>timestamp_mode</strong> (<em>str</em>) – Timestamp mode</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Buffer size in bytes</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_data_byte_size">
+<span class="sig-name descname"><span class="pre">get_data_byte_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.get_data_byte_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.get_data_byte_size" title="Link to this definition"></a></dt>
+<dd><p>Returns the byte size of the data type</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>var_type</strong> (<em>str</em>) – Variable type</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>byte size of the variable type</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_data_length">
+<span class="sig-name descname"><span class="pre">get_data_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp_mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.get_data_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.get_data_length" title="Link to this definition"></a></dt>
+<dd><p>Data length in the buffer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_type</strong> (<em>str</em>) – Variable type</p></li>
+<li><p><strong>timestamp_mode</strong> (<em>str</em>) – Timestamp mode</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Data length in the buffer (number of elements)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_latest_timestamp">
+<span class="sig-name descname"><span class="pre">get_latest_timestamp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.get_latest_timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.get_latest_timestamp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_prop_of_var">
+<span class="sig-name descname"><span class="pre">get_prop_of_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prop</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.get_prop_of_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.get_prop_of_var" title="Link to this definition"></a></dt>
+<dd><p>Get property of variable. Properties: name, type, timestamp_mode, log_filename, data_length</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_name</strong> (<em>str</em>) – Variable name</p></li>
+<li><p><strong>prop</strong> (<em>str</em>) – Requested property</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Requested property</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(type depending on prop)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.is_connected">
+<span class="sig-name descname"><span class="pre">is_connected</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.is_connected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.is_connected" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.list">
+<span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.list" title="Link to this definition"></a></dt>
+<dd><p>Asks the watcher for the list of variables and their properties and returns it</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.sample_rate">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sample_rate</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.sample_rate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.send_ctrl_msg">
+<span class="sig-name descname"><span class="pre">send_ctrl_msg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.send_ctrl_msg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.send_ctrl_msg" title="Link to this definition"></a></dt>
+<dd><p>Send control message</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<em>str</em>) – Message to send to the Bela watcher. Example: {“watcher”: [{“cmd”: “list”}]}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.stop" title="Link to this definition"></a></dt>
+<dd><p>Closes websockets</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.unwatched_vars">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unwatched_vars</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.unwatched_vars" title="Link to this definition"></a></dt>
+<dd><p>Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of unwatched variables</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.watched_vars">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">watched_vars</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.watched_vars" title="Link to this definition"></a></dt>
+<dd><p>Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of watched variables</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.watcher_vars">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">watcher_vars</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.watcher_vars" title="Link to this definition"></a></dt>
+<dd><p>Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of variables in watcher and their properties</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of dicts</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-pybela.Streamer">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Streamer.</span></span><span class="sig-name descname"><span class="pre">Streamer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pybela.Watcher.Watcher" title="pybela.Watcher.Watcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watcher</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.async_stream_n_values">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">async_stream_n_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'var_stream.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_buffer_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_block_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.async_stream_n_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.async_stream_n_values" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Asynchronous version of stream_n_values(). Usage:</dt><dd><p>stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename))</p>
+</dd>
+<dt>and retrieve the streaming buffer using:</dt><dd><p>streaming_buffers_queue = await stream_task</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be streamed. Defaults to [].</p></li>
+<li><p><strong>periods</strong> (<em>list</em><em>, </em><em>optional</em>) – List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].</p></li>
+<li><p><strong>n_values</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of values to stream for each variable. Defaults to 1000.</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving streamed data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>saving_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory for saving the streamed data. Defaults to “./”.</p></li>
+<li><p><strong>on_buffer_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a buffer is received. The callback function should take a single argument</em><em>, </em><em>the buffer. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>on_block_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a block</em><em> of </em><em>buffers is received. A block</em><em> of </em><em>buffers is a list</em><em> of </em><em>buffers</em><em>, </em><em>one for each streamed variable. The callback function should take a single argument</em><em>, </em><em>a list</em><em> of </em><em>buffers. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>callback_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Arguments to pass to the callback functions. Defaults to ().</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Streaming buffers queue</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>deque</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.flush_queue">
+<span class="sig-name descname"><span class="pre">flush_queue</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.flush_queue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.flush_queue" title="Link to this definition"></a></dt>
+<dd><p>Flushes the streaming buffers queue. The queue is emptied and the insertion counts are reset to 0.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.is_streaming">
+<span class="sig-name descname"><span class="pre">is_streaming</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.is_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.is_streaming" title="Link to this definition"></a></dt>
+<dd><p>Returns True if the streamer is currently streaming, False otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Streaming status bool</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.load_data_from_file">
+<span class="sig-name descname"><span class="pre">load_data_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.load_data_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.load_data_from_file" title="Link to this definition"></a></dt>
+<dd><p>Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
+:param filename: Filename
+:type filename: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of values loaded from file</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.monitored_vars">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">monitored_vars</span></span><a class="headerlink" href="#pybela.Streamer.Streamer.monitored_vars" title="Link to this definition"></a></dt>
+<dd><p>Returns a list of monitored variables. If no variables are monitored, returns an empty list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of monitored variables</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.plot_data">
+<span class="sig-name descname"><span class="pre">plot_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_vars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_update_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.plot_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.plot_data" title="Link to this definition"></a></dt>
+<dd><p>Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_var</strong> (<em>str</em>) – Variable to be plotted on the x axis</p></li>
+<li><p><strong>y_vars</strong> (<em>list</em><em> of </em><em>str</em>) – List of variables to be plotted on the y axis</p></li>
+<li><p><strong>y_range</strong> (<em>float</em><em>, </em><em>float</em>) – Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.</p></li>
+<li><p><strong>plot_update_delay</strong> (<em>int</em><em>, </em><em>optional</em>) – Delay between plot updates in ms. Defaults to 100.</p></li>
+<li><p><strong>rollover</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of data points to keep on the plot. Defaults to 1000.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.schedule_streaming">
+<span class="sig-name descname"><span class="pre">schedule_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">durations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'var_stream.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_buffer_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_block_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.schedule_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.schedule_streaming" title="Link to this definition"></a></dt>
+<dd><p>Schedule streaming of variables. The streaming session can be stopped with stop_streaming().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be streamed. Defaults to [].</p></li>
+<li><p><strong>timestamps</strong> (<em>list</em><em>, </em><em>optional</em>) – Timestamps to start streaming (one for each variable). Defaults to [].</p></li>
+<li><p><strong>durations</strong> (<em>list</em><em>, </em><em>optional</em>) – Durations to stream for (one for each variable). Defaults to [].</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving streamed data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>saving_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory for saving the streamed data files. Defaults to “./”.</p></li>
+<li><p><strong>on_buffer_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a buffer is received. The callback function should take a single argument</em><em>, </em><em>the buffer. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>on_block_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a block</em><em> of </em><em>buffers is received. A block</em><em> of </em><em>buffers is a list</em><em> of </em><em>buffers</em><em>, </em><em>one for each streamed variable. The callback function should take a single argument</em><em>, </em><em>a list</em><em> of </em><em>buffers. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>callback_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Arguments to pass to the callback functions. Defaults to ().</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.send_buffer">
+<span class="sig-name descname"><span class="pre">send_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.send_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.send_buffer" title="Link to this definition"></a></dt>
+<dd><p>Sends a buffer to Bela. The buffer is packed into binary format and sent over the websocket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>buffer_id</strong> (<em>int</em>) – Buffer id</p></li>
+<li><p><strong>buffer_type</strong> (<em>str</em>) – Buffer type. Supported types are ‘i’ (int), ‘f’ (float), ‘j’ (uint), ‘d’ (double), ‘c’ (char).</p></li>
+<li><p><strong>buffer_length</strong> (<em>int</em>) – Buffer length</p></li>
+<li><p><strong>data_list</strong> (<em>list</em>) – List of data to be sent</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.start" title="Link to this definition"></a></dt>
+<dd><p>Starts the websocket connection and initialises the streaming buffers queue.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.start_streaming">
+<span class="sig-name descname"><span class="pre">start_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'var_stream.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_buffer_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_block_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.start_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.start_streaming" title="Link to this definition"></a></dt>
+<dd><p>Starts the streaming session. The session can be stopped with stop_streaming().</p>
+<p>If no variables are specified, all watcher variables are streamed. If saving_enabled is True, the streamed data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be streamed. Defaults to [].</p></li>
+<li><p><strong>periods</strong> (<em>list</em><em>, </em><em>optional</em>) – List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving streamed data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>on_buffer_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a buffer is received. The callback function should take a single argument</em><em>, </em><em>the buffer. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>on_block_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a block</em><em> of </em><em>buffers is received. A block</em><em> of </em><em>buffers is a list</em><em> of </em><em>buffers</em><em>, </em><em>one for each streamed variable. The callback function should take a single argument</em><em>, </em><em>a list</em><em> of </em><em>buffers. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>callback_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Arguments to pass to the callback functions. Defaults to ().</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.stop_streaming">
+<span class="sig-name descname"><span class="pre">stop_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.stop_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.stop_streaming" title="Link to this definition"></a></dt>
+<dd><p>Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to stop streaming. Defaults to [].</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict containing the streaming buffers for each streamed variable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>streaming_buffers_queue (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.stream_n_values">
+<span class="sig-name descname"><span class="pre">stream_n_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_buffer_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_block_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.stream_n_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.stream_n_values" title="Link to this definition"></a></dt>
+<dd><p>Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size).</p>
+<p>Note: This function will block the main thread until n_values have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_values, unless n_values is a multiple of the block size (streamer._streaming_block_size).</p>
+<dl class="simple">
+<dt>To avoid blocking, use the async version of this function:</dt><dd><p>stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, periods, saving_enabled, saving_filename))</p>
+</dd>
+<dt>and retrieve the streaming buffer using:</dt><dd><p>streaming_buffers_queue = await stream_task</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be streamed. Defaults to [].</p></li>
+<li><p><strong>periods</strong> (<em>list</em><em>, </em><em>optional</em>) – List of streaming periods. Streaming periods are used by the monitor and will be ignored if in streaming mode. Defaults to [].</p></li>
+<li><p><strong>n_values</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of values to stream for each variable. Defaults to 1000.</p></li>
+<li><p><strong>delay</strong> (<em>int</em><em>, </em><em>optional</em>) – _description_. Defaults to 0.</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving streamed data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>saving_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory for saving the streamed data. Defaults to “./”.</p></li>
+<li><p><strong>on_buffer_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a buffer is received. The callback function should take a single argument</em><em>, </em><em>the buffer. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>on_block_callback</strong> (<em>function</em><em>, </em><em>optional</em><em>)</em><em>. Callback function that is called every time a block</em><em> of </em><em>buffers is received. A block</em><em> of </em><em>buffers is a list</em><em> of </em><em>buffers</em><em>, </em><em>one for each streamed variable. The callback function should take a single argument</em><em>, </em><em>a list</em><em> of </em><em>buffers. Accepts asynchronous functions</em><em> (</em><em>defined with async def</em>)</p></li>
+<li><p><strong>callback_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Arguments to pass to the callback functions. Defaults to ().</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict containing the streaming buffers for each streamed variable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>streaming_buffers_queue (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.streaming_buffers_data">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">streaming_buffers_data</span></span><a class="headerlink" href="#pybela.Streamer.Streamer.streaming_buffers_data" title="Link to this definition"></a></dt>
+<dd><p>Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
+:returns: Dict of flat lists of streamed values.
+:rtype: dict</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.streaming_buffers_queue">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">streaming_buffers_queue</span></span><a class="headerlink" href="#pybela.Streamer.Streamer.streaming_buffers_queue" title="Link to this definition"></a></dt>
+<dd><p>{“var1”: [val1, val2, …], “var2”: [val1, val2, …], …} }</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>streaming buffers queue</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Returns a dict where each key corresponds to a variable and each item to the variable’s buffer queue. The queue has maximum length determined by streamer.streaming_buffers_queue_length. Each item of the queue is a received buffer of the form {“frame</p>
+</dd>
+<dt class="field-even">Type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, “data”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Streamer.Streamer.streaming_buffers_queue_length">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">streaming_buffers_queue_length</span></span><a class="headerlink" href="#pybela.Streamer.Streamer.streaming_buffers_queue_length" title="Link to this definition"></a></dt>
+<dd><p>Returns:
+int: maximum number of streaming buffers allowed in self.streaming_buffers_queue</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-pybela.Logger">
+<dt class="sig sig-object py" id="pybela.Logger.Logger">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Logger.</span></span><span class="sig-name descname"><span class="pre">Logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pybela.Watcher.Watcher" title="pybela.Watcher.Watcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watcher</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.connect_ssh">
+<span class="sig-name descname"><span class="pre">connect_ssh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.connect_ssh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.connect_ssh" title="Link to this definition"></a></dt>
+<dd><p>Connects to Bela via ssh to transfer log files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.copy_all_bin_files_in_project">
+<span class="sig-name descname"><span class="pre">copy_all_bin_files_in_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.copy_all_bin_files_in_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.copy_all_bin_files_in_project" title="Link to this definition"></a></dt>
+<dd><p>Copies all .bin files in the specified remote directory using SFTP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the local directory where the files are copied to. Defaults to “./”.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show info messages. Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.copy_file_from_bela">
+<span class="sig-name descname"><span class="pre">copy_file_from_bela</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.copy_file_from_bela"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.copy_file_from_bela" title="Link to this definition"></a></dt>
+<dd><p>Copy a file from Bela onto the local machine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>remote_path</strong> (<em>str</em>) – Path to the remote file to be copied.</p></li>
+<li><p><strong>local_path</strong> (<em>str</em>) – Path to the local file (where the file is copied to)</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show info messages. Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.delete_all_bin_files_in_project">
+<span class="sig-name descname"><span class="pre">delete_all_bin_files_in_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.delete_all_bin_files_in_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.delete_all_bin_files_in_project" title="Link to this definition"></a></dt>
+<dd><p>Deletes all .bin files in the specified remote directory using SFTP.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.delete_file_from_bela">
+<span class="sig-name descname"><span class="pre">delete_file_from_bela</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.delete_file_from_bela"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.delete_file_from_bela" title="Link to this definition"></a></dt>
+<dd><p>Deletes a file from the remote path in Bela.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>remote_path</strong> (<em>str</em>) – Path to the remote file to be deleted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.disconnect_ssh">
+<span class="sig-name descname"><span class="pre">disconnect_ssh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.disconnect_ssh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.disconnect_ssh" title="Link to this definition"></a></dt>
+<dd><p>Disconnects from Bela via ssh.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.finish_copying_file">
+<span class="sig-name descname"><span class="pre">finish_copying_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.finish_copying_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.finish_copying_file" title="Link to this definition"></a></dt>
+<dd><p>Finish copying file if it was interrupted. This function is used to copy the remaining part of a file that was interrupted during the copy process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>remote_path</strong> (<em>str</em>) – Path to the file in Bela.
+local_path (str): Path to the file in the local machine (where the file is copied to)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.is_logging">
+<span class="sig-name descname"><span class="pre">is_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.is_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.is_logging" title="Link to this definition"></a></dt>
+<dd><p>Returns True if the logger is currently logging, false otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Logger status</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.read_binary_file">
+<span class="sig-name descname"><span class="pre">read_binary_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp_mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.read_binary_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.read_binary_file" title="Link to this definition"></a></dt>
+<dd><p>Reads a binary file generated by the logger and returns a dictionary with the file contents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>str</em>) – Path of the file to be read.</p></li>
+<li><p><strong>timestamp_mode</strong> (<em>str</em>) – Timestamp mode of the variable. Can be “dense” or “sparse”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with the file contents.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.schedule_logging">
+<span class="sig-name descname"><span class="pre">schedule_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">durations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transfer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.schedule_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.schedule_logging" title="Link to this definition"></a></dt>
+<dd><p>Schedule logging session. The session starts at the specified timestamps and lasts for the specified durations. If the timestamp is in the past, the logging will start immediately. The session can be ended by calling stop_logging().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – Variables to be logged. Defaults to [].</p></li>
+<li><p><strong>timestamps</strong> (<em>list</em><em>, </em><em>optional</em>) – Timestamps to start logging (one for each variable). Defaults to [].</p></li>
+<li><p><strong>durations</strong> (<em>list</em><em>, </em><em>optional</em>) – Durations to log for (one for each variable). Defaults to [].</p></li>
+<li><p><strong>transfer</strong> (<em>bool</em><em>, </em><em>optional</em>) – Transfer files to laptop automatically during logging session. Defaults to True.</p></li>
+<li><p><strong>logging_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to store the files. Defaults to “./”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.start_logging">
+<span class="sig-name descname"><span class="pre">start_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transfer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.start_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.start_logging" title="Link to this definition"></a></dt>
+<dd><p>Starts logging session. The session can be ended by calling stop_logging().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to be logged. If no variables are passed, all variables in the watcher are logged. Defaults to [].</p></li>
+<li><p><strong>transfer</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the logged files will be transferred automatically during the logging session. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of local paths to the logged files.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Logger.Logger.stop_logging">
+<span class="sig-name descname"><span class="pre">stop_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.stop_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.stop_logging" title="Link to this definition"></a></dt>
+<dd><p>Stops logging session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to stop logging. If none is passed, logging is stopped for all variables in the watcher. Defaults to [].</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-pybela.Monitor">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Monitor.</span></span><span class="sig-name descname"><span class="pre">Monitor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pybela.Streamer.Streamer" title="pybela.Streamer.Streamer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Streamer</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.async_monitor_n_values">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">async_monitor_n_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.async_monitor_n_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.async_monitor_n_values" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Asynchronous version of monitor_n_values(). Usage:</dt><dd><p>monitor_task = asyncio.create_task(monitor.async_monitor_n_values(variables, periods, n_values, saving_enabled, saving_filename))</p>
+</dd>
+<dt>and retrieve the monitored buffer using:</dt><dd><p>monitoring_buffers_queue = await monitor_task</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be monitored. Defaults to [].</p></li>
+<li><p><strong>periods</strong> (<em>list</em><em>, </em><em>optional</em>) – List of monitoring period. Defaults to [].</p></li>
+<li><p><strong>n_values</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of values to monitor for each variable. Defaults to 1000.</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving monitored data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>_type_</em><em>, </em><em>optional</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Monitored buffers queue</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>deque</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.connect" title="Link to this definition"></a></dt>
+<dd><p>Attempts to establish a WebSocket connection and prints a message indicating success or failure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.load_data_from_file">
+<span class="sig-name descname"><span class="pre">load_data_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.load_data_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.load_data_from_file" title="Link to this definition"></a></dt>
+<dd><p>Loads data from a file saved through the saving_enabled function in start_monitoring() or monitor_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
+:param filename: Filename
+:type filename: str
+:param flatten: If True, the returned list of values is flattened. Defaults to True.
+:type flatten: bool, optional</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict with “timestamps” and “values” list if flatten is True, otherwise a list of dicts with “timestamp” and “value” keys.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict of lists</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.monitor_n_values">
+<span class="sig-name descname"><span class="pre">monitor_n_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'monitor.txt'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.monitor_n_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.monitor_n_values" title="Link to this definition"></a></dt>
+<dd><p>Monitors a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be monitored (unless the number of frames is a multiple of the buffer size).</p>
+<p>Note: This function will block the main thread until n_values have been monitored. Since the monitored values come in blocks, the actual number of returned frames monitored may be higher than n_values, unless n_values is a multiple of the block size (monitor._streaming_block_size).</p>
+<dl class="simple">
+<dt>To avoid blocking, use the async version of this function:</dt><dd><p>monitor_task = asyncio.create_task(monitor.async_monitor_n_values(variables, n_values, periods, saving_enabled, saving_filename))</p>
+</dd>
+<dt>and retrieve the monitored buffer using:</dt><dd><p>monitored_buffers_queue = await monitor_task</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be monitored. Defaults to [].</p></li>
+<li><p><strong>periods</strong> (<em>list</em><em>, </em><em>optional</em>) – List of monitoring periods. Defaults to [].</p></li>
+<li><p><strong>n_values</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of values to monitor for each variable. Defaults to 1000.</p></li>
+<li><p><strong>delay</strong> (<em>int</em><em>, </em><em>optional</em>) – _description_. Defaults to 0.</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving monitored data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>_type_</em><em>, </em><em>optional</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict containing the monitored buffers for each streamed variable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>monitored_buffers_queue (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.peek">
+<span class="sig-name descname"><span class="pre">peek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.peek"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.peek" title="Link to this definition"></a></dt>
+<dd><p>Peek at variables</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to peek at. If no variables are specified, stream all watcher variables (default).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary of variables with their values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.start_monitoring">
+<span class="sig-name descname"><span class="pre">start_monitoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'monitor.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.start_monitoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.start_monitoring" title="Link to this definition"></a></dt>
+<dd><p>Starts the monitoring session. The session can be stopped with stop_monitoring().</p>
+<p>If no variables are specified, all watcher variables are monitored. If saving_enabled is True, the monitored data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to be streamed. Defaults to [].</p></li>
+<li><p><strong>periods</strong> (<em>list</em><em>, </em><em>optional</em>) – List of monitoring periods. Defaults to [].</p></li>
+<li><p><strong>saving_enabled</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enables/disables saving monitored data to local file. Defaults to False.</p></li>
+<li><p><strong>saving_filename</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>saving_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory for saving the monitored data. Defaults to “/.”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.stop_monitoring">
+<span class="sig-name descname"><span class="pre">stop_monitoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.stop_monitoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.stop_monitoring" title="Link to this definition"></a></dt>
+<dd><p>Stops the current monitoring session for the given variables. If no variables are passed, the monitoring of all variables is interrupted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to stop monitoring. Defaults to [].</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict containing the monitored buffers for each monitored variable</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict of dicts of lists</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pybela.Monitor.Monitor.values">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">values</span></span><a class="headerlink" href="#pybela.Monitor.Monitor.values" title="Link to this definition"></a></dt>
+<dd><p>Get monitored values from last monitoring session</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing the monitored buffers for each variable in the watcher</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict of dicts of list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-pybela.Controller">
+<dt class="sig sig-object py" id="pybela.Controller.Controller">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Controller.</span></span><span class="sig-name descname"><span class="pre">Controller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Controller.html#Controller"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Controller.Controller" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pybela.Watcher.Watcher" title="pybela.Watcher.Watcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watcher</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Controller.Controller.get_controlled_status">
+<span class="sig-name descname"><span class="pre">get_controlled_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Controller.html#Controller.get_controlled_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Controller.Controller.get_controlled_status" title="Link to this definition"></a></dt>
+<dd><p>Gets the controlled status (controlled or uncontrolled) of the variables</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to check. Defaults to all variables in the watcher.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of controlled status of the variables</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Controller.Controller.get_value">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Controller.html#Controller.get_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Controller.Controller.get_value" title="Link to this definition"></a></dt>
+<dd><p>Gets the value of the variables</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to get the value from. Defaults to all variables in the watcher.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of controlled values of the variables</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of numbers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Controller.Controller.send_value">
+<span class="sig-name descname"><span class="pre">send_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Controller.html#Controller.send_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Controller.Controller.send_value" title="Link to this definition"></a></dt>
+<dd><p>Send a value to the given variables.
+Note: All values set with this function will be only visible through the “get_value()” method, or the “value” field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variables</strong> (<em>list</em><em>, </em><em>required</em>) – List of variables to control.</p></li>
+<li><p><strong>values</strong> (<em>list</em><em>, </em><em>required</em>) – Values to be set for each variable.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Controller.Controller.start_controlling">
+<span class="sig-name descname"><span class="pre">start_controlling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Controller.html#Controller.start_controlling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Controller.Controller.start_controlling" title="Link to this definition"></a></dt>
+<dd><p>Starts controlling given variables. This function will block until all requested variables are set to ‘controlled’ in the list.
+Note: All values set with the controller class will be only visible through the “get_value()” method, or the “value” field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to control. If no variables are specified, stream all watcher variables (default).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Controller.Controller.stop_controlling">
+<span class="sig-name descname"><span class="pre">stop_controlling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Controller.html#Controller.stop_controlling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Controller.Controller.stop_controlling" title="Link to this definition"></a></dt>
+<dd><p>Stops controlling given variables. This function will block until all requested variables are set to ‘uncontrolled’ in the list.
+Note: All values set with the controller class will be only visible through the “get_value()” method, or the “value” field in the list() function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to control. If no variables are specified, stream all watcher variables (default).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
