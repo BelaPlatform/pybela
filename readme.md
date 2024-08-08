@@ -20,7 +20,14 @@ pip install pybela
 
 ### 2. Set the Bela branch to `dev`
 
-In order to use pybela, you will need to use the `dev` branch of the Bela code.
+`pybela` is relies on the `watcher` library, which currently only works with the Bela `dev` branch. To set your Bela to the `dev` branch, you can follow the instructions below.
+
+**Note:** if you just flashed the Bela image, the date and time on the Bela board might be wrong, and the Bela libraries might not build correctly after changing the Bela branch. To set the correct date, you can either run (in the host)
+
+```bash
+ssh root@bela.local "date -s \"`date '+%Y%m%d %T %z'`\""
+```
+or just open the IDE in your browser (type `bela.local` in the address bar).
 
 #### Option A: Bela connected to internet
 
@@ -30,7 +37,7 @@ If your Bela is connected to internet, you can ssh into your Bela (`ssh root@bel
 # in Bela
 cd Bela
 git checkout dev
-git pull
+make -f Makefile.libraries cleanall && make coreclean
 ```
 
 #### Option B: Bela not connected to internet
@@ -59,6 +66,7 @@ Then ssh into your Bela (`ssh root@bela.local`) and change the branch:
 # in Bela
 cd Bela
 git checkout tmp
+make -f Makefile.libraries cleanall && make coreclean
 ```
 
 You can check the commit hash by running `git rev-parse --short HEAD` either on Bela or your laptop.
