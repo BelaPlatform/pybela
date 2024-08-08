@@ -25,12 +25,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install pipenv
         pipenv install -d
-        pipenv run pip-chill 
+        echo "pwd:!!" && pwd
 
     - name: Build documentation
       run: |
-        ./venv/bin/pandoc -s readme.md -o docs/readme.rst
-        ./venv/bin/sphinx-build -M html docs/ docs/_build
+        pipenv run pandoc -s readme.md -o docs/readme.rst
+        pipenv run sphinx-build -M html docs/ docs/_build
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
