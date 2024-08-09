@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation and set up &mdash; pybela 0.1.0 0.1.0 documentation</title>
+  <title>Installation and set up &mdash; pybela 1.0.0 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b217d7a7" />
@@ -16,7 +16,7 @@
   
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
         <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -34,7 +34,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            pybela 0.1.0
+            pybela 1.0.0
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -100,7 +100,6 @@
 <li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.plot_data"><code class="docutils literal notranslate"><span class="pre">Streamer.plot_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.schedule_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.schedule_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.send_buffer"><code class="docutils literal notranslate"><span class="pre">Streamer.send_buffer()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.start"><code class="docutils literal notranslate"><span class="pre">Streamer.start()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.start_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.start_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.stop_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.stop_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules.html#pybela.Streamer.Streamer.stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.stream_n_values()</span></code></a></li>
@@ -151,7 +150,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">pybela 0.1.0</a>
+          <a href="index.html">pybela 1.0.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -168,14 +167,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <p>pybela allows interfacing with <a class="reference external" href="https://bela.io/">Bela</a>, the embedded
-audio platform, using Python. pybela provides a convenient way to
-stream, log, monitor sensor data from Bela to python. It also allows you
-to send buffers of data from python to Bela or control the value of
-variables in your Bela code from python.</p>
+  <p>pybela enables seamless interfacing with <a class="reference external" href="https://bela.io/">Bela</a>,
+the embedded audio platform, using python. It offers a convenient way to
+stream data between Bela and python in both directions. In addition to
+data streaming, pybela supports data logging, as well as variable
+monitoring and control functionalities.</p>
 <p>Below, you can find instructions to install pybela. You can find code
-examples at <code class="docutils literal notranslate"><span class="pre">tutorials/</span></code> and <code class="docutils literal notranslate"><span class="pre">test/</span></code>.</p>
-<p>pybela was developed with a machine learning use case in mind. For a
+examples at <code class="docutils literal notranslate"><span class="pre">tutorials/</span></code> and <code class="docutils literal notranslate"><span class="pre">test/</span></code>. The docs are available at
+<a class="reference external" href="https://belaplatform.github.io/pybela/">https://belaplatform.github.io/pybela/</a>.</p>
+<p>pybela was developed with a machine learning use-case in mind. For a
 complete pipeline including data acquisition, processing, model
 training, and deployment (including rapid cross-compilation) check the
 <a class="reference external" href="https://github.com/pelinski/pybela-pytorch-xc-tutorial">pybela-pytorch-xc-tutorial</a>.</p>
@@ -263,9 +263,9 @@ repository into your Bela project. To do so, you can run:</p>
 <h2>Modes of operation<a class="headerlink" href="#modes-of-operation" title="Link to this heading"></a></h2>
 <p>pybela has three different modes of operation:</p>
 <ul class="simple">
-<li><p><strong>Streaming</strong>: continuously send data from Bela to python (<strong>NEW: or
-vice versa!</strong> check the
-<a class="reference external" href="tutorials/notebooks/2_Streamer-python-to-Bela.ipynb">tutorial</a>).</p></li>
+<li><p><strong>Streaming</strong>: continuously send data from Bela to python (<strong>NEW: and
+from python to Bela!</strong> check the
+<a class="reference external" href="tutorials/notebooks/3_Streamer-python-to-Bela.ipynb">tutorial</a>).</p></li>
 <li><p><strong>Logging</strong>: log data in a file in Bela and then retrieve it in
 python.</p></li>
 <li><p><strong>Monitoring</strong>: monitor the value of variables in the Bela code from
@@ -373,11 +373,6 @@ pipenv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> 
 </section>
 <section id="to-do-and-known-issues">
 <h1>To do and known issues<a class="headerlink" href="#to-do-and-known-issues" title="Link to this heading"></a></h1>
-<p><strong>Before next release</strong></p>
-<ul class="simple">
-<li><p>☐ <strong>Add</strong> a tutorial for <code class="docutils literal notranslate"><span class="pre">.send_buffer</span></code>, and data and buffers
-callback</p></li>
-</ul>
 <p><strong>Long term</strong></p>
 <ul class="simple">
 <li><p>☐ <strong>Design</strong>: remove nest_asyncio?</p></li>

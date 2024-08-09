@@ -1,14 +1,15 @@
 
-pybela allows interfacing with `Bela <https://bela.io/>`__, the embedded
-audio platform, using Python. pybela provides a convenient way to
-stream, log, monitor sensor data from Bela to python. It also allows you
-to send buffers of data from python to Bela or control the value of
-variables in your Bela code from python.
+pybela enables seamless interfacing with `Bela <https://bela.io/>`__,
+the embedded audio platform, using python. It offers a convenient way to
+stream data between Bela and python in both directions. In addition to
+data streaming, pybela supports data logging, as well as variable
+monitoring and control functionalities.
 
 Below, you can find instructions to install pybela. You can find code
-examples at ``tutorials/`` and ``test/``.
+examples at ``tutorials/`` and ``test/``. The docs are available at
+https://belaplatform.github.io/pybela/.
 
-pybela was developed with a machine learning use case in mind. For a
+pybela was developed with a machine learning use-case in mind. For a
 complete pipeline including data acquisition, processing, model
 training, and deployment (including rapid cross-compilation) check the
 `pybela-pytorch-xc-tutorial <https://github.com/pelinski/pybela-pytorch-xc-tutorial>`__.
@@ -117,9 +118,9 @@ Modes of operation
 
 pybela has three different modes of operation:
 
--  **Streaming**: continuously send data from Bela to python (**NEW: or
-   vice versa!** check the
-   `tutorial <tutorials/notebooks/2_Streamer-python-to-Bela.ipynb>`__).
+-  **Streaming**: continuously send data from Bela to python (**NEW: and
+   from python to Bela!** check the
+   `tutorial <tutorials/notebooks/3_Streamer-python-to-Bela.ipynb>`__).
 -  **Logging**: log data in a file in Bela and then retrieve it in
    python.
 -  **Monitoring**: monitor the value of variables in the Bela code from
@@ -250,11 +251,6 @@ You can build pybela using pipenv:
 
 To do and known issues
 ----------------------
-
-**Before next release**
-
--  ☐ **Add** a tutorial for ``.send_buffer``, and data and buffers
-   callback
 
 **Long term**
 

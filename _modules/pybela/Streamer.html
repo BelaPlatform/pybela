@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela.Streamer &mdash; pybela 0.1.0 0.1.0 documentation</title>
+  <title>pybela.Streamer &mdash; pybela 1.0.0 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
@@ -15,7 +15,7 @@
   
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../../_static/documentation_options.js?v=8d563738"></script>
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -32,7 +32,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            pybela 0.1.0
+            pybela 1.0.0
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -98,7 +98,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.plot_data"><code class="docutils literal notranslate"><span class="pre">Streamer.plot_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.schedule_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.schedule_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.send_buffer"><code class="docutils literal notranslate"><span class="pre">Streamer.send_buffer()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.start"><code class="docutils literal notranslate"><span class="pre">Streamer.start()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.start_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.start_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.stop_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.stop_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Streamer.Streamer.stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.stream_n_values()</span></code></a></li>
@@ -149,7 +148,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">pybela 0.1.0</a>
+          <a href="../../index.html">pybela 1.0.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -280,22 +279,6 @@
         <span class="c1"># returns a dict of lists instead of a dict of dequeues</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-<div class="viewcode-block" id="Streamer.start">
-<a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.start">[docs]</a>
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Starts the websocket connection and initialises the streaming buffers queue.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># self.connect()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_connected</span><span class="p">():</span>
-            <span class="n">_print_warning</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;Monitor&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="o">==</span><span class="s2">&quot;MONITOR&quot;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;Streamer&quot;</span><span class="w"> </span><span class="si">}</span><span class="s1"> is not connected to Bela. Run </span><span class="si">{</span><span class="s2">&quot;monitor&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="o">==</span><span class="s2">&quot;MONITOR&quot;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;streamer&quot;</span><span class="si">}</span><span class="s1">.connect() first.&#39;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]:</span> <span class="n">deque</span><span class="p">(</span>
-            <span class="n">maxlen</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue_length</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher_vars</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">last_streamed_buffer</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">var</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;timestamps&quot;</span><span class="p">:</span> <span class="p">[]}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher_vars</span><span class="p">}</span></div>
-
-
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">streaming_buffers_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.</span>
@@ -318,8 +301,14 @@
             <span class="n">_print_warning</span><span class="p">(</span><span class="s2">&quot;Stopping previous streaming session...&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">stop_streaming</span><span class="p">()</span>  <span class="c1"># stop any previous streaming</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># bela is not connected</span>
-            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_connected</span><span class="p">():</span>
+            <span class="n">_print_warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;Monitor&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="o">==</span><span class="s2">&quot;MONITOR&quot;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;Streamer&quot;</span><span class="w"> </span><span class="si">}</span><span class="s1"> is not connected to Bela. Run </span><span class="si">{</span><span class="s2">&quot;monitor&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="o">==</span><span class="s2">&quot;MONITOR&quot;</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;streamer&quot;</span><span class="si">}</span><span class="s1">.connect() first.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]:</span> <span class="n">deque</span><span class="p">(</span>
+            <span class="n">maxlen</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue_length</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher_vars</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_streamed_buffer</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">var</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;timestamps&quot;</span><span class="p">:</span> <span class="p">[]}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher_vars</span><span class="p">}</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">):</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">)</span>
