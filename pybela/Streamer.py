@@ -108,19 +108,6 @@ class Streamer(Watcher):
         # returns a dict of lists instead of a dict of dequeues
         return {key: list(value) for key, value in self._streaming_buffers_queue.items()}
 
-    def start(self):
-        """Starts the websocket connection and initialises the streaming buffers queue.
-        """
-        # self.connect()
-        if not self.is_connected():
-            _print_warning(
-                f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
-            return 0
-        self._streaming_buffers_queue = {var["name"]: deque(
-            maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
-        self.last_streamed_buffer = {
-            var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
-
     @property
     def streaming_buffers_data(self):
         """Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.
@@ -143,8 +130,14 @@ class Streamer(Watcher):
             _print_warning("Stopping previous streaming session...")
             self.stop_streaming()  # stop any previous streaming
 
-        if self.start() == 0:  # bela is not connected
-            return
+        if not self.is_connected():
+            _print_warning(
+                f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
+            return 0
+        self._streaming_buffers_queue = {var["name"]: deque(
+            maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
+        self.last_streamed_buffer = {
+            var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
 
         if not os.path.exists(saving_dir):
             os.makedirs(saving_dir)

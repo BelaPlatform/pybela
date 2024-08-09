@@ -3,7 +3,7 @@ To build the docs you will need to install `pandoc` to convert the `readme.md` i
 Then you can build the docs with:
 
 ```bash
-rm -r docs/_build
-pandoc -s readme.md -o docs/readme.rst
-pipenv run sphinx-build -M html docs/ docs/_build
+rm -r _build
+pandoc -s ../readme.md -o readme.rst
+pipenv run sphinx-build -M html . _build
 ```

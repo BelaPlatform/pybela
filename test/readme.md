@@ -7,7 +7,7 @@ The watcher code is already included in `bela-test`. You can update your Bela AP
 To run the tests, copy the `bela-test` code into your Bela, add the `Watcher`` library compile and run it:
 
 ```bash
-rsync -rvL  test/bela-test root@bela.local:Bela/projects/
+rsync -rvL  test/bela-test test/bela-test-send root@bela.local:Bela/projects/
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
 
@@ -16,3 +16,15 @@ Once the `bela-test` project is running on Bela, you can run the python tests by
 ```bash
 python test.py # or `pipenv run python test.py` if you are using a pipenv environment
 ```
+
+You can also test the `bela-test-send` project by running:
+
+```bash
+ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
+```
+and then running the python tests with:
+
+```bash
+python test-send.py # or `pipenv run python test-send.py` if you are using a pipenv environment
+```
+ 

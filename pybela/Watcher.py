@@ -170,7 +170,9 @@ class Watcher:
                 await self.ws_ctrl.close()
             if self.ws_data is not None and self.ws_data.open:
                 await self.ws_data.close()
+            if self._process_received_data_msg_worker_task is not None:
                 self._process_received_data_msg_worker_task.cancel()
+            if self._sending_data_msg_worker_task is not None:
                 self._sending_data_msg_worker_task.cancel()
         return asyncio.run(_async_stop())
 

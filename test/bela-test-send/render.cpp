@@ -18,12 +18,6 @@ ReceivedBuffer receivedBuffer;
 uint receivedBufferHeaderSize;
 uint64_t totalReceivedCount;
 
-struct CallbackBuffer {
-    uint32_t guiBufferId;
-    std::vector<float> bufferData;
-    uint64_t count;
-};
-CallbackBuffer callbackBuffers[2];
 
 bool binaryDataCallback(const std::string& addr, const WSServerDetails* id, const unsigned char* data, size_t size, void* arg) {
 
@@ -39,10 +33,9 @@ bool binaryDataCallback(const std::string& addr, const WSServerDetails* id, cons
     Bela_getDefaultWatcherManager()->tick(totalReceivedCount);
     int _id = receivedBuffer.bufferId;
     if (_id >= 0 && _id < myVars.size()) {
-        callbackBuffers[_id].bufferData = receivedBuffer.bufferData;
-        callbackBuffers[_id].count++;
-        for (size_t i = 0; i < callbackBuffers[_id].bufferData.size(); ++i) {
-            *myVars[_id] = callbackBuffers[_id].bufferData[i];
+
+        for (size_t i = 0; i < receivedBuffer.bufferData.size(); ++i) {
+            *myVars[_id] = receivedBuffer.bufferData[i];
         }
     }
 
@@ -55,11 +48,8 @@ bool setup(BelaContext* context, void* userData) {
     Bela_getDefaultWatcherManager()->setup(context->audioSampleRate); // set sample rate in watcher
 
     for (int i = 0; i < 2; ++i) {
-        callbackBuffers[i].guiBufferId = Bela_getDefaultWatcherManager()->getGui().setBuffer('f', 1024);
-        callbackBuffers[i].count = 0;
+        Bela_getDefaultWatcherManager()->getGui().setBuffer('f', 1024);
     }
-
-    printf("dataBufferId_1: %d, dataBufferId_2: %d \n", callbackBuffers[0].guiBufferId, callbackBuffers[1].guiBufferId);
 
     Bela_getDefaultWatcherManager()->getGui().setBinaryDataCallback(binaryDataCallback);
 
