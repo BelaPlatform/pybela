@@ -4,8 +4,9 @@ import os
 import numpy as np
 from pybela import Watcher, Streamer, Logger, Monitor, Controller
 
-# all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
+os.environ["PYTHONASYNCIODEBUG"] = "1"
 
+# all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
 class test_Watcher(unittest.TestCase):
 
@@ -94,48 +95,95 @@ class test_Streamer(unittest.TestCase):
                         f"{var}_{self.saving_filename}"))
 
     def test_start_stop_streaming(self):
-        async def async_test_start_stop():
-            self.streamer.streaming_buffers_queue_length = 1000
+        self.streamer.streaming_buffers_queue_length = 1000
 
-            # delete any existing test files
-            for var in self.streaming_vars:
-                remove_file(os.path.join(self.saving_dir,
-                                         f"{var}_{self.saving_filename}"))
+        # delete any existing test files
+        for var in self.streaming_vars:
+            remove_file(os.path.join(self.saving_dir,
+                                     f"{var}_{self.saving_filename}"))
 
-            # stream with saving
-            self.streamer.start_streaming(variables=self.streaming_vars,
-                                          saving_enabled=True, saving_filename=self.saving_filename, saving_dir=self.saving_dir)
-            # check streaming mode is FOREVER after start_streaming is called
-            self.assertEqual(self.streamer._streaming_mode, "FOREVER",
-                             "Streaming mode should be FOREVER after start_streaming")
-            await asyncio.sleep(0.5)  # wait for some data to be streamed
-            self.streamer.stop_streaming(variables=self.streaming_vars)
-            # check streaming mode is OFF after stop_streaming
+        # stream with saving
+        self.streamer.start_streaming(variables=self.streaming_vars,
+                                      saving_enabled=True, saving_filename=self.saving_filename, saving_dir=self.saving_dir)
+        # check streaming mode is FOREVER after start_streaming is called
+        self.assertEqual(self.streamer._streaming_mode, "FOREVER",
+                         "Streaming mode should be FOREVER after start_streaming")
+        asyncio.run(asyncio.sleep(0.5))  # wait for some data to be streamed
+        self.streamer.stop_streaming(variables=self.streaming_vars)
+        # check streaming mode is OFF after stop_streaming
 
-        asyncio.run(async_test_start_stop())
         self.assertEqual(self.streamer._streaming_mode, "OFF",
                          "Streaming mode should be OFF after stop_streaming")
         self.__test_buffers(mode="start_stop")
 
     def test_scheduling_streaming(self):
-        async def async_test_scheduling_streaming():
-            self.streamer.streaming_buffers_queue_length = 1000
-            latest_timestamp = self.streamer.get_latest_timestamp()
-            sample_rate = self.streamer.sample_rate
-            timestamps = [latest_timestamp +
-                          sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
-            durations = [sample_rate] * \
-                len(self.streaming_vars)  # stream for 1s
+        self.streamer.streaming_buffers_queue_length = 1000
+        latest_timestamp = self.streamer.get_latest_timestamp()
+        sample_rate = self.streamer.sample_rate
+        timestamps = [latest_timestamp +
+                        sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
+        durations = [sample_rate] * \
+            len(self.streaming_vars)  # stream for 1s
 
-            self.streamer.schedule_streaming(variables=self.streaming_vars,
-                                             timestamps=timestamps,
-                                             durations=durations,
-                                             saving_enabled=True,
-                                             saving_dir=self.saving_dir,
-                                             saving_filename=self.saving_filename)
+        self.streamer.schedule_streaming(variables=self.streaming_vars,
+                                            timestamps=timestamps,
+                                            durations=durations,
+                                            saving_enabled=True,
+                                            saving_dir=self.saving_dir,
+                                            saving_filename=self.saving_filename)
 
-        asyncio.run(async_test_scheduling_streaming())
         self.__test_buffers(mode="schedule")
+
+    def test_on_buffer_callback(self):
+        variables = ["myvar", "myvar5"]  # dense double
+
+        # test only on vars of the same type
+
+        timestamps = {var: [] for var in variables}
+        buffers = {var: [] for var in variables}
+
+        def callback(buffer):
+            timestamps[buffer["name"]].append(
+                buffer["buffer"]["ref_timestamp"])
+            buffers[buffer["name"]].append(buffer["buffer"]["data"])
+
+        self.streamer.start_streaming(
+            variables, saving_enabled=False, on_buffer_callback=callback)
+
+        asyncio.run(asyncio.sleep(0.1))
+
+        self.streamer.stop_streaming(variables)
+
+        for var in variables:
+            for i in range(1, len(timestamps[var])):
+                self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,
+                                 "The timestamps should be continuous. The callback is missing some buffer")
+
+    def test_on_block_callback(self):
+        variables = ["myvar", "myvar5"]  # dense double
+
+        timestamps = {var: [] for var in variables}
+        buffers = {var: [] for var in variables}
+
+        def callback(block):
+            for buffer in block:
+                var = buffer["name"]
+                timestamps[var].append(buffer["buffer"]["ref_timestamp"])
+                buffers[var].append(buffer["buffer"]["data"])
+
+        self.streamer.start_streaming(
+            variables, saving_enabled=False, on_block_callback=callback)
+
+        asyncio.run(asyncio.sleep(0.5))
+
+        self.streamer.stop_streaming(variables)
+        
+        self.assertGreater(len(timestamps["myvar"]), 0, "The on_block_callback should have been called at least once")
+        
+        for var in variables:
+            for i in range(1, len(timestamps[var])):
+                self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,
+                                 "The timestamps should be continuous. The callback is missing some buffer")
 
 
 class test_Logger(unittest.TestCase):
@@ -181,85 +229,79 @@ class test_Logger(unittest.TestCase):
                         inferred_timestamps, _buffer["data"], "The timestamps should be equal to the ref_timestamp plus the relative timestamps (sparse logging)")
 
     def test_logged_files_with_transfer(self):
-        async def async_test_logged_files_with_transfer():
+        # log with transfer
+        file_paths = self.logger.start_logging(
+            variables=self.logging_vars, transfer=True, logging_dir=self.logging_dir)
+        asyncio.run(asyncio.sleep(0.5))
+        self.logger.stop_logging()
 
-            # log with transfer
-            file_paths = self.logger.start_logging(
-                variables=self.logging_vars, transfer=True, logging_dir=self.logging_dir)
-            await asyncio.sleep(0.5)
-            self.logger.stop_logging()
+        # test logged data
+        self._test_logged_data(self.logger, self.logging_vars,
+                                file_paths["local_paths"])
 
-            # test logged data
-            self._test_logged_data(self.logger, self.logging_vars,
-                                   file_paths["local_paths"])
+        # clean local log files
+        for var in file_paths["local_paths"]:
+            remove_file(file_paths["local_paths"][var])
+        # clean all remote log files in project
+        self.logger.delete_all_bin_files_in_project()
 
-            # clean local log files
-            for var in file_paths["local_paths"]:
-                remove_file(file_paths["local_paths"][var])
-            # clean all remote log files in project
-            self.logger.delete_all_bin_files_in_project()
-
-        asyncio.run(async_test_logged_files_with_transfer())
 
     def test_logged_files_wo_transfer(self):
-        async def async_test_logged_files_wo_transfer():
 
-            # logging without transfer
-            file_paths = self.logger.start_logging(
-                variables=self.logging_vars, transfer=False, logging_dir=self.logging_dir)
-            await asyncio.sleep(0.5)
-            self.logger.stop_logging()
+        # logging without transfer
+        file_paths = self.logger.start_logging(
+            variables=self.logging_vars, transfer=False, logging_dir=self.logging_dir)
+        asyncio.run(asyncio.sleep(0.5))
+        self.logger.stop_logging()
 
-            # transfer files from bela
-            local_paths = {}
-            for var in file_paths["remote_paths"]:
-                filename = os.path.basename(file_paths["remote_paths"][var])
-                local_paths[var] = self.logger._generate_local_filename(
-                    os.path.join(self.logging_dir, filename))
-                self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
-                                                local_path=local_paths[var])
+        # transfer files from bela
+        local_paths = {}
+        for var in file_paths["remote_paths"]:
+            filename = os.path.basename(file_paths["remote_paths"][var])
+            local_paths[var] = self.logger._generate_local_filename(
+                os.path.join(self.logging_dir, filename))
+            self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
+                                            local_path=local_paths[var])
 
-            # test logged data
-            self._test_logged_data(self.logger, self.logging_vars, local_paths)
+        # test logged data
+        self._test_logged_data(self.logger, self.logging_vars, local_paths)
 
-            # clean log files
-            for var in self.logging_vars:
-                remove_file(local_paths[var])
-                # self.logger.delete_file_from_bela(
-                #     file_paths["remote_paths"][var])
-            self.logger.delete_all_bin_files_in_project()
+        # clean log files
+        for var in self.logging_vars:
+            remove_file(local_paths[var])
+            # self.logger.delete_file_from_bela(
+            #     file_paths["remote_paths"][var])
+        self.logger.delete_all_bin_files_in_project()
 
-        asyncio.run(async_test_logged_files_wo_transfer())
+
 
     def test_scheduling_logging(self):
-        async def async_test_scheduling_logging():
-            latest_timestamp = self.logger.get_latest_timestamp()
-            sample_rate = self.logger.sample_rate
-            timestamps = [latest_timestamp +
-                          sample_rate] * len(self.logging_vars)  # start logging after ~1s
-            durations = [sample_rate] * len(self.logging_vars)  # log for 1s
+        latest_timestamp = self.logger.get_latest_timestamp()
+        sample_rate = self.logger.sample_rate
+        timestamps = [latest_timestamp +
+                        sample_rate] * len(self.logging_vars)  # start logging after ~1s
+        durations = [sample_rate] * len(self.logging_vars)  # log for 1s
 
-            file_paths = self.logger.schedule_logging(variables=self.logging_vars,
-                                                      timestamps=timestamps,
-                                                      durations=durations,
-                                                      transfer=True,
-                                                      logging_dir=self.logging_dir)
+        file_paths = self.logger.schedule_logging(variables=self.logging_vars,
+                                                    timestamps=timestamps,
+                                                    durations=durations,
+                                                    transfer=True,
+                                                    logging_dir=self.logging_dir)
 
-            self._test_logged_data(self.logger, self.logging_vars,
-                                   file_paths["local_paths"])
+        self._test_logged_data(self.logger, self.logging_vars,
+                                file_paths["local_paths"])
 
-            # clean local log files
-            for var in file_paths["local_paths"]:
-                if os.path.exists(file_paths["local_paths"][var]):
-                    os.remove(file_paths["local_paths"][var])
-            self.logger.delete_all_bin_files_in_project()
+        # clean local log files
+        for var in file_paths["local_paths"]:
+            if os.path.exists(file_paths["local_paths"][var]):
+                os.remove(file_paths["local_paths"][var])
+        self.logger.delete_all_bin_files_in_project()
 
-            # # clean all remote log files in project
-            # for var in file_paths["remote_paths"]:
-            #     self.logger.delete_file_from_bela(
-            #         file_paths["remote_paths"][var])
+        # # clean all remote log files in project
+        # for var in file_paths["remote_paths"]:
+        #     self.logger.delete_file_from_bela(
+        #         file_paths["remote_paths"][var])
 
-        asyncio.run(async_test_scheduling_logging())
 
 
 class test_Monitor(unittest.TestCase):
@@ -276,81 +318,72 @@ class test_Monitor(unittest.TestCase):
         self.monitor.__del__()
 
     def test_peek(self):
-        async def async_test_peek():
-            peeked_values = self.monitor.peek()  # peeks at all variables by default
-            for var in peeked_values:
-                self.assertEqual(peeked_values[var]["timestamp"], peeked_values[var]["value"],
-                                 "The timestamp of the peeked variable should be equal to the value")
-        asyncio.run(async_test_peek())
+        peeked_values = self.monitor.peek()  # peeks at all variables by default
+        for var in peeked_values:
+            self.assertEqual(peeked_values[var]["timestamp"], peeked_values[var]["value"],
+                                "The timestamp of the peeked variable should be equal to the value")
 
     def test_period_monitor(self):
-        async def async_test_period_monitor():
-            self.monitor.start_monitoring(
-                variables=self.monitor_vars[:2],
-                periods=[self.period]*len(self.monitor_vars[:2]))
-            await asyncio.sleep(0.5)
-            monitored_values = self.monitor.stop_monitoring()
+        self.monitor.start_monitoring(
+            variables=self.monitor_vars[:2],
+            periods=[self.period]*len(self.monitor_vars[:2]))
+        asyncio.run(asyncio.sleep(0.5))
+        monitored_values = self.monitor.stop_monitoring()
 
-            for var in self.monitor_vars[:2]:  # assigned at every frame n
-                self.assertTrue(np.all(np.diff(monitored_values[var]["timestamps"]) == self.period),
-                                "The timestamps of the monitored variables should be spaced by the period")
-                if var in ["myvar", "myvar2"]:  # assigned at each frame n
-                    self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == self.period),
-                                    "The values of the monitored variables should be spaced by the period")
+        for var in self.monitor_vars[:2]:  # assigned at every frame n
+            self.assertTrue(np.all(np.diff(monitored_values[var]["timestamps"]) == self.period),
+                            "The timestamps of the monitored variables should be spaced by the period")
+            if var in ["myvar", "myvar2"]:  # assigned at each frame n
+                self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == self.period),
+                                "The values of the monitored variables should be spaced by the period")
 
-        asyncio.run(async_test_period_monitor())
 
     def test_monitor_n_values(self):
+        n_values = 25
+        monitored_buffer = self.monitor.monitor_n_values(
+            variables=self.monitor_vars[:2],
+            periods=[self.period]*len(self.monitor_vars[:2]), n_values=n_values)
 
-        async def async_test_monitor_n_values():
-            n_values = 25
-            monitored_buffer = self.monitor.monitor_n_values(
-                variables=self.monitor_vars[:2],
-                periods=[self.period]*len(self.monitor_vars[:2]), n_values=n_values)
+        for var in self.monitor_vars[:2]:
+            self.assertTrue(np.all(np.diff(self.monitor.values[var]["timestamps"]) == self.period),
+                            "The timestamps of the monitored variables should be spaced by the period")
+            self.assertTrue(np.all(np.diff(self.monitor.values[var]["values"]) == self.period),
+                            "The values of the monitored variables should be spaced by the period")
+            self.assertTrue(all(len(self.monitor.streaming_buffers_data[
+                var]) >= n_values for var in self.monitor_vars[:2]), "The streamed flat buffers for every variable should have at least n_values")
+            self.assertTrue(all(len(monitored_buffer[
+                var]["values"]) == n_values for var in self.monitor_vars[:2]), "The streaming buffers queue should have n_value for every variable")
 
-            for var in self.monitor_vars[:2]:
-                self.assertTrue(np.all(np.diff(self.monitor.values[var]["timestamps"]) == self.period),
-                                "The timestamps of the monitored variables should be spaced by the period")
-                self.assertTrue(np.all(np.diff(self.monitor.values[var]["values"]) == self.period),
-                                "The values of the monitored variables should be spaced by the period")
-                self.assertTrue(all(len(self.monitor.streaming_buffers_data[
-                    var]) >= n_values for var in self.monitor_vars[:2]), "The streamed flat buffers for every variable should have at least n_values")
-                self.assertTrue(all(len(monitored_buffer[
-                    var]["values"]) == n_values for var in self.monitor_vars[:2]), "The streaming buffers queue should have n_value for every variable")
-
-        asyncio.run(async_test_monitor_n_values())
 
     def test_save_monitor(self):
-        async def async_test_save_monitor():
 
-            # delete any existing test files
-            for var in self.monitor_vars:
-                if os.path.exists(f"{var}_{self.saving_filename}"):
-                    os.remove(f"{var}_{self.saving_filename}")
+        # delete any existing test files
+        for var in self.monitor_vars:
+            if os.path.exists(f"{var}_{self.saving_filename}"):
+                os.remove(f"{var}_{self.saving_filename}")
 
-            self.monitor.start_monitoring(
-                variables=self.monitor_vars,
-                periods=[self.period]*len(self.monitor_vars),
-                saving_enabled=True,
-                saving_filename=self.saving_filename,
-                saving_dir=self.saving_dir)
-            await asyncio.sleep(0.5)
-            monitored_buffers = self.monitor.stop_monitoring()
+        self.monitor.start_monitoring(
+            variables=self.monitor_vars,
+            periods=[self.period]*len(self.monitor_vars),
+            saving_enabled=True,
+            saving_filename=self.saving_filename,
+            saving_dir=self.saving_dir)
+        asyncio.run(asyncio.sleep(0.5))
+        monitored_buffers = self.monitor.stop_monitoring()
 
-            for var in self.monitor_vars:
-                loaded_buffers = self.monitor.load_data_from_file(os.path.join(self.saving_dir,
-                                                                               f"{var}_{self.saving_filename}"))
+        for var in self.monitor_vars:
+            loaded_buffers = self.monitor.load_data_from_file(os.path.join(self.saving_dir,
+                                                                            f"{var}_{self.saving_filename}"))
 
-                self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
-                                 "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
-                self.assertEqual(loaded_buffers["values"], monitored_buffers[var]["values"],
-                                 "The values of the loaded buffer should be equal to the values of the monitored buffer")
+            self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
+                                "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
+            self.assertEqual(loaded_buffers["values"], monitored_buffers[var]["values"],
+                                "The values of the loaded buffer should be equal to the values of the monitored buffer")
 
-            for var in self.monitor_vars:
-                remove_file(os.path.join(self.saving_dir,
-                                         f"{var}_{self.saving_filename}"))
+        for var in self.monitor_vars:
+            remove_file(os.path.join(self.saving_dir,
+                                        f"{var}_{self.saving_filename}"))
 
-        asyncio.run(async_test_save_monitor())
 
 
 class test_Controller(unittest.TestCase):
@@ -364,44 +397,38 @@ class test_Controller(unittest.TestCase):
         self.controller.__del__()
 
     def test_start_stop_controlling(self):
+        self.controller.start_controlling(variables=self.controlled_vars)
 
-        async def async_test_start_stop_controlling():
+        self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars), {
+                            var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
 
-            self.controller.start_controlling(variables=self.controlled_vars)
+        self.controller.stop_controlling(variables=self.controlled_vars)
 
-            self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars), {
-                             var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
+        self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars),  {
+                            var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
 
-            self.controller.stop_controlling(variables=self.controlled_vars)
-
-            self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars),  {
-                             var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
-
-        asyncio.run(async_test_start_stop_controlling())
 
     def test_send_value(self):
-        async def async_test_send_value():
-            # TODO add streamer to check values are being sent
-            self.controller.start_controlling(variables=self.controlled_vars)
+        # TODO add streamer to check values are being sent
+        self.controller.start_controlling(variables=self.controlled_vars)
 
-            set_value = 4.6
+        set_value = 4.6
 
-            self.controller.send_value(
-                variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
-            await asyncio.sleep(0.1)  # wait for the values to be set
+        self.controller.send_value(
+            variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
+        asyncio.run(asyncio.sleep(0.1))  # wait for the values to be set
 
-            _controlled_values = self.controller.get_value(
-                variables=self.controlled_vars)  # avoid multiple calls to list
+        _controlled_values = self.controller.get_value(
+            variables=self.controlled_vars)  # avoid multiple calls to list
 
-            integer_types = ["i", "j"]
-            expected_values = [int(set_value) if self.controller.get_prop_of_var(
-                var, "type") in integer_types else set_value for var in self.controlled_vars]
+        integer_types = ["i", "j"]
+        expected_values = [int(set_value) if self.controller.get_prop_of_var(
+            var, "type") in integer_types else set_value for var in self.controlled_vars]
 
-            for idx, var in enumerate(self.controlled_vars):
-                self.assertTrue(
-                    _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
+        for idx, var in enumerate(self.controlled_vars):
+            self.assertTrue(
+                _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
 
-        asyncio.run(async_test_send_value())
 
 
 def remove_file(file_path):
@@ -410,8 +437,8 @@ def remove_file(file_path):
 
 
 if __name__ == '__main__':
-    if 0:
-        unittest.main(verbosity=2)
+    # run all tests
+    # unittest.main(verbosity=2)
 
     # select which tests to run
     n = 1
@@ -419,31 +446,30 @@ if __name__ == '__main__':
 
         print(f"\n\n....Running test {i+1}/{n}")
 
-        if 1:
-            suite = unittest.TestSuite()
-            if 1:
-                suite.addTest(test_Watcher('test_list'))
-                suite.addTest(test_Watcher('test_start_stop'))
-
-            if 1:
-                suite.addTest(test_Streamer('test_stream_n_values'))
-                suite.addTest(test_Streamer('test_start_stop_streaming'))
-                suite.addTest(test_Streamer('test_scheduling_streaming'))
-
-            if 1:
-                suite.addTest(test_Logger('test_logged_files_with_transfer'))
-                suite.addTest(test_Logger('test_logged_files_wo_transfer'))
-                suite.addTest(test_Logger('test_scheduling_logging'))
-
-            if 1:
-                suite.addTest(test_Monitor('test_peek'))
-                suite.addTest(test_Monitor('test_period_monitor'))
-                suite.addTest(test_Monitor('test_monitor_n_values'))
-                suite.addTest(test_Monitor('test_save_monitor'))
-
-            if 1:
-                suite.addTest(test_Controller('test_start_stop_controlling'))
-                suite.addTest(test_Controller('test_send_value'))
-
-            runner = unittest.TextTestRunner(verbosity=2)
-            runner.run(suite)
+        suite = unittest.TestSuite()
+        suite.addTests([
+            # watcher
+            test_Watcher('test_list'),
+            test_Watcher('test_start_stop'),
+            # streamer
+            test_Streamer('test_stream_n_values'),
+            test_Streamer('test_start_stop_streaming'),
+            test_Streamer('test_scheduling_streaming'),
+            test_Streamer('test_on_buffer_callback'),
+            test_Streamer('test_on_block_callback'),
+            # logger
+            test_Logger('test_logged_files_with_transfer'),
+            test_Logger('test_logged_files_wo_transfer'),
+            test_Logger('test_scheduling_logging'),
+            # monitor
+            test_Monitor('test_peek'),
+            test_Monitor('test_period_monitor'),
+            test_Monitor('test_monitor_n_values'),
+            test_Monitor('test_save_monitor'),
+            # controller
+            test_Controller('test_start_stop_controlling'),
+            test_Controller('test_send_value')
+        ])
+        # suite.addTest(test_Streamer('test_on_block_callback'))
+        runner = unittest.TextTestRunner(verbosity=2)
+        runner.run(suite)

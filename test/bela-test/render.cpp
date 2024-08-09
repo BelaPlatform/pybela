@@ -3,21 +3,18 @@ Watcher<double> myvar("myvar");
 Watcher<unsigned int> myvar2("myvar2");
 Watcher<unsigned int> myvar3("myvar3", WatcherManager::kTimestampSample);
 Watcher<double> myvar4("myvar4", WatcherManager::kTimestampSample);
+Watcher<double> myvar5("myvar5");
+
 
 
 #include <Bela.h>
 #include <cmath>
 
-float gFrequency = 440.0;
-float gPhase;
-float gInverseSampleRate;
-
 bool setup(BelaContext *context, void *userData)
 {
 	Bela_getDefaultWatcherManager()->getGui().setup(context->projectName);
 	Bela_getDefaultWatcherManager()->setup(context->audioSampleRate); // set sample rate in watcher
-	gInverseSampleRate = 1.0 / context->audioSampleRate;
-	gPhase = 0.0;
+
 	return true;
 }
 
@@ -45,20 +42,13 @@ void render(BelaContext *context, void *userData)
 
 		myvar = frames;
 		myvar2 = frames; // log a dense variable densely: good
+		myvar5 = frames;
 		
 		if(frames % 12 == 0){ // log a sparse variable sparsely: good
 			myvar3 = frames;
 			myvar4 = frames;
 		}
 
-		float out = 0.8 * sinf(gPhase);
-		gPhase += 2.0 * M_PI * gFrequency * gInverseSampleRate;
-		if(gPhase > 2.0 * M_PI)
-			gPhase -= 2.0 * M_PI;
-
-		for(unsigned int channel = 0; channel < context->audioOutChannels; channel++) {
-			audioWrite(context, n, channel, out);
-		}
 	}
 }
 

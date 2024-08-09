@@ -1,47 +1,35 @@
 # pybela
 
-pybela allows interfacing with [Bela](https://bela.io/), the embedded audio platform, using Python. pybela provides a convenient way to stream, log, monitor sensor data from your Bela device to your laptop. It also allows you to control the value of variables in your Bela code from your laptop.
+pybela enables seamless interfacing with [Bela](https://bela.io/), the embedded audio platform, using python. It offers a convenient way to stream data between Bela and python in both directions. In addition to data streaming, pybela supports data logging, as well as variable monitoring and control functionalities.
 
-Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`. 
+Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`. The docs are available at [https://belaplatform.github.io/pybela/](https://belaplatform.github.io/pybela/).
 
-pybela was developed with a machine learning use case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial).
+pybela was developed with a machine learning use-case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial).
 
-## [Installation and set up](#installation)
-You will need to (1) install the python package in your laptop,  (2) set the Bela branch to `dev` and (3) add the watcher library to your Bela project.
+## Installation and set up
+
+You will need to (1) install the python package in your laptop, (2) set the Bela branch to `dev` and (3) add the watcher library to your Bela project.
 
 ### 1. Installing the python package
 
-#### Option A:
-
-You can install this library using `pip` (replace `pip` with `pipenv` if you are using a pipenv environment):
+You can install this library using `pip`:
 
 ```python
 pip install pybela
 ```
 
-#### Option B:
-
-You can also download the built package from the releases section and run (replace `pip` with `pipenv` if you are using a pipenv environment):
-
-```bash
-pip install pybela-<version>.tar.gz
-```
-
-#### Option C:
-
-You can also install this library using [pipenv](https://pipenv.pypa.io/en/latest/installation/) by cloning this repository and running:
-
-```bash
-git clone  --recurse-submodules https://github.com/BelaPlatform/pybela
-cd pybela
-pipenv install
-```
-
 ### 2. Set the Bela branch to `dev`
 
-In order to use pybela, you will need to use the `dev` branch of the Bela code.
+`pybela` is relies on the `watcher` library, which currently only works with the Bela `dev` branch. To set your Bela to the `dev` branch, you can follow the instructions below.
 
-#### Option A:
+**Note:** if you just flashed the Bela image, the date and time on the Bela board might be wrong, and the Bela libraries might not build correctly after changing the Bela branch. To set the correct date, you can either run (in the host)
+
+```bash
+ssh root@bela.local "date -s \"`date '+%Y%m%d %T %z'`\""
+```
+or just open the IDE in your browser (type `bela.local` in the address bar).
+
+#### Option A: Bela connected to internet
 
 If your Bela is connected to internet, you can ssh into your Bela (`ssh root@bela.local`) and change the branch:
 
@@ -49,10 +37,10 @@ If your Bela is connected to internet, you can ssh into your Bela (`ssh root@bel
 # in Bela
 cd Bela
 git checkout dev
-git pull
+make -f Makefile.libraries cleanall && make coreclean
 ```
 
-#### Option B:
+#### Option B: Bela not connected to internet
 
 If your Bela is not connected to internet, you can change the branch by cloning the Bela repository into your laptop and then pushing the `dev` branch to your Bela.
 To do that, first clone the Bela repository into your laptop:
@@ -78,6 +66,7 @@ Then ssh into your Bela (`ssh root@bela.local`) and change the branch:
 # in Bela
 cd Bela
 git checkout tmp
+make -f Makefile.libraries cleanall && make coreclean
 ```
 
 You can check the commit hash by running `git rev-parse --short HEAD` either on Bela or your laptop.
@@ -96,16 +85,16 @@ scp watcher/Watcher.h watcher/Watcher.cpp root@bela.local:Bela/projects/your-pro
 
 pybela has three different modes of operation:
 
-- **Streaming**: continuously send data from your Bela device to your laptop.
-- **Logging**: log data in your Bela device and then retrieve it from your laptop.
-- **Monitoring**: monitor the value of variables in the Bela code from your laptop.
-- **Controlling**: control the value of variables in the Bela code from your laptop.
+- **Streaming**: continuously send data from Bela to python (**NEW: and from python to Bela!** check the [tutorial](tutorials/notebooks/3_Streamer-python-to-Bela.ipynb)).
+- **Logging**: log data in a file in Bela and then retrieve it in python.
+- **Monitoring**: monitor the value of variables in the Bela code from python.
+- **Controlling**: control the value of variables in the Bela code from python.
 
-You can check the **tutorials** at `tutorials/` for more detailed information and usage of each of the modes. You can also check the `test/test.py` for a quick overview of the library. 
+You can check the **tutorials** at tutorials/`for more detailed information and usage of each of the modes. You can also check`test/test.py` for a quick overview of the library.
 
 ### Running the examples
 
-The quickest way to get started is to start a jupyter notebook server and run the examples. If you haven't done it yet, install the python package as explained in the [installation section](#installation). If you don't have the `jupyter notebook` package installed, you can installed by running (replace `pip` with `pipenv` if you are using a pipenv environment):
+The quickest way to get started is to start a jupyter notebook server and run the examples. If you haven't done it yet, install the python package as explained in the Installation section. If you don't have the `jupyter notebook` package installed, you can install it by running (replace `pip` with `pipenv` if you are using a pipenv environment):
 
 ```bash
 pip install notebook
@@ -204,6 +193,10 @@ pipenv run python -m build --sdist # builds the .tar.gz file
 
 ## To do and known issues
 
+**Long term**
+
+- [ ] **Design**: remove nest_asyncio?
+- [ ] **Add**: example projects
 - [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
 - [ ] **Issue**: The plotting routine does not work for the monitor (it only works for the streamer)
