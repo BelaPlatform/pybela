@@ -1,9 +1,9 @@
 
-pybela enables seamless interfacing with `Bela <https://bela.io/>`__,
-the embedded audio platform, using python. It offers a convenient way to
-stream data between Bela and python in both directions. In addition to
-data streaming, pybela supports data logging, as well as variable
-monitoring and control functionalities.
+pybela allows interfacing with `Bela <https://bela.io/>`__, the embedded
+audio platform, using python. It offers a convenient way to stream data
+between Bela and python, in both directions. In addition to data
+streaming, pybela supports data logging, as well as variable monitoring
+and control functionalities.
 
 Below, you can find instructions to install pybela. You can find code
 examples at ``tutorials/`` and ``test/``. The docs are available at
