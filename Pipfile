@@ -4,19 +4,19 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-jupyter = "*"
-panel = "*"
-jupyter-bokeh = "*"
-bitarray = "*"
-notebook = "*"
-websockets = "*"
-bokeh = "*"
-ipykernel = "*"
-nest-asyncio = "*"
-aiofiles = "*"
+jupyter = "==1.1.1"
+panel = "==1.4.5"
+jupyter-bokeh = "==4.0.5"
+bitarray = "==3.0.0"
+notebook = "==7.2.2"
+websockets = "==12.0"
+bokeh = "==3.4.3"
+ipykernel = "==6.29.5"
+nest-asyncio = "==1.6.0"
+aiofiles = "==24.1.0"
 pybela = {editable = true, path = "."}
-paramiko = "*"
-numpy = "==1.26"
+paramiko = "==3.5.0"
+numpy = "==1.26.0"
 
 [dev-packages]
 twine = "*"

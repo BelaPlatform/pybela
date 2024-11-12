@@ -1,7 +1,8 @@
 .DS_Store
 notes.md
 .ipynb_checkpoints
-dev/
+dev-code/*
+*/test-env/*
 *.err
 .vscode/
 __pycache__/
@@ -10,7 +11,6 @@ build/
 *.bin
 *.fzz
 dist/
-*.sh
 .clang-format
 docs/_build/*
 docs/readme.rst
