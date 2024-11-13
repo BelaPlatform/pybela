@@ -5,18 +5,18 @@ name = "pypi"
 
 [packages]
 jupyter = "==1.1.1"
-panel = "==1.4.5"
-jupyter-bokeh = "==4.0.5"
 bitarray = "==3.0.0"
 notebook = "==7.2.2"
 websockets = "==12.0"
-bokeh = "==3.4.3"
 ipykernel = "==6.29.5"
 nest-asyncio = "==1.6.0"
 aiofiles = "==24.1.0"
 pybela = {editable = true, path = "."}
 paramiko = "==3.5.0"
 numpy = "==1.26.0"
+bokeh = "==2.4.3"
+panel = "==0.14.4"
+jupyter-bokeh = "==3.0.5"
 
 [dev-packages]
 twine = "*"
@@ -24,6 +24,7 @@ pip-chill = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 build = "*"
+pipdeptree = "*"
 
 [scripts]
 test = "python test/test.py"

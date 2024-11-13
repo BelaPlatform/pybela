@@ -14,3 +14,4 @@ dist/
 .clang-format
 docs/_build/*
 docs/readme.rst
+deptree.txt
