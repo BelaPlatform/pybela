@@ -231,8 +231,6 @@ class Streamer(Watcher):
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
         async def async_stop_streaming(variables=[]):
-            # self.stop()
-
             _previous_streaming_mode = copy.copy(self._streaming_mode)
 
             self._streaming_mode = "OFF"
@@ -820,3 +818,9 @@ class Streamer(Watcher):
                 p, int), "Periods must be integers"
 
         return periods
+
+    def __del__(self):
+        super().__del__()
+        self._cancel_tasks(tasks=[
+            self._on_buffer_callback_worker_task,
+            self._on_block_callback_worker_task])

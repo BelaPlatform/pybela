@@ -11,7 +11,7 @@ from .utils import _print_error, _print_warning, _print_ok
 class Watcher:
 
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
-        """ Watcher class
+        """ Watcher class - manages websockets and abstracts communication with the Bela watcher
 
             Args:
                 ip (str, optional): Remote address IP. If using internet over USB, the IP won't work, pass "bela.local". Defaults to "192.168.7.2".
@@ -32,15 +32,16 @@ class Watcher:
         self.ws_ctrl = None
         self.ws_data = None
 
-        self._list_response_queue = asyncio.Queue()
+        # tasks
+        self._ctrl_listener_task = None
+        self._data_listener_task = None
+        self._process_received_data_msg_task = None
+        self._send_data_msg_task = None
 
-        # receive data message queue
+        # queues
         self._received_data_msg_queue = asyncio.Queue()
-        self._process_received_data_msg_worker_task = None
-
-        # send data message queue
+        self._list_response_queue = asyncio.Queue()
         self._to_send_data_msg_queue = asyncio.Queue()
-        self._sending_data_msg_worker_task = None
 
         self._watcher_vars = None
 
@@ -119,7 +120,11 @@ class Watcher:
                     await self._pybela_ws_register[self._mode][self.ws_ctrl_add].close()
 
                 # Control and monitor can't be used at the same time
-                if (self._mode == "MONITOR" and self._pybela_ws_register["CONTROL"].get(self.ws_ctrl_add) is not None and self._pybela_ws_register["CONTROL"][self.ws_ctrl_add].open) or (self._mode == "CONTROL" and self._pybela_ws_register["MONITOR"].get(self.ws_ctrl_add) is not None and self._pybela_ws_register["MONITOR"][self.ws_ctrl_add].open):
+                _is_control_mode_running = self._pybela_ws_register["CONTROL"].get(
+                    self.ws_ctrl_add) is not None and self._pybela_ws_register["CONTROL"][self.ws_ctrl_add].open
+                _is_monitor_mode_running = self._pybela_ws_register["MONITOR"].get(
+                    self.ws_ctrl_add) is not None and self._pybela_ws_register["MONITOR"][self.ws_ctrl_add].open
+                if (self._mode == "MONITOR" and _is_control_mode_running) or (self._mode == "CONTROL" and _is_monitor_mode_running):
                     _print_warning(
                         f"pybela doesn't support running control and monitor modes at the same time. You are currently running {'CONTROL' if self._mode=='MONITOR' else 'MONITOR'} at {self.ws_ctrl_add}. You can close it running controller.disconnect()")
                     _print_error("Connection failed")
@@ -129,23 +134,33 @@ class Watcher:
                 self.ws_ctrl = await websockets.connect(self.ws_ctrl_add)
                 self._pybela_ws_register[self._mode][self.ws_ctrl_add] = self.ws_ctrl
 
-                # Check if the response indicates a successful connection
+                # If connection is successful,
+                #  (1) send connection reply to establish the connection
+                # (2) connect to the data websocket
+                # (3) start data processing and sending tasks
+                # (4) start listener tasks
+                # (5) refresh watcher vars in case new project has been loaded in Bela
                 response = json.loads(await self.ws_ctrl.recv())
                 if "event" in response and response["event"] == "connection":
                     self.project_name = response["projectName"]
+
                     # Send connection reply to establish the connection
                     self.send_ctrl_msg({"event": "connection-reply"})
 
                     # Connect to the data websocket
                     self.ws_data = await websockets.connect(self.ws_data_add)
-                    self._process_received_data_msg_worker_task = asyncio.create_task(
+
+                    # start data processing and sending tasks
+                    self._process_received_data_msg_task = asyncio.create_task(
                         self._process_data_msg_worker())
-                    self._sending_data_msg_worker_task = asyncio.create_task(
+                    self._send_data_msg_task = asyncio.create_task(
                         self._send_data_msg_worker())
 
-                    # Start listener loops
-                    self._start_listener(self.ws_ctrl, self.ws_ctrl_add)
-                    self._start_listener(self.ws_data, self.ws_data_add)
+                    # Start listener tasks
+                    self._ctrl_listener_task = asyncio.create_task(self._async_start_listener(
+                        self.ws_ctrl, self.ws_ctrl_add))
+                    self._data_listener_task = asyncio.create_task(self._async_start_listener(
+                        self.ws_data, self.ws_data_add))
 
                     # refresh watcher vars in case new project has been loaded in Bela
                     self._list = self.list()
@@ -162,22 +177,30 @@ class Watcher:
 
         return asyncio.run(_async_connect())
 
-    def stop(self):
-        """Closes websockets
-        """
-        async def _async_stop():
-            if self.ws_ctrl is not None and self.ws_ctrl.open:
-                await self.ws_ctrl.close()
-            if self.ws_data is not None and self.ws_data.open:
-                await self.ws_data.close()
-            if self._process_received_data_msg_worker_task is not None:
-                self._process_received_data_msg_worker_task.cancel()
-            if self._sending_data_msg_worker_task is not None:
-                self._sending_data_msg_worker_task.cancel()
-        return asyncio.run(_async_stop())
-
     def is_connected(self):
         return True if (self.ws_ctrl is not None and self.ws_ctrl.open) and (self.ws_data is not None and self.ws_data.open) else False
+
+    def disconnect(self):
+        """Closes websockets and cancels tasks
+        """
+
+        def _close_ws():
+            """Closes websockets
+            """
+            async def _async_close_ws():
+                websockets = [self.ws_ctrl, self.ws_data]
+                for ws in websockets:
+                    if ws is not None and ws.open:
+                        await ws.close()
+            return asyncio.run(_async_close_ws())
+
+        _close_ws()
+        self._cancel_tasks(
+            tasks=[self._ctrl_listener_task,
+                   self._data_listener_task,
+                   self._process_received_data_msg_task,
+                   self._send_data_msg_task
+                   ])
 
     def list(self):
         """ Asks the watcher for the list of variables and their properties and returns it
@@ -204,31 +227,31 @@ class Watcher:
 
     # start listener
 
-    def _start_listener(self, ws, ws_address):
-        """Start listener for messages. The listener is a while True loop that runs in the background and processes messages received in ws as they are received.
+    async def _async_start_listener(self, ws, ws_address):
+        """Start listener for websocket
 
         Args:
-            ws (websocket): Websocket object
+            ws (websockets.WebSocketClientProtocol): Websocket object
             ws_address (str): Websocket address
         """
-        async def _async_start_listener(ws, ws_address):
-            try:
-                while ws is not None and ws.open:
-                    msg = await ws.recv()
-                    if self._printall_responses:
-                        print(msg)
-                    if ws_address == self.ws_data_add:
-                        self._received_data_msg_queue.put_nowait(msg)
-                    elif ws_address == self.ws_ctrl_add:
-                        self._process_ctrl_msg(msg)
-                    else:
-                        print(msg)
-            except Exception as e:
-                if ws.open:  # otherwise websocket was closed intentionally
-                    _handle_connection_exception(
-                        ws_address, e, "receiving message")
-        asyncio.create_task(
-            _async_start_listener(ws, ws_address))
+        try:
+            while ws is not None and ws.open:
+                msg = await ws.recv()
+                if self._printall_responses:
+                    print(msg)
+                if ws_address == self.ws_data_add:
+                    self._received_data_msg_queue.put_nowait(msg)
+                elif ws_address == self.ws_ctrl_add:
+                    _msg = json.loads(msg)
+                    # response to list cmd
+                    if "watcher" in _msg.keys() and "sampleRate" in _msg["watcher"].keys():
+                        self._list_response_queue.put_nowait(_msg["watcher"])
+                else:
+                    print(msg)
+        except Exception as e:
+            if ws.open:  # otherwise websocket was closed intentionally
+                _handle_connection_exception(
+                    ws_address, e, "receiving message")
 
     # send message
 
@@ -263,7 +286,7 @@ class Watcher:
     # process messages
 
     async def _process_data_msg_worker(self):
-        """Process data message. 
+        """Process data message.
 
         Args:
             msg (str): Bytestring with data
@@ -280,6 +303,8 @@ class Watcher:
         Args:
             msg (str): Bytestring with data
         """
+        _msg = json.loads(msg)
+        print(_msg)
         pass
 
     def _process_ctrl_msg(self, msg):
@@ -441,7 +466,7 @@ class Watcher:
             var_type (str): Variable type
 
         Returns:
-            int: byte size of the variable type 
+            int: byte size of the variable type
         """
         data_byte_size_map = {
             "f": 4,
@@ -460,7 +485,7 @@ class Watcher:
             timestamp_mode (str): Timestamp mode
 
         Returns:
-            int: Data length in the buffer (number of elements) 
+            int: Data length in the buffer (number of elements)
         """
         dense_map = {
             "f": 1024,
@@ -508,10 +533,16 @@ class Watcher:
             # return error message
             return 0
 
-    # destructor
+    def _cancel_tasks(self, tasks):
+        """Cancels tasks
+        """
+        for task in tasks:
+            if task is not None:
+                task.cancel()
 
+    # destructor
     def __del__(self):
-        self.stop()  # stop websockets
+        self.disconnect()  # stop websockets
 
 
 def _handle_connection_exception(ws_address, exception, action):

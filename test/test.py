@@ -8,6 +8,7 @@ os.environ["PYTHONASYNCIODEBUG"] = "1"
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
+
 class test_Watcher(unittest.TestCase):
 
     def setUp(self):
@@ -22,7 +23,7 @@ class test_Watcher(unittest.TestCase):
                          "Length of list should be equal to number of watcher variables")
 
     def test_start_stop(self):
-        self.watcher.stop()
+        self.watcher.disconnect()
         self.assertTrue(self.watcher.ws_ctrl.close,
                         "Watcher ctrl websocket should be closed after stop")
         self.assertTrue(self.watcher.ws_data.close,
@@ -121,16 +122,16 @@ class test_Streamer(unittest.TestCase):
         latest_timestamp = self.streamer.get_latest_timestamp()
         sample_rate = self.streamer.sample_rate
         timestamps = [latest_timestamp +
-                        sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
+                      sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
         durations = [sample_rate] * \
             len(self.streaming_vars)  # stream for 1s
 
         self.streamer.schedule_streaming(variables=self.streaming_vars,
-                                            timestamps=timestamps,
-                                            durations=durations,
-                                            saving_enabled=True,
-                                            saving_dir=self.saving_dir,
-                                            saving_filename=self.saving_filename)
+                                         timestamps=timestamps,
+                                         durations=durations,
+                                         saving_enabled=True,
+                                         saving_dir=self.saving_dir,
+                                         saving_filename=self.saving_filename)
 
         self.__test_buffers(mode="schedule")
 
@@ -177,9 +178,10 @@ class test_Streamer(unittest.TestCase):
         asyncio.run(asyncio.sleep(0.5))
 
         self.streamer.stop_streaming(variables)
-        
-        self.assertGreater(len(timestamps["myvar"]), 0, "The on_block_callback should have been called at least once")
-        
+
+        self.assertGreater(len(
+            timestamps["myvar"]), 0, "The on_block_callback should have been called at least once")
+
         for var in variables:
             for i in range(1, len(timestamps[var])):
                 self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,
@@ -237,14 +239,13 @@ class test_Logger(unittest.TestCase):
 
         # test logged data
         self._test_logged_data(self.logger, self.logging_vars,
-                                file_paths["local_paths"])
+                               file_paths["local_paths"])
 
         # clean local log files
         for var in file_paths["local_paths"]:
             remove_file(file_paths["local_paths"][var])
         # clean all remote log files in project
         self.logger.delete_all_bin_files_in_project()
-
 
     def test_logged_files_wo_transfer(self):
 
@@ -273,23 +274,21 @@ class test_Logger(unittest.TestCase):
             #     file_paths["remote_paths"][var])
         self.logger.delete_all_bin_files_in_project()
 
-
-
     def test_scheduling_logging(self):
         latest_timestamp = self.logger.get_latest_timestamp()
         sample_rate = self.logger.sample_rate
         timestamps = [latest_timestamp +
-                        sample_rate] * len(self.logging_vars)  # start logging after ~1s
+                      sample_rate] * len(self.logging_vars)  # start logging after ~1s
         durations = [sample_rate] * len(self.logging_vars)  # log for 1s
 
         file_paths = self.logger.schedule_logging(variables=self.logging_vars,
-                                                    timestamps=timestamps,
-                                                    durations=durations,
-                                                    transfer=True,
-                                                    logging_dir=self.logging_dir)
+                                                  timestamps=timestamps,
+                                                  durations=durations,
+                                                  transfer=True,
+                                                  logging_dir=self.logging_dir)
 
         self._test_logged_data(self.logger, self.logging_vars,
-                                file_paths["local_paths"])
+                               file_paths["local_paths"])
 
         # clean local log files
         for var in file_paths["local_paths"]:
@@ -301,7 +300,6 @@ class test_Logger(unittest.TestCase):
         # for var in file_paths["remote_paths"]:
         #     self.logger.delete_file_from_bela(
         #         file_paths["remote_paths"][var])
-
 
 
 class test_Monitor(unittest.TestCase):
@@ -321,7 +319,7 @@ class test_Monitor(unittest.TestCase):
         peeked_values = self.monitor.peek()  # peeks at all variables by default
         for var in peeked_values:
             self.assertEqual(peeked_values[var]["timestamp"], peeked_values[var]["value"],
-                                "The timestamp of the peeked variable should be equal to the value")
+                             "The timestamp of the peeked variable should be equal to the value")
 
     def test_period_monitor(self):
         self.monitor.start_monitoring(
@@ -336,7 +334,6 @@ class test_Monitor(unittest.TestCase):
             if var in ["myvar", "myvar2"]:  # assigned at each frame n
                 self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == self.period),
                                 "The values of the monitored variables should be spaced by the period")
-
 
     def test_monitor_n_values(self):
         n_values = 25
@@ -353,7 +350,6 @@ class test_Monitor(unittest.TestCase):
                 var]) >= n_values for var in self.monitor_vars[:2]), "The streamed flat buffers for every variable should have at least n_values")
             self.assertTrue(all(len(monitored_buffer[
                 var]["values"]) == n_values for var in self.monitor_vars[:2]), "The streaming buffers queue should have n_value for every variable")
-
 
     def test_save_monitor(self):
 
@@ -373,17 +369,16 @@ class test_Monitor(unittest.TestCase):
 
         for var in self.monitor_vars:
             loaded_buffers = self.monitor.load_data_from_file(os.path.join(self.saving_dir,
-                                                                            f"{var}_{self.saving_filename}"))
+                                                                           f"{var}_{self.saving_filename}"))
 
             self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
-                                "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
+                             "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
             self.assertEqual(loaded_buffers["values"], monitored_buffers[var]["values"],
-                                "The values of the loaded buffer should be equal to the values of the monitored buffer")
+                             "The values of the loaded buffer should be equal to the values of the monitored buffer")
 
         for var in self.monitor_vars:
             remove_file(os.path.join(self.saving_dir,
-                                        f"{var}_{self.saving_filename}"))
-
+                                     f"{var}_{self.saving_filename}"))
 
 
 class test_Controller(unittest.TestCase):
@@ -400,13 +395,12 @@ class test_Controller(unittest.TestCase):
         self.controller.start_controlling(variables=self.controlled_vars)
 
         self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars), {
-                            var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
+            var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
 
         self.controller.stop_controlling(variables=self.controlled_vars)
 
         self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars),  {
-                            var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
-
+            var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
 
     def test_send_value(self):
         # TODO add streamer to check values are being sent
@@ -428,7 +422,6 @@ class test_Controller(unittest.TestCase):
         for idx, var in enumerate(self.controlled_vars):
             self.assertTrue(
                 _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
-
 
 
 def remove_file(file_path):
@@ -466,7 +459,7 @@ if __name__ == '__main__':
             test_Monitor('test_period_monitor'),
             test_Monitor('test_monitor_n_values'),
             test_Monitor('test_save_monitor'),
-            # controller
+            #  controller
             test_Controller('test_start_stop_controlling'),
             test_Controller('test_send_value')
         ])

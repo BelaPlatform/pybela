@@ -202,8 +202,6 @@ class Logger(Watcher):
 
             self.sftp_client.close()
 
-            # self.stop()
-
         return asyncio.run(async_stop_logging(variables))
 
     def connect_ssh(self):
@@ -579,5 +577,5 @@ class Logger(Watcher):
         return tasks
 
     def __del__(self):
+        super().__del__()
         self.disconnect_ssh()  # disconnect ssh
-        self.stop()  # stop websockets
