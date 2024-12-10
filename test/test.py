@@ -1,10 +1,9 @@
 import unittest
-import asyncio
 import os
 import numpy as np
 from pybela import Watcher, Streamer, Logger, Monitor, Controller
 
-os.environ["PYTHONASYNCIODEBUG"] = "1"
+# os.environ["PYTHONASYNCIODEBUG"] = "1"
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
@@ -16,7 +15,8 @@ class test_Watcher(unittest.TestCase):
         self.watcher.connect()
 
     def tearDown(self):
-        self.watcher.__del__()
+        self.watcher.cleanup()
+        # pass
 
     def test_list(self):
         self.assertEqual(len(self.watcher.list()["watchers"]), len(self.watcher.watcher_vars),
@@ -46,7 +46,7 @@ class test_Streamer(unittest.TestCase):
         self.saving_filename = "test_streamer_save.txt"
 
     def tearDown(self):
-        self.streamer.__del__()
+        self.streamer.cleanup()
 
     def test_stream_n_values(self):
         n_values = 40
@@ -109,7 +109,8 @@ class test_Streamer(unittest.TestCase):
         # check streaming mode is FOREVER after start_streaming is called
         self.assertEqual(self.streamer._streaming_mode, "FOREVER",
                          "Streaming mode should be FOREVER after start_streaming")
-        asyncio.run(asyncio.sleep(0.5))  # wait for some data to be streamed
+        # wait for some data to be streamed
+        self.streamer.wait(0.5)
         self.streamer.stop_streaming(variables=self.streaming_vars)
         # check streaming mode is OFF after stop_streaming
 
@@ -151,7 +152,7 @@ class test_Streamer(unittest.TestCase):
         self.streamer.start_streaming(
             variables, saving_enabled=False, on_buffer_callback=callback)
 
-        asyncio.run(asyncio.sleep(0.1))
+        self.streamer.wait(0.5)
 
         self.streamer.stop_streaming(variables)
 
@@ -175,7 +176,7 @@ class test_Streamer(unittest.TestCase):
         self.streamer.start_streaming(
             variables, saving_enabled=False, on_block_callback=callback)
 
-        asyncio.run(asyncio.sleep(0.5))
+        self.streamer.wait(0.5)
 
         self.streamer.stop_streaming(variables)
 
@@ -203,7 +204,7 @@ class test_Logger(unittest.TestCase):
         self.logging_dir = "./test"
 
     def tearDown(self):
-        self.logger.__del__()
+        self.logger.cleanup()
 
     def _test_logged_data(self, logger, logging_vars, local_paths):
         # common routine to test the data in the logged files
@@ -234,7 +235,7 @@ class test_Logger(unittest.TestCase):
         # log with transfer
         file_paths = self.logger.start_logging(
             variables=self.logging_vars, transfer=True, logging_dir=self.logging_dir)
-        asyncio.run(asyncio.sleep(0.5))
+        self.logger.wait(0.5)
         self.logger.stop_logging()
 
         # test logged data
@@ -252,7 +253,7 @@ class test_Logger(unittest.TestCase):
         # logging without transfer
         file_paths = self.logger.start_logging(
             variables=self.logging_vars, transfer=False, logging_dir=self.logging_dir)
-        asyncio.run(asyncio.sleep(0.5))
+        self.logger.wait(0.5)
         self.logger.stop_logging()
 
         # transfer files from bela
@@ -313,7 +314,7 @@ class test_Monitor(unittest.TestCase):
         self.monitor.connect()
 
     def tearDown(self):
-        self.monitor.__del__()
+        self.monitor.cleanup()
 
     def test_peek(self):
         peeked_values = self.monitor.peek()  # peeks at all variables by default
@@ -325,7 +326,7 @@ class test_Monitor(unittest.TestCase):
         self.monitor.start_monitoring(
             variables=self.monitor_vars[:2],
             periods=[self.period]*len(self.monitor_vars[:2]))
-        asyncio.run(asyncio.sleep(0.5))
+        self.monitor.wait(0.5)
         monitored_values = self.monitor.stop_monitoring()
 
         for var in self.monitor_vars[:2]:  # assigned at every frame n
@@ -364,7 +365,7 @@ class test_Monitor(unittest.TestCase):
             saving_enabled=True,
             saving_filename=self.saving_filename,
             saving_dir=self.saving_dir)
-        asyncio.run(asyncio.sleep(0.5))
+        self.monitor.wait(0.5)
         monitored_buffers = self.monitor.stop_monitoring()
 
         for var in self.monitor_vars:
@@ -389,7 +390,7 @@ class test_Controller(unittest.TestCase):
         self.controller.connect()
 
     def tearDown(self):
-        self.controller.__del__()
+        self.controller.cleanup()
 
     def test_start_stop_controlling(self):
         self.controller.start_controlling(variables=self.controlled_vars)
@@ -410,7 +411,7 @@ class test_Controller(unittest.TestCase):
 
         self.controller.send_value(
             variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
-        asyncio.run(asyncio.sleep(0.1))  # wait for the values to be set
+        self.controller.wait(0.1)  # wait for the values to be set
 
         _controlled_values = self.controller.get_value(
             variables=self.controlled_vars)  # avoid multiple calls to list

@@ -33,12 +33,13 @@ class Controller(Watcher):
 
         async def async_wait_for_control_mode_to_be_set(variables=variables):
             # wait for variables to be set as 'controlled' in list
-            _controlled_status = self.get_controlled_status(
+            _controlled_status = await self._async_get_controlled_status(
                 variables)  # avoid multiple calls to list
             while not all([_controlled_status[var] for var in variables]):
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.2)
 
-        asyncio.run(async_wait_for_control_mode_to_be_set(variables=variables))
+        self.loop.run_until_complete(
+            async_wait_for_control_mode_to_be_set(variables=variables))
 
         _print_info(
             f"Started controlling variables {variables}... Run stop_controlling() to stop controlling the variable values.")
@@ -58,12 +59,13 @@ class Controller(Watcher):
 
         async def async_wait_for_control_mode_to_be_set(variables=variables):
             # wait for variables to be set as 'uncontrolled' in list
-            _controlled_status = self.get_controlled_status(
+            _controlled_status = await self._async_get_controlled_status(
                 variables)  # avoid multiple calls to list
             while all([_controlled_status[var] for var in variables]):
                 await asyncio.sleep(0.5)
 
-        asyncio.run(async_wait_for_control_mode_to_be_set(variables=variables))
+        self.loop.run_until_complete(
+            async_wait_for_control_mode_to_be_set(variables=variables))
 
         _print_info(f"Stopped controlling variables {variables}.")
 
@@ -95,6 +97,12 @@ class Controller(Watcher):
 
         self.send_ctrl_msg(
             {"watcher": [{"cmd": "set", "watchers": variables, "values": values}]})
+
+    async def _async_get_controlled_status(self, variables=[]):
+        """Async version of get_controller_status"""
+        variables = self._var_arg_checker(variables)
+        _list = await self._async_list()
+        return {var['name']: var['controlled'] for var in _list['watchers'] if var['name'] in variables}
 
     def get_controlled_status(self, variables=[]):
         """Gets the controlled status (controlled or uncontrolled) of the variables

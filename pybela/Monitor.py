@@ -1,5 +1,4 @@
 from .Streamer import Streamer
-import asyncio
 
 
 class Monitor(Streamer):
@@ -57,11 +56,11 @@ class Monitor(Streamer):
             peeked_values = self._peek_response
             # set _peek_response again to None so that peek is not notified every time a new buffer is received (see Streamer._process_data_msg)
             self._peek_response = None
-            self.stop_monitoring(variables)
+            await self._async_stop_monitoring(variables)
 
             return peeked_values
 
-        return asyncio.run(_async_peek(variables))
+        return self.loop.run_until_complete(_async_peek(variables))
 
         # using list
         # res = self.list()
@@ -138,6 +137,11 @@ class Monitor(Streamer):
 
         self.async_stream_n_values(variables, periods, n_values,
                                    saving_enabled, saving_filename)
+
+    async def _async_stop_monitoring(self, variables=[]):
+        await self._async_stop_streaming(variables)
+        self._monitored_vars = None
+        return {var: self.values[var] for var in self.values if self.values[var]["timestamps"] != []}
 
     def stop_monitoring(self, variables=[]):
         """
