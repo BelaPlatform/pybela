@@ -1,11 +1,9 @@
 import asyncio
-import nest_asyncio
 import websockets
 import json
 import errno
 import struct
 import os
-import gc
 from .utils import _print_error, _print_warning, _print_ok
 
 
@@ -32,11 +30,14 @@ class Watcher:
         self.ws_data_add = f"ws://{self.ip}:{self.port}/{self.data_add}"
         self.ws_ctrl = None
         self.ws_data = None
+        self._watcher_vars = None
+        self._mode = "WATCH"
+
         global _pybela_ws_register
         try:
             _ = _pybela_ws_register
         except NameError:  # initialise _pybela_ws_register only once in runtime
-            _pybela_ws_register = {"loop": None,
+            _pybela_ws_register = {"event-loop": None,
                                    "WATCH": {},
                                    "STREAM":  {},
                                    "LOG":  {},
@@ -46,23 +47,13 @@ class Watcher:
         self._pybela_ws_register = _pybela_ws_register
 
         # background event loop
-
         # If no loop exists, create a new one
-        if self._pybela_ws_register["loop"] is None:
+        if self._pybela_ws_register["event-loop"] is None:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-            self._pybela_ws_register["loop"] = self.loop
-        else:
-            self.loop = self._pybela_ws_register["loop"]
-            # self.loop.run_forever()
-        # self.loop = asyncio.new_event_loop()
-        # asyncio.set_event_loop(self.loop)
-        # self.loop.run_forever()
-
-        # self.loop_thread = threading.Thread(
-        #     target=self._run_event_loop, daemon=True)
-        # self.loop_thread.start()
-        # self.loop = asyncio.get_event_loop()
+            self._pybela_ws_register["event-loop"] = self.loop
+        else:  # if loop exists, use the existing one
+            self.loop = self._pybela_ws_register["event-loop"]
 
         # tasks
         self._ctrl_listener_task = None
@@ -77,18 +68,8 @@ class Watcher:
         self._to_send_data_msg_queue = asyncio.Queue(loop=self.loop)
         self._to_send_ctrl_msg_queue = asyncio.Queue(loop=self.loop)
 
-        self._watcher_vars = None
-
-        self._mode = "WATCH"
-
         # debug
         self._printall_responses = False
-
-        # event loop needs to be nested - otherwise it conflicts with jupyter's event loop
-        # nest_asyncio.apply()
-    def _run_event_loop(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_forever()
 
     # properties
 
@@ -98,7 +79,7 @@ class Watcher:
 
     @property
     def watcher_vars(self):
-        """Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length)
+        """Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length). Can't be used in async functions, use _async_watcher_vars instead.
 
         Returns:
             list of dicts: List of variables in watcher and their properties
@@ -110,6 +91,11 @@ class Watcher:
         return self._watcher_vars   # updates every time start is called
 
     async def _async_watcher_vars(self):
+        """Asynchronous version of watcher_vars
+
+        Returns:
+            list of dicts: List of variables in watcher and their properties
+        """
         if self._watcher_vars == None:
             _list = await self._async_list()
             self._watcher_vars = self._filtered_watcher_vars(
@@ -118,7 +104,7 @@ class Watcher:
 
     @property
     def watched_vars(self):
-        """Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring)
+        """Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring). Can't be used in async functions, use _async_watched_vars instead.
 
         Returns:
             list of str: List of watched variables
@@ -127,12 +113,17 @@ class Watcher:
         return self._filtered_watcher_vars(_list["watchers"], lambda var: var["watched"])
 
     async def _async_watched_vars(self):
+        """Async version of watched_vars
+
+        Returns:
+            list of str: List of watched variables
+        """
         _list = await self._async_list()
         return self._filtered_watcher_vars(_list["watchers"], lambda var: var["watched"])
 
     @property
     def unwatched_vars(self):
-        """Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring)
+        """Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring). Can't be used in async functions, use _async_unwatched_vars instead.
 
         Returns:
             list of str: List of unwatched variables
@@ -141,10 +132,15 @@ class Watcher:
         return self._filtered_watcher_vars(_list["watchers"], lambda var: not var["watched"])
 
     async def _async_unwatched_vars(self):
+        """Async version of unwatched_vars
+
+        Returns:
+            list of str: List of unwatched variables
+        """
         _list = await self._async_list()
         return self._filtered_watcher_vars(_list["watchers"], lambda var: not var["watched"])
 
-    # --- public methods --- #
+    # --- connection methods --- #
 
     def connect(self):
         """Attempts to establish a WebSocket connection and prints a message indicating success or failure.
@@ -198,15 +194,15 @@ class Watcher:
                     # Connect to the data websocket
                     self.ws_data = await websockets.connect(self.ws_data_add)
 
-                    # start data processing and sending tasks
-                    self._process_received_data_msg_task = self.loop.create_task(
-                        self._process_data_msg_worker())
-                    self._send_data_msg_task = self.loop.create_task(
-                        self._send_data_msg_worker())
+                    # start data sending and processing tasks
                     self._send_ctrl_msg_task = self.loop.create_task(
                         self._send_ctrl_msg_worker())
+                    self._send_data_msg_task = self.loop.create_task(
+                        self._send_data_msg_worker())
+                    self._process_received_data_msg_task = self.loop.create_task(
+                        self._process_data_msg_worker())
 
-                    # Start listener tasks
+                    # start listener tasks
                     self._ctrl_listener_task = self.loop.create_task(self._async_start_listener(
                         self.ws_ctrl, self.ws_ctrl_add))
                     self._data_listener_task = self.loop.create_task(self._async_start_listener(
@@ -228,36 +224,104 @@ class Watcher:
         return self.loop.run_until_complete(_async_connect())
 
     def is_connected(self):
+        """Check if the websocket is connected
+        Returns:
+            bool: True if connected, False otherwise
+        """
+
         return True if (self.ws_ctrl is not None and self.ws_ctrl.state == 1) and (self.ws_data is not None and self.ws_data.state == 1) else False
 
     async def _async_disconnect(self):
+        """Disconnects the websockets. Closes the websockets and cancels the keepalive task."""
         # close websockets
-        wss = [self.ws_ctrl, self.ws_data]
-        for ws in wss:
+        for ws in [self.ws_ctrl, self.ws_data]:
             if ws is not None and ws.state == 1:
                 await ws.close()
                 ws.keepalive_task.cancel()  # cancel keepalive task
 
     def disconnect(self):
-        """Closes websockets
+        """Closes websockets. Sync wrapper for _async_disconnect.
         """
         self.loop.run_until_complete(self._async_disconnect())
 
-        pass
-
-    async def _async_list(self):
-        await self._async_send_ctrl_msg({"watcher": [{"cmd": "list"}]})
-        # Wait for the list response to be available
-        list_res = await self._list_response_queue.get()
-        self._list_response_queue.task_done()
-        return list_res
-
-    def list(self):
-        """ Asks the watcher for the list of variables and their properties and returns it
+    async def _async_cancel_tasks(self, tasks):
+        """Cancels tasks
         """
-        return self.loop.run_until_complete(self._async_list())
+        cancel_tasks = []
+        for task in tasks:
+            if task is not None and not task.done():
+                task.cancel()
+                cancel_tasks.append(task)
+        await asyncio.gather(*cancel_tasks, return_exceptions=True)
+
+    async def _async_cleanup(self):
+        """Cleans up tasks
+        """
+        tasks = [self._ctrl_listener_task,
+                 self._data_listener_task,
+                 self._process_received_data_msg_task,
+                 self._send_data_msg_task,
+                 self._send_ctrl_msg_task
+                 ]
+        await self._async_cancel_tasks(tasks)
+        await self._async_disconnect()
+
+    def cleanup(self):
+        """Cleans up tasks. Synchronous wrapper for _async_cleanup
+        """
+        self.loop.run_until_complete(self._async_cleanup())
+
+    # --- message sending methods --- #
+
+    async def _send_data_msg_worker(self):
+        """ Send data message to websocket. Runs as long as websocket is open.
+        """
+        while self.ws_data is not None and self.ws_data.state == 1:
+            msg = await self._to_send_data_msg_queue.get()
+            await self.ws_data.send(msg)
+            self._to_send_data_msg_queue.task_done()
+
+    async def _send_ctrl_msg_worker(self):
+        """ Send control message to websocket. Runs as long as websocket is open.
+        """
+        while self.ws_ctrl is not None and self.ws_ctrl.state == 1:
+            msg = await self._to_send_ctrl_msg_queue.get()
+            msg = json.dumps(msg)
+            await self.ws_ctrl.send(msg)
+            self._to_send_ctrl_msg_queue.task_done()
+
+    async def _async_send_msg(self, ws_address, msg):
+        """Send message to websocket
+
+        Args:
+            ws_address (str): Websocket address
+            msg (str): Message to send
+        """
+        try:
+            if ws_address == self.ws_data_add and self.ws_data is not None and self.ws_data.state == 1:
+                self._to_send_data_msg_queue.put_nowait(msg)
+            elif ws_address == self.ws_ctrl_add and self.ws_ctrl is not None and self.ws_ctrl.state == 1:
+                # msg = json.dumps(msg)
+                self._to_send_ctrl_msg_queue.put_nowait(msg)
+        except Exception as e:
+            _handle_connection_exception(ws_address, e, "sending message")
+            return 0
+
+    def _send_msg(self, ws_address, msg):
+        """Send message to websocket. Sync wrapper for _async_send_msg. Can be used in synchronous functions.
+
+        Args:
+            ws_address (str): Websocket address
+            msg (str): Message to send
+        """
+        return self.loop.create_task(self._async_send_msg(ws_address, msg))
 
     async def _async_send_ctrl_msg(self, msg):
+        """Send control message. Async version of send_ctrl_msg.
+
+        Args:
+            msg (str): Message to send to the Bela watcher. Example: {"watcher": [{"cmd": "list"}]}
+        """
         await self._async_send_msg(self.ws_ctrl_add, msg)
 
     def send_ctrl_msg(self, msg):
@@ -268,9 +332,26 @@ class Watcher:
         """
         self._send_msg(self.ws_ctrl_add, msg)
 
-    # --- private methods --- #
+    ##  -- list -- ##
 
-    # start listener
+    async def _async_list(self):
+        """ Asks the watcher for the list of variables and their properties and returns it.
+
+        Returns:
+            dict: Dictionary with the list of variables and their properties
+        """
+        self.send_ctrl_msg({"watcher": [{"cmd": "list"}]})
+        # Wait for the list response to be available
+        list_res = await self._list_response_queue.get()
+        self._list_response_queue.task_done()
+        return list_res
+
+    def list(self):
+        """ Sync wrapper for _async_list
+        """
+        return self.loop.run_until_complete(self._async_list())
+
+    # -- listener methods -- #
 
     async def _async_start_listener(self, ws, ws_address):
         """Start listener for websocket
@@ -290,56 +371,17 @@ class Watcher:
                     _msg = json.loads(msg)
                     # response to list cmd
                     if "watcher" in _msg.keys() and "sampleRate" in _msg["watcher"].keys():
-                        self._list_response_queue.put_nowait(_msg["watcher"])
+                        self._list_response_queue.put_nowait(
+                            _msg["watcher"])
                 else:
                     print(msg)
 
-        except Exception or asyncio.exceptions.CancelledError as e:
+        except Exception as e:
             if ws.state == 1:  # otherwise websocket was closed intentionally
                 _handle_connection_exception(
                     ws_address, e, "receiving message")
 
-    # send message
-    async def _async_send_msg(self, ws_address, msg):
-        try:
-            if ws_address == self.ws_data_add and self.ws_data is not None and self.ws_data.state == 1:
-                await self._to_send_data_msg_queue.put(msg)
-            elif ws_address == self.ws_ctrl_add and self.ws_ctrl is not None and self.ws_ctrl.state == 1:
-                # msg = json.dumps(msg)
-                await self._to_send_ctrl_msg_queue.put(msg)
-        except Exception as e:
-            _handle_connection_exception(ws_address, e, "sending message")
-            return 0
-
-    def _send_msg(self, ws_address, msg):
-        """Send message to websocket
-
-        Args:
-            ws_address (str): Websocket address
-            msg (str): Message to send
-        """
-        return self.loop.create_task(self._async_send_msg(ws_address, msg))
-
-    # send messages
-
-    async def _send_data_msg_worker(self):
-        """ Send data message to websocket. Runs as long as websocket is open.
-        """
-        while self.ws_data is not None and self.ws_data.state == 1:
-            msg = await self._to_send_data_msg_queue.get()
-            await self.ws_data.send(msg)
-            self._to_send_data_msg_queue.task_done()
-
-    async def _send_ctrl_msg_worker(self):
-        """ Send control message to websocket. Runs as long as websocket is open.
-        """
-        while self.ws_ctrl is not None and self.ws_ctrl.state == 1:
-            msg = await self._to_send_ctrl_msg_queue.get()
-            msg = json.dumps(msg)
-            await self.ws_ctrl.send(msg)
-            self._to_send_ctrl_msg_queue.task_done()
-
-    # process messages
+    # -- data processing methods -- #
 
     async def _process_data_msg_worker(self):
         """Process data message.
@@ -359,8 +401,6 @@ class Watcher:
         Args:
             msg (str): Bytestring with data
         """
-        _msg = json.loads(msg)
-        print(_msg)
         pass
 
     def _process_ctrl_msg(self, msg):
@@ -397,11 +437,17 @@ class Watcher:
             # sparse mode
             if timestamp_mode == "sparse":
                 # ensure that the buffer is the correct size (remove padding)
+
                 binary_data = binary_data[:struct.calcsize("Q") + data_length*struct.calcsize(
                     _type)+data_length*struct.calcsize("I")]
 
-                ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
-                                                        + 'I'*data_length, binary_data)
+                try:
+                    ref_timestamp, *_buffer = struct.unpack('Q' + f"{_type}" * data_length
+                                                            + 'I'*data_length, binary_data)
+                except struct.error as e:
+                    _print_error(
+                        f"Error parsing buffer: {e}. Received buffer of length: {len(binary_data)}")
+                    return None
                 data = _buffer[:data_length]
                 # remove padding
                 rel_timestamps = _buffer[data_length:][:data_length]
@@ -434,13 +480,16 @@ class Watcher:
     # --- utils --- #
 
     def wait(self, time_in_seconds):
+        """Wait for a given amount of time. Can't be used in async functions."""
         self.loop.run_until_complete(asyncio.sleep(time_in_seconds))
 
     async def _async_get_latest_timestamp(self):
+        """Get latest timestamp. Async version of get_latest_timestamp."""
         _list = await self._async_list()
         return _list["timestamp"]
 
     def get_latest_timestamp(self):
+        """Get latest timestamp. Can't be used in async functions"""
         return self.list()["timestamp"]
 
     async def _async_remove_item_from_list(self, _list, task):
@@ -495,7 +544,11 @@ class Watcher:
         return variables
 
     def _generate_local_filename(self, local_path):
-        # if file already exists, throw a warning and add number at the end of the filename
+        """Generate local filename. If the file already exists, add a number at the end of the filename.
+
+        Args:
+            local_path (str): Path to the file
+        """
         new_local_path = local_path  # default
         if os.path.exists(local_path):
             base, ext = os.path.splitext(local_path)
@@ -596,44 +649,10 @@ class Watcher:
             # return error message
             return 0
 
-    async def _async_cancel_tasks(self, tasks):
-        """Cancels tasks
-        """
-        cancel_tasks = []
-        for task in tasks:
-            if task is not None and not task.done():
-                task.cancel()
-                cancel_tasks.append(task)
-        await asyncio.gather(*cancel_tasks, return_exceptions=True)
-
-    async def _async_cleanup(self):
-        """Cleans up tasks
-        """
-        tasks = [self._ctrl_listener_task,
-                 self._data_listener_task,
-                 self._process_received_data_msg_task,
-                 self._send_data_msg_task,
-                 self._send_ctrl_msg_task
-                 ]
-        await self._async_cancel_tasks(tasks)
-        await self._async_disconnect()
-
-    def cleanup(self):
-        """Cleans up tasks. Synchronous wrapper for _async_cleanup
-        """
-        self.loop.run_until_complete(self._async_cleanup())
-
     # destructor
 
     def __del__(self):
-        pass
-        # self.disconnect()  # stop websockets and cancel tasks
-        # stop event loop
-        # self.wait(0.5)
-        # if self.loop.is_running():
-        #     self.loop.stop()
-        # self.loop.close()
-        # self.loop_thread.join()
+        pass  # __del__ can't run asynchronous code, so cleanup() should be called manually
 
 
 def _handle_connection_exception(ws_address, exception, action):

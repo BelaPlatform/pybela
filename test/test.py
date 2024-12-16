@@ -42,7 +42,6 @@ class test_Streamer(unittest.TestCase):
             "myvar4"  # sparse double
         ]
         self.saving_dir = "./test"
-
         self.saving_filename = "test_streamer_save.txt"
 
     def tearDown(self):
@@ -90,7 +89,7 @@ class test_Streamer(unittest.TestCase):
                                      "The ref_timestamp and the first item of data buffer should be the same")
                     self.assertEqual(_buffer["ref_timestamp"]+var["data_length"]-1, _buffer["data"][-1],
                                      "The last data item should be equal to the ref_timestamp plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
-
+        # delete files
         for var in self.streaming_vars:
             remove_file(os.path.join(self.saving_dir,
                         f"{var}_{self.saving_filename}"))
@@ -260,10 +259,8 @@ class test_Logger(unittest.TestCase):
         local_paths = {}
         for var in file_paths["remote_paths"]:
             filename = os.path.basename(file_paths["remote_paths"][var])
-            local_paths[var] = self.logger._generate_local_filename(
-                os.path.join(self.logging_dir, filename))
-            self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
-                                            local_path=local_paths[var])
+            local_paths[var] = self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
+                                                               local_path=filename)
 
         # test logged data
         self._test_logged_data(self.logger, self.logging_vars, local_paths)
@@ -435,7 +432,7 @@ if __name__ == '__main__':
     # unittest.main(verbosity=2)
 
     # select which tests to run
-    n = 1
+    n = 2
     for i in range(n):
 
         print(f"\n\n....Running test {i+1}/{n}")
