@@ -51,6 +51,7 @@ class Watcher:
         try:
             get_ipython().__class__.__name__
             nest_asyncio.apply()
+            print("Running in Jupyter notebook. Enabling nest_asyncio.")
         except NameError:
             pass
 
@@ -71,10 +72,10 @@ class Watcher:
         self._send_ctrl_msg_task = None
 
         # queues
-        self._received_data_msg_queue = asyncio.Queue(loop=self.loop)
-        self._list_response_queue = asyncio.Queue(loop=self.loop)
-        self._to_send_data_msg_queue = asyncio.Queue(loop=self.loop)
-        self._to_send_ctrl_msg_queue = asyncio.Queue(loop=self.loop)
+        self._received_data_msg_queue = asyncio.Queue()
+        self._list_response_queue = asyncio.Queue()
+        self._to_send_data_msg_queue = asyncio.Queue()
+        self._to_send_ctrl_msg_queue = asyncio.Queue()
 
         # debug
         self._printall_responses = False

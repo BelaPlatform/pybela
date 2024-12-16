@@ -10,3 +10,4 @@ numpy==1.26.0
 panel==0.14.4
 paramiko==3.5.0
 websockets==14.1
+pandas==2.2.3

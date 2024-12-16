@@ -36,14 +36,14 @@ class Streamer(Watcher):
 
         # -- streaming --
         self._streaming_mode = "OFF"  # OFF, FOREVER, N_VALUES, PEEK :: this flag prevents writing into the streaming buffer unless requested by the user using the start/stop_streaming() functions
-        self._streaming_buffer_available = asyncio.Event(loop=self.loop)
+        self._streaming_buffer_available = asyncio.Event()
         # number of streaming buffers (not of data points!)
         self._streaming_buffers_queue_length = 1000
         self._streaming_buffers_queue = None
         self.last_streamed_buffer = {}
 
         # -- on data/block callbacks --
-        self._processed_data_msg_queue = asyncio.Queue(loop=self.loop)
+        self._processed_data_msg_queue = asyncio.Queue()
         self._on_buffer_callback_is_active = False
         self._on_buffer_callback_worker_task = None
         self._on_block_callback_is_active = False
@@ -59,7 +59,7 @@ class Streamer(Watcher):
         # -- monitor --
         # stores the list of monitored variables for each monitored session. cleaned after each monitoring session. used to avoid calling list() every time a new message is parsed
         self._monitored_vars = None
-        self._peek_response_available = asyncio.Event(loop=self.loop)
+        self._peek_response_available = asyncio.Event()
         self._peek_response = None
         self._periods = None
 
@@ -154,7 +154,7 @@ class Streamer(Watcher):
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
         # clear asyncio data queues
-        self._processed_data_msg_queue = asyncio.Queue(loop=self.loop)
+        self._processed_data_msg_queue = asyncio.Queue()
 
         self.last_streamed_buffer = {
             var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
@@ -251,7 +251,7 @@ class Streamer(Watcher):
             self._saving_enabled = False
             self._saving_filename = None
             # await all active saving tasks
-            await asyncio.gather(*self._active_saving_tasks, return_exceptions=True, loop=self.loop)
+            await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
             self._active_saving_tasks.clear()
 
         _all_vars = [var["name"] for var in self.watcher_vars]
@@ -270,8 +270,7 @@ class Streamer(Watcher):
             if not _previous_streaming_mode == "PEEK":
                 _print_info(f"Stopped monitoring variables {variables}...")
 
-        self._processed_data_msg_queue = asyncio.Queue(
-            loop=self.loop)  # clear processed data queue
+        self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
         self._on_buffer_callback_is_active = False
         if self._on_buffer_callback_worker_task:
             self._on_buffer_callback_worker_task.cancel()

@@ -441,12 +441,12 @@ class Logger(Watcher):
                 _local_path = self._generate_local_filename(local_path)
             else:
                 _local_path = local_path
-            transferred_event = asyncio.Event(loop=self.loop)
+            transferred_event = asyncio.Event()
             def callback(transferred, to_transfer): return transferred_event.set(
             ) if transferred == to_transfer else None
             self.sftp_client.get(remote_path, _local_path, callback=callback)
             file_size = self.sftp_client.stat(remote_path).st_size
-            await asyncio.wait_for(transferred_event.wait(), timeout=file_size/1e5)
+            await asyncio.wait_for(transferred_event.wait(), timeout=file_size*1e-4)
             if verbose:
                 _print_ok(
                     f"\rTransferring {remote_path}-->{_local_path}... Done.")
