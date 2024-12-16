@@ -18,6 +18,8 @@ from bokeh.resources import INLINE
 from .Watcher import Watcher
 from .utils import _print_info, _print_error, _print_warning
 
+import numpy as np
+
 
 class Streamer(Watcher):
     def __init__(self, ip="192.168.7.2", port=5555, data_add="gui_data", control_add="gui_control"):
@@ -59,22 +61,35 @@ class Streamer(Watcher):
         self._monitored_vars = None
         self._peek_response_available = asyncio.Event()
         self._peek_response = None
+        self._periods = None
 
         self._mode = "STREAM"
 
-    # --- public methods --- #
-
-    # - setters & getters
+    # -- properties --
 
     @property
     def monitored_vars(self):
-        """ Returns a list of monitored variables. If no variables are monitored, returns an empty list.
+        """ Returns a list of monitored variables. If no variables are monitored, returns an empty list. Can't be used in async functions, use _async_monitored_vars() instead.
 
         Returns:
             list: list of monitored variables
         """
         if self._monitored_vars is None:  # avoids calling list() every time a new message is parsed
             _list = self.list()
+            self._monitored_vars = self._filtered_watcher_vars(
+                _list["watchers"], lambda var: var["monitor"])
+            if self._monitored_vars == []:
+                self._monitored_vars = None
+        return self._monitored_vars
+
+    async def _async_monitored_vars(self):
+        """Async version of monitored_vars. Returns a list of monitored variables. If no variables are monitored, returns an empty list.
+
+        Returns:
+            _type_: _description_
+        """
+        if self._monitored_vars is None:
+            _list = await self._async_list()
             self._monitored_vars = self._filtered_watcher_vars(
                 _list["watchers"], lambda var: var["monitor"])
             if self._monitored_vars == []:
@@ -122,7 +137,7 @@ class Streamer(Watcher):
                                  "MONITOR" else [_buffer["value"]])
         return data
 
-    # - streaming methods
+    # -- streaming methods --
 
     def __streaming_common_routine(self, variables=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
 
@@ -131,11 +146,16 @@ class Streamer(Watcher):
             self.stop_streaming()  # stop any previous streaming
 
         if not self.is_connected():
-            _print_warning(
+
+            raise ConnectionError(
                 f'{"Monitor" if self._mode=="MONITOR" else "Streamer" } is not connected to Bela. Run {"monitor" if self._mode=="MONITOR" else "streamer"}.connect() first.')
-            return 0
+
+        # reset streaming buffers queue
         self._streaming_buffers_queue = {var["name"]: deque(
             maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
+        # clear asyncio data queues
+        self._processed_data_msg_queue = asyncio.Queue()
+
         self.last_streamed_buffer = {
             var["name"]: {"data": [], "timestamps": []} for var in self.watcher_vars}
 
@@ -146,8 +166,6 @@ class Streamer(Watcher):
         self._saving_filename = self._generate_filename(
             saving_filename, saving_dir) if saving_enabled else None
 
-        self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
-
         async def async_callback_workers():
 
             if on_block_callback and on_buffer_callback:
@@ -156,24 +174,24 @@ class Streamer(Watcher):
                 return 0
             if on_buffer_callback:
                 self._on_buffer_callback_is_active = True
-                self._on_buffer_callback_worker_task = asyncio.create_task(
+                self._on_buffer_callback_worker_task = self.loop.create_task(
                     self.__async_on_buffer_callback_worker(on_buffer_callback, callback_args))
 
             elif on_block_callback:
                 self._on_block_callback_is_active = True
-                self._on_block_callback_worker_task = asyncio.create_task(
+                self._on_block_callback_worker_task = self.loop.create_task(
                     self.__async_on_block_callback_worker(on_block_callback, callback_args, variables))
 
-        asyncio.run(async_callback_workers())
+        self.loop.create_task(async_callback_workers())
 
         # checks types and if no variables are specified, stream all watcher variables (default)
         return self._var_arg_checker(variables)
 
     def start_streaming(self, variables=[], periods=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """
-        Starts the streaming session. The session can be stopped with stop_streaming().
+        Starts the streaming session. The session can be stopped with stop_streaming(). Can't be used in async functions.
 
-        If no variables are specified, all watcher variables are streamed. If saving_enabled is True, the streamed data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists. 
+        If no variables are specified, all watcher variables are streamed. If saving_enabled is True, the streamed data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists.
 
         Args:
             variables (list, optional): List of variables to be streamed. Defaults to [].
@@ -188,7 +206,7 @@ class Streamer(Watcher):
 
         variables = self.__streaming_common_routine(
             variables, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args)
-
+        _all_vars = [var["name"] for var in self.watcher_vars]
         # commented because then you can only start streaming on variables whose values have been previously assigned in the Bela code
         # not useful for the Sender function (send a buffer from the laptop and stream it through the watcher)
         # async def async_wait_for_streaming_to_start():  # ensures that when function returns streaming has started
@@ -205,8 +223,7 @@ class Streamer(Watcher):
                 warnings.warn(
                     "Periods list is ignored in streaming mode STREAM")
             self.send_ctrl_msg(
-                {"watcher": [{"cmd": "watch", "watchers": variables}]})
-            # asyncio.run(async_wait_for_streaming_to_start())
+                {"watcher": [{"cmd": "watch", "watchers": variables, "periods": [0]*len(_all_vars)}]})
             _print_info(
                 f"Started streaming variables {variables}... Run stop_streaming() to stop streaming.")
         elif self._mode == "MONITOR":
@@ -220,9 +237,50 @@ class Streamer(Watcher):
             elif self._streaming_mode == "PEEK":
                 _print_info(f"Peeking at variables {variables}...")
 
+    async def _async_stop_streaming(self, variables=[]):
+        """ Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted.
+
+        Args:
+            variables (list, optional): _description_. Defaults to [].
+        """
+        _previous_streaming_mode = copy.copy(self._streaming_mode)
+
+        self._streaming_mode = "OFF"
+
+        if self._saving_enabled:
+            self._saving_enabled = False
+            self._saving_filename = None
+            # await all active saving tasks
+            await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
+            self._active_saving_tasks.clear()
+
+        _all_vars = [var["name"] for var in self.watcher_vars]
+        if variables == []:
+            # if no variables specified, stop streaming all watcher variables (default)
+            variables = _all_vars
+
+        if self._mode == "STREAM" and _previous_streaming_mode != "SCHEDULE":
+            await self._async_send_ctrl_msg(
+                {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
+            _print_info(f"Stopped streaming variables {variables}...")
+        # elif self._mode == "MONITOR" and _previous_streaming_mode != "SCHEDULE":
+        elif self._mode == "MONITOR":
+            await self._async_send_ctrl_msg(
+                {"watcher": [{"cmd": "monitor", "periods": [0]*len(_all_vars),  "watchers": variables}]})  # setting period to 0 disables monitoring
+            if not _previous_streaming_mode == "PEEK":
+                _print_info(f"Stopped monitoring variables {variables}...")
+
+        self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
+        self._on_buffer_callback_is_active = False
+        if self._on_buffer_callback_worker_task:
+            self._on_buffer_callback_worker_task.cancel()
+        self._on_block_callback_is_active = False
+        if self._on_block_callback_worker_task:
+            self._on_block_callback_worker_task.cancel()
+
     def stop_streaming(self, variables=[]):
         """
-        Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted.
+        Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted. Sync wrapper of _async_stop_streaming(), can't be used in async functions.
 
         Args:
             variables (list, optional): List of variables to stop streaming. Defaults to [].
@@ -230,42 +288,8 @@ class Streamer(Watcher):
         Returns:
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
-        async def async_stop_streaming(variables=[]):
-            # self.stop()
 
-            _previous_streaming_mode = copy.copy(self._streaming_mode)
-
-            self._streaming_mode = "OFF"
-
-            if self._saving_enabled:
-                self._saving_enabled = False
-                self._saving_filename = None
-                # await all active saving tasks
-                await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
-                self._active_saving_tasks.clear()
-
-            if variables == []:
-                # if no variables specified, stop streaming all watcher variables (default)
-                variables = [var["name"] for var in self.watcher_vars]
-
-            if self._mode == "STREAM" and _previous_streaming_mode != "SCHEDULE":
-                self.send_ctrl_msg(
-                    {"watcher": [{"cmd": "unwatch", "watchers": variables}]})
-                _print_info(f"Stopped streaming variables {variables}...")
-            elif self._mode == "MONITOR" and _previous_streaming_mode != "SCHEDULE":
-                self.send_ctrl_msg(
-                    {"watcher": [{"cmd": "monitor", "periods": [0]*len(variables),  "watchers": variables}]})  # setting period to 0 disables monitoring
-                if not _previous_streaming_mode == "PEEK":
-                    _print_info(f"Stopped monitoring variables {variables}...")
-                    self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
-                self._on_buffer_callback_is_active = False
-                if self._on_buffer_callback_worker_task:
-                    self._on_buffer_callback_worker_task.cancel()
-                self._on_block_callback_is_active = False
-                if self._on_block_callback_worker_task:
-                    self._on_block_callback_worker_task.cancel()
-
-        return asyncio.run(async_stop_streaming(variables))
+        return self.loop.run_until_complete(self._async_stop_streaming(variables))
 
     def schedule_streaming(self, variables=[], timestamps=[], durations=[], saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """Schedule streaming of variables. The streaming session can be stopped with stop_streaming().
@@ -297,32 +321,33 @@ class Streamer(Watcher):
             finished_streaming_vars = []
 
             while not all(var in finished_streaming_vars for var in variables):
-
-                for var in [v["name"] for v in self.watched_vars]:
+                _watched_vars = await self._async_watched_vars()
+                for var in [v["name"] for v in _watched_vars]:
                     if var not in started_streaming_vars:
                         started_streaming_vars.append(var)
                         _print_info(f"Started streaming {var}...")
 
                 for var in started_streaming_vars:
-                    if var not in [v["name"] for v in self.watched_vars]:
+                    if var not in [v["name"] for v in _watched_vars]:
                         finished_streaming_vars.append(var)
                         _print_info(f"Stopped streaming {var}")
 
                 await asyncio.sleep(0.1)
 
-            self.stop_streaming()
+            await self._async_stop_streaming()
 
-        asyncio.run(
+        self.loop.run_until_complete(
             async_check_if_variables_have_been_streamed_and_stop())
 
     def stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename=None, saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
         """
-        Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size). 
+        Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size).
 
         Note: This function will block the main thread until n_values have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_values, unless n_values is a multiple of the block size (streamer._streaming_block_size).
 
         To avoid blocking, use the async version of this function:
-            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, periods, saving_enabled, saving_filename))
+            stream_task = self.loop.create_task(streamer.async_stream_n_values(
+                variables, n_values, periods, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
              streaming_buffers_queue = await stream_task
 
@@ -341,12 +366,13 @@ class Streamer(Watcher):
         Returns:
             streaming_buffers_queue (dict): Dict containing the streaming buffers for each streamed variable.
         """
-        return asyncio.run(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args))
+        return self.loop.run_until_complete(self.async_stream_n_values(variables, periods, n_values, saving_enabled, saving_filename, saving_dir, on_buffer_callback, on_block_callback, callback_args))
 
     async def async_stream_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="var_stream.txt", saving_dir="./", on_buffer_callback=None, on_block_callback=None, callback_args=()):
-        """ 
-        Asynchronous version of stream_n_values(). Usage: 
-            stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename)) 
+        """
+        Asynchronous version of stream_n_values(). Usage:
+            stream_task = self.loop.create_task(streamer.async_stream_n_values(
+                variables, n_values, saving_enabled, saving_filename))
         and retrieve the streaming buffer using:
             streaming_buffers_queue = await stream_task
 
@@ -376,9 +402,10 @@ class Streamer(Watcher):
             # if mode stream, each buffer has m values and we need to calc the min buffers needed to supply n_values
 
             # variables might have different buffer sizes -- the code below finds the minimum number of buffers needed to stream n_values for all variables
+            _watcher_vars = await self._async_watcher_vars()
             buffer_sizes = [
                 self.get_data_length(var["type"], var["timestamp_mode"])
-                for var in self.watcher_vars if var["name"] in variables]
+                for var in _watcher_vars if var["name"] in variables]
 
             # TODO add a warning when there's different buffer sizes ?
 
@@ -390,7 +417,7 @@ class Streamer(Watcher):
             if periods != []:
                 warnings.warn(
                     "Periods list is ignored in streaming mode STREAM")
-            self.send_ctrl_msg(
+            await self._async_send_ctrl_msg(
                 {"watcher": [{"cmd": "unwatch", "watchers": [var["name"] for var in self.watcher_vars]}, {"cmd": "watch", "watchers": variables}]})
             _print_info(
                 f"Streaming {n_values} values for variables {variables}...")
@@ -400,7 +427,7 @@ class Streamer(Watcher):
             self.streaming_buffers_queue_length = n_values
 
             periods = self._check_periods(periods, variables)
-            self.send_ctrl_msg(
+            await self._async_send_ctrl_msg(
                 {"watcher": [{"cmd": "monitor", "watchers": variables, "periods": periods}]})
             _print_info(
                 f"Monitoring {n_values} values for variables {variables} with periods {periods}...")
@@ -410,240 +437,13 @@ class Streamer(Watcher):
         self._streaming_buffer_available.clear()
 
         # turns off listener, unwatches variables
-        self.stop_streaming(variables)
+        await self._async_stop_streaming(variables)
         if self._mode == "MONITOR":
             self._monitored_vars = None  # reset monitored vars
 
         return self.streaming_buffers_queue
 
-    # callbacks
-
-    async def __async_on_buffer_callback_worker(self, on_buffer_callback, callback_args):
-        while self._on_buffer_callback_is_active and self.is_streaming():
-            if not self._processed_data_msg_queue.empty():
-                msg = await self._processed_data_msg_queue.get()
-                self._processed_data_msg_queue.task_done()
-                try:
-                    if asyncio.iscoroutinefunction(on_buffer_callback):
-                        if callback_args != () and type(callback_args) == tuple:
-                            await on_buffer_callback(msg, *callback_args)
-                        elif callback_args != ():
-                            await on_buffer_callback(msg, callback_args)
-                        else:
-                            await on_buffer_callback(msg)
-                    else:
-                        if callback_args != () and type(callback_args) == tuple:
-                            on_buffer_callback(msg, *callback_args)
-                        elif callback_args != ():
-                            on_buffer_callback(msg, callback_args)
-                        else:
-                            on_buffer_callback(msg)
-                except Exception as e:
-                    _print_error(
-                        f"Error in on_buffer_callback: {e}")
-
-            await asyncio.sleep(0.0001)
-
-    async def __async_on_block_callback_worker(self, on_block_callback, callback_args, variables):
-        while self._on_block_callback_is_active and self.is_streaming():
-            msgs = []
-            for var in variables:
-                # if not self._processed_data_msg_queue.empty():
-                msg = await asyncio.wait_for(self._processed_data_msg_queue.get(), timeout=1)
-                msgs.append(msg)
-                self._processed_data_msg_queue.task_done()
-            if len(msgs) == len(variables):
-                try:
-                    if asyncio.iscoroutinefunction(on_block_callback):
-                        if callback_args != () and type(callback_args) == tuple:
-                            await on_block_callback(msgs, *callback_args)
-                        elif callback_args != ():
-                            await on_block_callback(msgs, callback_args)
-                        else:
-                            await on_block_callback(msgs)
-                    else:
-                        if callback_args != () and type(callback_args) == tuple:
-                            on_block_callback(msgs, *callback_args)
-                        elif callback_args != ():
-                            on_block_callback(msgs, callback_args)
-                        else:
-                            on_block_callback(msgs)
-
-                except Exception as e:
-                    _print_error(
-                        f"Error in on_block_callback: {e}")
-
-            await asyncio.sleep(0.001)
-
-    # send
-
-    def send_buffer(self, buffer_id, buffer_type, buffer_length, data_list, verbose=False):
-        """
-        Sends a buffer to Bela. The buffer is packed into binary format and sent over the websocket.
-
-        Args:
-            buffer_id (int): Buffer id
-            buffer_type (str): Buffer type. Supported types are 'i' (int), 'f' (float), 'j' (uint), 'd' (double), 'c' (char).
-            buffer_length (int): Buffer length
-            data_list (list): List of data to be sent
-        """
-        # Pack the data into binary format
-        # >I means big-endian unsigned int, 4s means 4-byte string, pad with x for empty bytes
-
-        idtypestr = struct.pack('<I4sI4x', buffer_id,
-                                buffer_type.encode(), buffer_length)
-        format_str = buffer_type * len(data_list)
-        binary_data = struct.pack(format_str, *data_list)
-        self._send_msg(self.ws_data_add, idtypestr + binary_data)
-        if verbose:
-            _print_info(
-                f"Sent buffer {buffer_id} of type {buffer_type} with length {buffer_length}...")
-
-    # - utils
-
-    def is_streaming(self):
-        """Returns True if the streamer is currently streaming, False otherwise.
-
-        Returns:
-            bool: Streaming status bool
-        """
-        return True if self._streaming_mode != "OFF" else False
-
-    def flush_queue(self):
-        """Flushes the streaming buffers queue. The queue is emptied and the insertion counts are reset to 0.
-        """
-        self._streaming_buffers_queue = {var["name"]: deque(
-            maxlen=self._streaming_buffers_queue_length) for var in self.watcher_vars}
-
-    def load_data_from_file(self, filename):
-        """
-        Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
-        Args:
-            filename (str): Filename
-
-        Returns:
-            list: List of values loaded from file
-        """
-        try:
-            data = []
-            with open(filename, "r") as f:
-                while True:
-                    line = f.readline()
-                    if not line:
-                        break
-                    try:
-                        data.append(json.loads(line))
-                    except EOFError:  # reached end of file
-                        break
-        except Exception as e:
-            _print_error(f"Error while loading data from file: {e}")
-            return None
-
-        return data
-
-    # - plotting
-
-    def _bokeh_plot_data_app(self,
-                             data,
-                             x_var,
-                             y_vars,
-                             y_range=None,
-                             rollover=None,
-                             plot_update_delay=90):
-        """Return a function defining a Bokeh app for streaming. The app is called in plot_data().
-        Args:
-            data (dict): Dict containing the data to be plotted. The dict should have the following structure: {"var1": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, "var2": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, ...}
-            x_var (str): Variable to be plotted on the x axis
-            y_vars (list): List of variables to be plotted on the y axis
-            y_range (tuple, optional): Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
-            rollover (int, optional): Number of data points to keep on the plot. Defaults to None.
-            plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 90.
-        """
-        # TODO add variable checkers
-
-        def _app(doc):
-            # Instantiate figures
-            p = bokeh.plotting.figure(
-                frame_width=500,
-                frame_height=175,
-                x_axis_label="timestamps",
-                y_axis_label="value",
-            )
-
-            if y_range is not None:
-                p.y_range = bokeh.models.Range1d(y_range[0], y_range[1])
-
-            # No padding on x_range makes data flush with end of plot
-            p.x_range.range_padding = 0
-
-            # Create a dictionary to store ColumnDataSource instances for each y_var
-            template = {"timestamps": [], **{var: [] for var in data}}
-            source = bokeh.models.ColumnDataSource(template)
-
-            # # Create line glyphs for each y_var
-            colors = cycle([
-                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
-                "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
-                "#bcbd22", "#17becf", "#1a55FF", "#FF1A1A"
-            ])
-            for y_var in y_vars:
-                p.line(source=source, x="timestamps",
-                       y=y_var, line_color=next(colors), legend_label=y_var)
-
-            @bokeh.driving.linear()
-            def update(step):
-                # Update plot by streaming in data
-                new_data = {"timestamps": [
-                    data[x_var]["timestamp"]]if "timestamp" in data[x_var] else data[x_var]["timestamps"]}
-                for y_var in y_vars:
-                    new_data[y_var] = data[y_var]["data"] if isinstance(
-                        data[y_var]["data"], list) else [data[y_var]["data"]]
-                source.stream(new_data, rollover)
-
-            doc.add_root(p)
-            doc.add_periodic_callback(update, plot_update_delay)
-        return _app
-
-    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=500):
-        """ Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.
-
-        Args:
-            x_var (str): Variable to be plotted on the x axis
-            y_vars (list of str): List of variables to be plotted on the y axis
-            y_range (float, float):  Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
-            plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 100.
-            rollover (int, optional): Number of data points to keep on the plot. Defaults to 1000.
-        """
-
-        if self._mode == "MONITOR":
-            raise NotImplementedError(
-                "Plotting is not yet supported in monitor mode.")
-
-        # check that x_var and y_vars are either streamed or monitored
-        for _var in [x_var, *y_vars]:
-            if not (_var in [var["name"] for var in self.watched_vars] or _var in [var["name"] for var in self.monitored_vars]):
-                _print_error(
-                    f"PlottingError: {_var} is not being streamed or monitored.")
-                return
-
-        # check buffer lengths are the same
-        # wait until streaming buffers have been populated
-        async def wait_for_streaming_buffers_to_arrive():
-            while not all(data['data'] for data in {
-                    var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}.values()):
-                await asyncio.sleep(0.1)
-        asyncio.run(wait_for_streaming_buffers_to_arrive())
-        if len(y_vars) > 1 and not all([len(self.last_streamed_buffer[y_var]) == len(self.last_streamed_buffer[y_vars[0]]) for y_var in y_vars[1:]]):
-            _print_error(
-                "PlottingError: plotting buffers of different length is not supported yet. Try using the same timestamp mode and type for your variables...")
-            return
-
-        bokeh.io.output_notebook(INLINE)
-        bokeh.io.show(self._bokeh_plot_data_app(data={
-            var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}, x_var=x_var,
-            y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
-
-    # --- private methods --- #
+    # -- data processing method --
 
     async def _process_data_msg(self, msg):
         """ Process data message received from Bela. This function is called by the websocket listener when a data message is received.
@@ -707,13 +507,12 @@ class Streamer(Watcher):
                 elif self._mode == "MONITOR":
                     self.last_streamed_buffer[var_name] = {
                         "timestamp": parsed_buffer["timestamp"], "value": parsed_buffer["value"]}
-
                 # save data to file if saving is enabled
                 if _saving_enabled:
                     _saving_var_filename = os.path.join(os.path.dirname(
                         self._saving_filename), f"{var_name}_{os.path.basename(self._saving_filename)}")
                     # save the data asynchronously
-                    saving_task = asyncio.create_task(
+                    saving_task = self.loop.create_task(
                         self._save_data_to_file(_saving_var_filename, parsed_buffer))
                     self._active_saving_tasks.append(saving_task)
 
@@ -727,12 +526,247 @@ class Streamer(Watcher):
                         self._peek_response_available.set()
 
                 # if streaming buffers queue is full for watched variables and streaming mode is n_values
-                if self._streaming_mode == "N_VALUES":
-                    obs_vars = self.watched_vars if self._mode == "STREAM" else self.monitored_vars
+                if self._streaming_mode == "N_VALUES":  # FIXME doesn't always work for monitor
+                    _watched_vars = await self._async_watched_vars()
+                    _monitored_vars = await self._async_monitored_vars()
+                    _vars = _watched_vars if self._mode == "STREAM" else _monitored_vars
                     if all(len(self._streaming_buffers_queue[var["name"]]) == self._streaming_buffers_queue_length
-                            for var in obs_vars):
-                        self._streaming_mode = "OFF"
-                        self._streaming_buffer_available.set()
+                            for var in _vars):
+
+                        # check if timestamp values are spaced by the correct period
+                        if self._mode == "MONITOR" and np.any([np.diff(self.values[var["name"]]["timestamps"]) != self._periods[idx] for idx, var in enumerate(_monitored_vars)]):
+                            for var in _monitored_vars:
+                                # fixes bug in which the diff between first and second timestamp is less than period
+                                self._streaming_buffers_queue[var["name"]].popleft(
+                                )
+
+                        else:
+                            self._streaming_mode = "OFF"
+                            self._streaming_buffer_available.set()
+
+    # -- callback methods --
+
+    async def __async_on_buffer_callback_worker(self, on_buffer_callback, callback_args):
+        while self._on_buffer_callback_is_active and self.is_streaming():
+            if not self._processed_data_msg_queue.empty():
+                msg = await self._processed_data_msg_queue.get()
+                self._processed_data_msg_queue.task_done()
+                try:
+                    if asyncio.iscoroutinefunction(on_buffer_callback):
+                        if callback_args != () and type(callback_args) == tuple:
+                            await on_buffer_callback(msg, *callback_args)
+                        elif callback_args != ():
+                            await on_buffer_callback(msg, callback_args)
+                        else:
+                            await on_buffer_callback(msg)
+                    else:
+                        if callback_args != () and type(callback_args) == tuple:
+                            on_buffer_callback(msg, *callback_args)
+                        elif callback_args != ():
+                            on_buffer_callback(msg, callback_args)
+                        else:
+                            on_buffer_callback(msg)
+                except Exception as e:
+                    _print_error(
+                        f"Error in on_buffer_callback: {e}")
+
+            await asyncio.sleep(0.0001)
+
+    async def __async_on_block_callback_worker(self, on_block_callback, callback_args, variables):
+        while self._on_block_callback_is_active and self.is_streaming():
+            msgs = []
+            for var in variables:
+                # if not self._processed_data_msg_queue.empty():
+                msg = await self._processed_data_msg_queue.get()
+                msgs.append(msg)
+                self._processed_data_msg_queue.task_done()
+            if len(msgs) == len(variables):
+                try:
+                    if asyncio.iscoroutinefunction(on_block_callback):
+                        if callback_args != () and type(callback_args) == tuple:
+                            await on_block_callback(msgs, *callback_args)
+                        elif callback_args != ():
+                            await on_block_callback(msgs, callback_args)
+                        else:
+                            await on_block_callback(msgs)
+                    else:
+                        if callback_args != () and type(callback_args) == tuple:
+                            on_block_callback(msgs, *callback_args)
+                        elif callback_args != ():
+                            on_block_callback(msgs, callback_args)
+                        else:
+                            on_block_callback(msgs)
+
+                except Exception as e:
+                    _print_error(
+                        f"Error in on_block_callback: {e}")
+
+            await asyncio.sleep(0.001)
+
+    # -- data sending methods --
+
+    def send_buffer(self, buffer_id, buffer_type, buffer_length, data_list, verbose=False):
+        """
+        Sends a buffer to Bela. The buffer is packed into binary format and sent over the websocket.
+
+        Args:
+            buffer_id (int): Buffer id
+            buffer_type (str): Buffer type. Supported types are 'i' (int), 'f' (float), 'j' (uint), 'd' (double), 'c' (char).
+            buffer_length (int): Buffer length
+            data_list (list): List of data to be sent
+        """
+        # Pack the data into binary format
+        # >I means big-endian unsigned int, 4s means 4-byte string, pad with x for empty bytes
+
+        idtypestr = struct.pack('<I4sI4x', buffer_id,
+                                buffer_type.encode(), buffer_length)
+        format_str = buffer_type * len(data_list)
+        binary_data = struct.pack(format_str, *data_list)
+        self._send_msg(self.ws_data_add, idtypestr + binary_data)
+        if verbose:
+            _print_info(
+                f"Sent buffer {buffer_id} of type {buffer_type} with length {buffer_length}...")
+
+    # -- plotting --
+
+    def _bokeh_plot_data_app(self,
+                             data,
+                             x_var,
+                             y_vars,
+                             y_range=None,
+                             rollover=None,
+                             plot_update_delay=90):
+        """Return a function defining a Bokeh app for streaming. The app is called in plot_data().
+        Args:
+            data (dict): Dict containing the data to be plotted. The dict should have the following structure: {"var1": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, "var2": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, ...}
+            x_var (str): Variable to be plotted on the x axis
+            y_vars (list): List of variables to be plotted on the y axis
+            y_range (tuple, optional): Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
+            rollover (int, optional): Number of data points to keep on the plot. Defaults to None.
+            plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 90.
+        """
+        # TODO add variable checkers
+
+        def _app(doc):
+            # Instantiate figures
+            p = bokeh.plotting.figure(
+                frame_width=500,
+                frame_height=175,
+                x_axis_label="timestamps",
+                y_axis_label="value",
+            )
+
+            if y_range is not None:
+                p.y_range = bokeh.models.Range1d(y_range[0], y_range[1])
+
+            # No padding on x_range makes data flush with end of plot
+            p.x_range.range_padding = 0
+
+            # Create a dictionary to store ColumnDataSource instances for each y_var
+            template = {"timestamps": [], **{var: [] for var in data}}
+            source = bokeh.models.ColumnDataSource(template)
+
+            # # Create line glyphs for each y_var
+            colors = cycle([
+                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+                "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+                "#bcbd22", "#17becf", "#1a55FF", "#FF1A1A"
+            ])
+            for y_var in y_vars:
+                p.line(source=source, x="timestamps",
+                       y=y_var, line_color=next(colors), legend_label=y_var)
+
+            @bokeh.driving.linear()
+            def update(step):
+                # Update plot by streaming in data
+                new_data = {"timestamps": [
+                    data[x_var]["timestamp"]]if "timestamp" in data[x_var] else data[x_var]["timestamps"]}
+                for y_var in y_vars:
+                    new_data[y_var] = data[y_var]["data"] if isinstance(
+                        data[y_var]["data"], list) else [data[y_var]["data"]]
+                source.stream(new_data, rollover)
+
+            doc.add_root(p)
+            doc.add_periodic_callback(update, plot_update_delay)
+        return _app
+
+    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=1000):
+        """ Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.
+
+        Args:
+            x_var (str): Variable to be plotted on the x axis
+            y_vars (list of str): List of variables to be plotted on the y axis
+            y_range (float, float):  Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
+            plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 100.
+            rollover (int, optional): Number of data points to keep on the plot. Defaults to 1000.
+        """
+
+        if self._mode == "MONITOR":
+            raise NotImplementedError(
+                "Plotting is not yet supported in monitor mode.")
+
+        # check that x_var and y_vars are either streamed or monitored
+        for _var in [x_var, *y_vars]:
+            if not (_var in [var["name"] for var in self.watched_vars] or _var in [var["name"] for var in self.monitored_vars]):  # FIXME
+                raise ValueError(
+                    f"PlottingError: {_var} is not being streamed or monitored.")
+
+        # check buffer lengths are the same
+        # wait until streaming buffers have been populated
+        async def wait_for_streaming_buffers_to_arrive():
+            while not all(data['data'] for data in {
+                    var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}.values()):
+                await asyncio.sleep(0.01)
+        self.loop.run_until_complete(
+            wait_for_streaming_buffers_to_arrive())
+        if len(y_vars) > 1 and not all([len(self.last_streamed_buffer[y_var]) == len(self.last_streamed_buffer[y_vars[0]]) for y_var in y_vars[1:]]):
+            raise NotImplementedError(
+                "PlottingError: plotting buffers of different length is not supported yet. Try using the same timestamp mode and type for your variables...")
+
+        async def _async_plot_data(x_var, y_vars, y_range=None, plot_update_delay=100, rollover=1000):
+            bokeh.io.output_notebook(INLINE)
+            bokeh.io.show(self._bokeh_plot_data_app(data={
+                var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}, x_var=x_var,
+                y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
+
+        self.loop.run_until_complete(_async_plot_data(
+            x_var, y_vars, y_range, plot_update_delay, rollover))
+
+# -- utils --
+
+    def is_streaming(self):
+        """Returns True if the streamer is currently streaming, False otherwise.
+
+        Returns:
+            bool: Streaming status bool
+        """
+        return True if self._streaming_mode != "OFF" else False
+
+    def load_data_from_file(self, filename):
+        """
+        Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.
+        Args:
+            filename (str): Filename
+
+        Returns:
+            list: List of values loaded from file
+        """
+        try:
+            data = []
+            with open(filename, "r") as f:
+                while True:
+                    line = f.readline()
+                    if not line:
+                        break
+                    try:
+                        data.append(json.loads(line))
+                    except EOFError:  # reached end of file
+                        break
+        except Exception as e:
+            _print_error(f"Error while loading data from file: {e}")
+            return None
+
+        return data
 
     async def _save_data_to_file(self, filename, msg):
         """ Saves data to file asynchronously. This function is called by _process_data_msg() when a buffer is received and saving is enabled.
@@ -756,11 +790,11 @@ class Streamer(Watcher):
         except Exception as e:
             _print_error(f"Error while saving data to file: {e}")
 
-        finally:
-            await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
+        # finally:
+        #     await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
 
     def _generate_filename(self, saving_filename, saving_dir="./"):
-        """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled. 
+        """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled.
 
         Args:
             saving_filename (str): Root filename
@@ -820,3 +854,12 @@ class Streamer(Watcher):
                 p, int), "Periods must be integers"
 
         return periods
+
+    async def _async_disconnect(self):
+        """ Cancels existing tasks
+        """
+        await super()._async_disconnect()
+        if self._on_buffer_callback_worker_task is not None and not self._on_buffer_callback_worker_task.done():
+            self._on_buffer_callback_worker_task.cancel()
+        if self._on_block_callback_worker_task is not None and not self._on_block_callback_worker_task.done():
+            self._on_block_callback_worker_task.cancel()

@@ -196,7 +196,6 @@ pipenv run python -m build --sdist # builds the .tar.gz file
 
 **Long term**
 
-- [ ] **Design**: remove nest_asyncio?
 - [ ] **Add**: example projects
 - [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
@@ -204,7 +203,7 @@ pipenv run python -m build --sdist # builds the .tar.gz file
 - [ ] **Code refactor:** There are two routines for generating filenames (for Streamer and for Logger). This should be unified.
 - [ ] **Possible feature:** Flexible backend buffer size for streaming: if the assign rate of variables is too slow, the buffers might not be filled and hence not sent (since the data flushed is not collected in the frontend), and there will be long delays between the variable assign and the data being sent to the frontend.
 - [ ] **Issue:** Flushed buffers are not collected after `stop_streaming` in the frontend.
-- [ ] **Bug:** `OSError: [Errno 12] Cannot allocate memory`
+<!-- - [ ] **Bug:** `OSError: [Errno 12] Cannot allocate memory` -->
 
 ## License
 

@@ -1,12 +1,12 @@
 import unittest
-import asyncio
 import os
 import numpy as np
 from pybela import Watcher, Streamer, Logger, Monitor, Controller
 
-os.environ["PYTHONASYNCIODEBUG"] = "1"
+# os.environ["PYTHONASYNCIODEBUG"] = "1"
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
+
 
 class test_Watcher(unittest.TestCase):
 
@@ -15,14 +15,15 @@ class test_Watcher(unittest.TestCase):
         self.watcher.connect()
 
     def tearDown(self):
-        self.watcher.__del__()
+        self.watcher.cleanup()
+        # pass
 
     def test_list(self):
         self.assertEqual(len(self.watcher.list()["watchers"]), len(self.watcher.watcher_vars),
                          "Length of list should be equal to number of watcher variables")
 
     def test_start_stop(self):
-        self.watcher.stop()
+        self.watcher.disconnect()
         self.assertTrue(self.watcher.ws_ctrl.close,
                         "Watcher ctrl websocket should be closed after stop")
         self.assertTrue(self.watcher.ws_data.close,
@@ -41,11 +42,10 @@ class test_Streamer(unittest.TestCase):
             "myvar4"  # sparse double
         ]
         self.saving_dir = "./test"
-
         self.saving_filename = "test_streamer_save.txt"
 
     def tearDown(self):
-        self.streamer.__del__()
+        self.streamer.cleanup()
 
     def test_stream_n_values(self):
         n_values = 40
@@ -89,7 +89,7 @@ class test_Streamer(unittest.TestCase):
                                      "The ref_timestamp and the first item of data buffer should be the same")
                     self.assertEqual(_buffer["ref_timestamp"]+var["data_length"]-1, _buffer["data"][-1],
                                      "The last data item should be equal to the ref_timestamp plus the length of the buffer")  # this test will fail if the Bela program has been streaming for too long and there are truncating errors. If this test fails, try stopping and rerunning hte Bela program again
-
+        # delete files
         for var in self.streaming_vars:
             remove_file(os.path.join(self.saving_dir,
                         f"{var}_{self.saving_filename}"))
@@ -108,7 +108,8 @@ class test_Streamer(unittest.TestCase):
         # check streaming mode is FOREVER after start_streaming is called
         self.assertEqual(self.streamer._streaming_mode, "FOREVER",
                          "Streaming mode should be FOREVER after start_streaming")
-        asyncio.run(asyncio.sleep(0.5))  # wait for some data to be streamed
+        # wait for some data to be streamed
+        self.streamer.wait(0.5)
         self.streamer.stop_streaming(variables=self.streaming_vars)
         # check streaming mode is OFF after stop_streaming
 
@@ -121,16 +122,16 @@ class test_Streamer(unittest.TestCase):
         latest_timestamp = self.streamer.get_latest_timestamp()
         sample_rate = self.streamer.sample_rate
         timestamps = [latest_timestamp +
-                        sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
+                      sample_rate] * len(self.streaming_vars)  # start streaming after ~1s
         durations = [sample_rate] * \
             len(self.streaming_vars)  # stream for 1s
 
         self.streamer.schedule_streaming(variables=self.streaming_vars,
-                                            timestamps=timestamps,
-                                            durations=durations,
-                                            saving_enabled=True,
-                                            saving_dir=self.saving_dir,
-                                            saving_filename=self.saving_filename)
+                                         timestamps=timestamps,
+                                         durations=durations,
+                                         saving_enabled=True,
+                                         saving_dir=self.saving_dir,
+                                         saving_filename=self.saving_filename)
 
         self.__test_buffers(mode="schedule")
 
@@ -150,7 +151,7 @@ class test_Streamer(unittest.TestCase):
         self.streamer.start_streaming(
             variables, saving_enabled=False, on_buffer_callback=callback)
 
-        asyncio.run(asyncio.sleep(0.1))
+        self.streamer.wait(0.5)
 
         self.streamer.stop_streaming(variables)
 
@@ -174,12 +175,13 @@ class test_Streamer(unittest.TestCase):
         self.streamer.start_streaming(
             variables, saving_enabled=False, on_block_callback=callback)
 
-        asyncio.run(asyncio.sleep(0.5))
+        self.streamer.wait(0.5)
 
         self.streamer.stop_streaming(variables)
-        
-        self.assertGreater(len(timestamps["myvar"]), 0, "The on_block_callback should have been called at least once")
-        
+
+        self.assertGreater(len(
+            timestamps["myvar"]), 0, "The on_block_callback should have been called at least once")
+
         for var in variables:
             for i in range(1, len(timestamps[var])):
                 self.assertEqual(timestamps[var][i] - timestamps[var][i-1], 512,
@@ -201,7 +203,7 @@ class test_Logger(unittest.TestCase):
         self.logging_dir = "./test"
 
     def tearDown(self):
-        self.logger.__del__()
+        self.logger.cleanup()
 
     def _test_logged_data(self, logger, logging_vars, local_paths):
         # common routine to test the data in the logged files
@@ -232,12 +234,12 @@ class test_Logger(unittest.TestCase):
         # log with transfer
         file_paths = self.logger.start_logging(
             variables=self.logging_vars, transfer=True, logging_dir=self.logging_dir)
-        asyncio.run(asyncio.sleep(0.5))
+        self.logger.wait(0.5)
         self.logger.stop_logging()
 
         # test logged data
         self._test_logged_data(self.logger, self.logging_vars,
-                                file_paths["local_paths"])
+                               file_paths["local_paths"])
 
         # clean local log files
         for var in file_paths["local_paths"]:
@@ -245,23 +247,20 @@ class test_Logger(unittest.TestCase):
         # clean all remote log files in project
         self.logger.delete_all_bin_files_in_project()
 
-
     def test_logged_files_wo_transfer(self):
 
         # logging without transfer
         file_paths = self.logger.start_logging(
             variables=self.logging_vars, transfer=False, logging_dir=self.logging_dir)
-        asyncio.run(asyncio.sleep(0.5))
+        self.logger.wait(0.5)
         self.logger.stop_logging()
 
         # transfer files from bela
         local_paths = {}
         for var in file_paths["remote_paths"]:
             filename = os.path.basename(file_paths["remote_paths"][var])
-            local_paths[var] = self.logger._generate_local_filename(
-                os.path.join(self.logging_dir, filename))
-            self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
-                                            local_path=local_paths[var])
+            local_paths[var] = self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
+                                                               local_path=filename)
 
         # test logged data
         self._test_logged_data(self.logger, self.logging_vars, local_paths)
@@ -273,23 +272,21 @@ class test_Logger(unittest.TestCase):
             #     file_paths["remote_paths"][var])
         self.logger.delete_all_bin_files_in_project()
 
-
-
     def test_scheduling_logging(self):
         latest_timestamp = self.logger.get_latest_timestamp()
         sample_rate = self.logger.sample_rate
         timestamps = [latest_timestamp +
-                        sample_rate] * len(self.logging_vars)  # start logging after ~1s
+                      sample_rate] * len(self.logging_vars)  # start logging after ~1s
         durations = [sample_rate] * len(self.logging_vars)  # log for 1s
 
         file_paths = self.logger.schedule_logging(variables=self.logging_vars,
-                                                    timestamps=timestamps,
-                                                    durations=durations,
-                                                    transfer=True,
-                                                    logging_dir=self.logging_dir)
+                                                  timestamps=timestamps,
+                                                  durations=durations,
+                                                  transfer=True,
+                                                  logging_dir=self.logging_dir)
 
         self._test_logged_data(self.logger, self.logging_vars,
-                                file_paths["local_paths"])
+                               file_paths["local_paths"])
 
         # clean local log files
         for var in file_paths["local_paths"]:
@@ -303,7 +300,6 @@ class test_Logger(unittest.TestCase):
         #         file_paths["remote_paths"][var])
 
 
-
 class test_Monitor(unittest.TestCase):
     def setUp(self):
         self.monitor_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
@@ -315,19 +311,19 @@ class test_Monitor(unittest.TestCase):
         self.monitor.connect()
 
     def tearDown(self):
-        self.monitor.__del__()
+        self.monitor.cleanup()
 
     def test_peek(self):
         peeked_values = self.monitor.peek()  # peeks at all variables by default
         for var in peeked_values:
             self.assertEqual(peeked_values[var]["timestamp"], peeked_values[var]["value"],
-                                "The timestamp of the peeked variable should be equal to the value")
+                             "The timestamp of the peeked variable should be equal to the value")
 
     def test_period_monitor(self):
         self.monitor.start_monitoring(
             variables=self.monitor_vars[:2],
             periods=[self.period]*len(self.monitor_vars[:2]))
-        asyncio.run(asyncio.sleep(0.5))
+        self.monitor.wait(0.5)
         monitored_values = self.monitor.stop_monitoring()
 
         for var in self.monitor_vars[:2]:  # assigned at every frame n
@@ -336,7 +332,6 @@ class test_Monitor(unittest.TestCase):
             if var in ["myvar", "myvar2"]:  # assigned at each frame n
                 self.assertTrue(np.all(np.diff(monitored_values[var]["values"]) == self.period),
                                 "The values of the monitored variables should be spaced by the period")
-
 
     def test_monitor_n_values(self):
         n_values = 25
@@ -354,7 +349,6 @@ class test_Monitor(unittest.TestCase):
             self.assertTrue(all(len(monitored_buffer[
                 var]["values"]) == n_values for var in self.monitor_vars[:2]), "The streaming buffers queue should have n_value for every variable")
 
-
     def test_save_monitor(self):
 
         # delete any existing test files
@@ -368,22 +362,21 @@ class test_Monitor(unittest.TestCase):
             saving_enabled=True,
             saving_filename=self.saving_filename,
             saving_dir=self.saving_dir)
-        asyncio.run(asyncio.sleep(0.5))
+        self.monitor.wait(0.5)
         monitored_buffers = self.monitor.stop_monitoring()
 
         for var in self.monitor_vars:
             loaded_buffers = self.monitor.load_data_from_file(os.path.join(self.saving_dir,
-                                                                            f"{var}_{self.saving_filename}"))
+                                                                           f"{var}_{self.saving_filename}"))
 
             self.assertEqual(loaded_buffers["timestamps"], monitored_buffers[var]["timestamps"],
-                                "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
+                             "The timestamps of the loaded buffer should be equal to the timestamps of the monitored buffer")
             self.assertEqual(loaded_buffers["values"], monitored_buffers[var]["values"],
-                                "The values of the loaded buffer should be equal to the values of the monitored buffer")
+                             "The values of the loaded buffer should be equal to the values of the monitored buffer")
 
         for var in self.monitor_vars:
             remove_file(os.path.join(self.saving_dir,
-                                        f"{var}_{self.saving_filename}"))
-
+                                     f"{var}_{self.saving_filename}"))
 
 
 class test_Controller(unittest.TestCase):
@@ -394,19 +387,18 @@ class test_Controller(unittest.TestCase):
         self.controller.connect()
 
     def tearDown(self):
-        self.controller.__del__()
+        self.controller.cleanup()
 
     def test_start_stop_controlling(self):
         self.controller.start_controlling(variables=self.controlled_vars)
 
         self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars), {
-                            var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
+            var: True for var in self.controlled_vars}, "The controlled status of the variables should be True after start_controlling")
 
         self.controller.stop_controlling(variables=self.controlled_vars)
 
         self.assertEqual(self.controller.get_controlled_status(variables=self.controlled_vars),  {
-                            var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
-
+            var: False for var in self.controlled_vars}, "The controlled status of the variables should be False after stop_controlling")
 
     def test_send_value(self):
         # TODO add streamer to check values are being sent
@@ -416,7 +408,7 @@ class test_Controller(unittest.TestCase):
 
         self.controller.send_value(
             variables=self.controlled_vars, values=[set_value]*len(self.controlled_vars))
-        asyncio.run(asyncio.sleep(0.1))  # wait for the values to be set
+        self.controller.wait(0.1)  # wait for the values to be set
 
         _controlled_values = self.controller.get_value(
             variables=self.controlled_vars)  # avoid multiple calls to list
@@ -430,7 +422,6 @@ class test_Controller(unittest.TestCase):
                 _controlled_values[var] == expected_values[idx], "The controlled value should be 4")
 
 
-
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -441,7 +432,7 @@ if __name__ == '__main__':
     # unittest.main(verbosity=2)
 
     # select which tests to run
-    n = 1
+    n = 2
     for i in range(n):
 
         print(f"\n\n....Running test {i+1}/{n}")
@@ -466,7 +457,7 @@ if __name__ == '__main__':
             test_Monitor('test_period_monitor'),
             test_Monitor('test_monitor_n_values'),
             test_Monitor('test_save_monitor'),
-            # controller
+            #  controller
             test_Controller('test_start_stop_controlling'),
             test_Controller('test_send_value')
         ])

@@ -1,5 +1,4 @@
 from .Streamer import Streamer
-import asyncio
 
 
 class Monitor(Streamer):
@@ -57,17 +56,17 @@ class Monitor(Streamer):
             peeked_values = self._peek_response
             # set _peek_response again to None so that peek is not notified every time a new buffer is received (see Streamer._process_data_msg)
             self._peek_response = None
-            self.stop_monitoring(variables)
+            await self._async_stop_monitoring(variables)
 
             return peeked_values
 
-        return asyncio.run(_async_peek(variables))
+        return self.loop.run_until_complete(_async_peek(variables))
 
         # using list
         # res = self.list()
         # return {var: next(r["value"] for r in res if r["name"] == var) for var in variables}
 
-    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt", saving_dir="/."):
+    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt", saving_dir="./"):
         """
         Starts the monitoring session. The session can be stopped with stop_monitoring().
 
@@ -82,10 +81,10 @@ class Monitor(Streamer):
         """
 
         variables = self._var_arg_checker(variables)
-        periods = self._check_periods(periods, variables)
+        self._periods = self._check_periods(periods, variables)
 
         self.start_streaming(
-            variables=variables, periods=periods, saving_enabled=saving_enabled, saving_filename=saving_filename, saving_dir=saving_dir)
+            variables=variables, periods=self._periods, saving_enabled=saving_enabled, saving_filename=saving_filename, saving_dir=saving_dir)
 
     def monitor_n_values(self, variables=[], periods=[], n_values=1000, saving_enabled=False, saving_filename="monitor.txt"):
         """
@@ -110,8 +109,8 @@ class Monitor(Streamer):
             monitored_buffers_queue (dict): Dict containing the monitored buffers for each streamed variable.
         """
         variables = self._var_arg_checker(variables)
-        periods = self._check_periods(periods, variables)
-        self.stream_n_values(variables, periods, n_values,
+        self._periods = self._check_periods(periods, variables)
+        self.stream_n_values(variables, self._periods, n_values,
                              saving_enabled, saving_filename)
         return self.values
 
@@ -134,10 +133,16 @@ class Monitor(Streamer):
             deque: Monitored buffers queue
         """
         variables = self._var_arg_checker(variables)
-        periods = self._check_periods(periods, variables)
+        self._periods = self._check_periods(periods, variables)
 
-        self.async_stream_n_values(variables, periods, n_values,
+        self.async_stream_n_values(variables, self._periods, n_values,
                                    saving_enabled, saving_filename)
+
+    async def _async_stop_monitoring(self, variables=[]):
+        await self._async_stop_streaming(variables)
+        self._monitored_vars = None
+        self._periods = None
+        return {var: self.values[var] for var in self.values if self.values[var]["timestamps"] != []}
 
     def stop_monitoring(self, variables=[]):
         """

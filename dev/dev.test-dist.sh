@@ -7,7 +7,7 @@ echo "\nCreating test-env..."
 python -m venv test-env
 source test-env/bin/activate
 echo "\nInstalling pybela from dist..." 
-pip install ../dist/pybela-1.0.2-py3-none-any.whl
+pip install ../dist/pybela-2.0.0-py3-none-any.whl
 echo "\nRunning test.py..."
 python test.py
 deactivate

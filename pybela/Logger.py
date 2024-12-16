@@ -4,7 +4,7 @@ import aiofiles
 import struct
 import paramiko
 from .Watcher import Watcher
-from .utils import _bcolors, _print_error, _print_info, _print_ok, _print_warning
+from .utils import _print_error, _print_info, _print_ok, _print_warning
 
 
 class Logger(Watcher):
@@ -30,6 +30,8 @@ class Logger(Watcher):
 
         self._mode = "LOG"
 
+    # -- logging methods --
+
     def start_logging(self, variables=[], transfer=True, logging_dir="./"):
         """ Starts logging session. The session can be ended by calling stop_logging().
 
@@ -40,27 +42,24 @@ class Logger(Watcher):
         Returns:
             list of str: List of local paths to the logged files.
         """
-
-        remote_paths = self.__logging_common_routine(
-            mode="FOREVER", timestamps=[], durations=[], variables=variables, logging_dir=logging_dir)
+        remote_paths = self.loop.run_until_complete(self.__async_logging_common_routine(
+            mode="FOREVER", timestamps=[], durations=[], variables=variables, logging_dir=logging_dir))
 
         local_paths = {}
         if transfer:
-            async def copying_tasks():  # FIXME can we remove this async?
-                for var in [v for v in self.watcher_vars if v["name"] in variables]:
-                    var = var["name"]
-                    local_path = os.path.join(
-                        logging_dir, os.path.basename(remote_paths[var]))
+            self.connect_ssh()  # start ssh connection
+            for var in [v for v in self.watcher_vars if v["name"] in variables]:
+                var = var["name"]
+                local_path = os.path.join(
+                    logging_dir, os.path.basename(remote_paths[var]))
 
-                    # if file already exists, throw a warning and add number at the end of the filename
-                    local_paths[var] = self._generate_local_filename(
-                        local_path)
+                # if file already exists, throw a warning and add number at the end of the filename
+                local_paths[var] = self._generate_local_filename(
+                    local_path)
 
-                    copying_task = self.__copy_file_in_chunks(
-                        remote_paths[var], local_paths[var])
-                    self._active_copying_tasks.append(copying_task)
-
-            asyncio.run(copying_tasks())
+                copying_task = self.__copy_file_in_chunks(
+                    remote_paths[var], local_paths[var])
+                self._active_copying_tasks.append(copying_task)
 
         return {"local_paths": local_paths, "remote_paths": remote_paths}
 
@@ -74,21 +73,24 @@ class Logger(Watcher):
             transfer (bool, optional): Transfer files to laptop automatically during logging session. Defaults to True.
             logging_dir (str, optional): Path to store the files. Defaults to "./".
         """
+
+        # check timestamps and duration types
+        assert isinstance(
+            timestamps, list) and all(isinstance(timestamp, int) for timestamp in timestamps), "Error: timestamps must be a list of ints."
+        assert isinstance(
+            durations, list) and all(isinstance(duration, int) for duration in durations), "Error: durations must be a list of ints."
+
+        remote_paths = self.loop.run_until_complete(self.__async_logging_common_routine(
+            mode="SCHEDULED", timestamps=timestamps, durations=durations, variables=variables, logging_dir=logging_dir))
+
         async def _async_schedule_logging(variables, timestamps, durations, transfer, logging_dir):
             # checks types and if no variables are specified, stream all watcher variables (default)
-            latest_timestamp = self.get_latest_timestamp()
-
-            # check timestamps and duration types
-            assert isinstance(
-                timestamps, list) and all(isinstance(timestamp, int) for timestamp in timestamps), "Error: timestamps must be a list of ints."
-            assert isinstance(
-                durations, list) and all(isinstance(duration, int) for duration in durations), "Error: durations must be a list of ints."
-
-            remote_paths = self.__logging_common_routine(
-                mode="SCHEDULED", timestamps=timestamps, durations=durations, variables=variables, logging_dir=logging_dir)
+            latest_timestamp = await self._async_get_latest_timestamp()
 
             local_paths = {}
             if transfer:
+                self.connect_ssh()  # start ssh connection
+
                 async def _async_check_if_file_exists_and_start_copying(var, timestamp):
 
                     diff_stamps = timestamp - latest_timestamp
@@ -124,7 +126,7 @@ class Logger(Watcher):
 
                 _active_checking_tasks = []
                 for idx, var in enumerate(variables):
-                    check_task = asyncio.create_task(
+                    check_task = self.loop.create_task(
                         _async_check_if_file_exists_and_start_copying(var, timestamps[idx]))
                     _active_checking_tasks.append(check_task)
 
@@ -138,7 +140,8 @@ class Logger(Watcher):
                 await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
                 self._active_copying_tasks.clear()
                 _active_checking_tasks.clear()
-                self.sftp_client.close()
+                if self.sftp_client:
+                    self.disconnect_ssh()
 
                 # async version (non blocking)
                 # async def _async_cleanup():
@@ -149,9 +152,9 @@ class Logger(Watcher):
 
             return {"local_paths": local_paths, "remote_paths": remote_paths}
 
-        return asyncio.run(_async_schedule_logging(variables=variables, timestamps=timestamps, durations=durations, transfer=transfer, logging_dir=logging_dir))
+        return self.loop.run_until_complete(_async_schedule_logging(variables=variables, timestamps=timestamps, durations=durations, transfer=transfer, logging_dir=logging_dir))
 
-    def __logging_common_routine(self, mode, timestamps=[], durations=[], variables=[], logging_dir="./"):
+    async def __async_logging_common_routine(self, mode, timestamps=[], durations=[], variables=[], logging_dir="./"):
         # checks types and if no variables are specified, stream all watcher variables (default)
         variables = self._var_arg_checker(variables)
 
@@ -159,20 +162,20 @@ class Logger(Watcher):
             os.makedirs(logging_dir)
 
         if self.is_logging():
-            self.stop_logging()
+            self.loop.create_task(self._async_stop_logging())
 
-        self.connect_ssh()  # start ssh connection
+        # self.connect_ssh()  # start ssh connection
 
         self._logging_mode = mode
 
         remote_files, remote_paths = {}, {}
 
-        self.send_ctrl_msg({"watcher": [
-                           {"cmd": "log", "timestamps": timestamps, "durations": durations, "watchers": variables}]})
-        list_res = self.list()
+        await self._async_send_ctrl_msg({"watcher": [
+            {"cmd": "log", "timestamps": timestamps, "durations": durations, "watchers": variables}]})
 
+        _list = await self._async_list()
         for idx, var in enumerate(variables):
-            remote_files[var] = list_res["watchers"][idx]["logFileName"]
+            remote_files[var] = _list["watchers"][idx]["logFileName"]
             remote_paths[var] = f'/root/Bela/projects/{self.project_name}/{remote_files[var]}'
 
         _print_info(
@@ -180,83 +183,51 @@ class Logger(Watcher):
 
         return remote_paths
 
-    def stop_logging(self, variables=[]):
-        """ Stops logging session.
+    async def _async_stop_logging(self, variables=[]):
+        """Stops logging session.
 
         Args:
             variables (list of str, optional): List of variables to stop logging. If none is passed, logging is stopped for all variables in the watcher. Defaults to [].
         """
-        async def async_stop_logging(variables=[]):
-            self._logging_mode = "OFF"
-            if variables == []:
-                # if no variables specified, stop streaming all watcher variables (default)
-                variables = [var["name"] for var in self.watcher_vars]
+        self._logging_mode = "OFF"
+        if variables == []:
+            # if no variables specified, stop streaming all watcher variables (default)
+            variables = [var["name"] for var in self.watcher_vars]
 
-            self.send_ctrl_msg(
-                {"watcher": [{"cmd": "unlog", "watchers": variables}]})
+        await self._async_send_ctrl_msg(
+            {"watcher": [{"cmd": "unlog", "watchers": variables}]})
 
-            _print_info(f"Stopped logging variables {variables}...")
+        _print_info(f"Stopped logging variables {variables}...")
 
-            await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
-            self._active_copying_tasks.clear()
-
-            self.sftp_client.close()
-
-            # self.stop()
-
-        return asyncio.run(async_stop_logging(variables))
-
-    def connect_ssh(self):
-        """ Connects to Bela via ssh to transfer log files.
-        """
-
-        if self.sftp_client is not None:
+        await asyncio.gather(*self._active_copying_tasks, return_exceptions=True)
+        self._active_copying_tasks.clear()
+        if self.sftp_client:
             self.disconnect_ssh()
 
-        self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    def stop_logging(self, variables=[]):
+        """ Stops logging session. Sync wrapper for _async_stop_logging().
 
-        # Workaround for no authentication:
-        # https://github.com/paramiko/paramiko/issues/890#issuecomment-906893725
-        try:
-            self.ssh_client.connect(
-                self.ip, port=22, username="root", password=None)
-        except paramiko.SSHException as e:
-            self.ssh_client.get_transport().auth_none("root")
-        except Exception as e:
-            _print_error(
-                f"Error while connecting to Bela via ssh: {e} {bcolors.ENDC}")
-            return
-
-        self.sftp_client = self.ssh_client.open_sftp()  # TODO handle exceptions better
-
-    def disconnect_ssh(self):
-        """ Disconnects from Bela via ssh.
+        Args:
+            variables (list of str, optional): List of variables to stop logging. If none is passed, logging is stopped for all variables in the watcher. Defaults to [].
         """
-        if self.sftp_client:
-            self.sftp_client.close()
-        if self.ssh_client:
-            self.ssh_client.close()
 
-    def is_logging(self):
-        """ Returns True if the logger is currently logging, false otherwise.
+        return self.loop.run_until_complete(self._async_stop_logging(variables))
 
-        Returns:
-            bool: Logger status
-        """
-        return True if self._logging_mode != "OFF" else False
+    # -- binary file parsing method
 
     def read_binary_file(self, file_path, timestamp_mode):
         """ Reads a binary file generated by the logger and returns a dictionary with the file contents.
 
         Args:
             file_path (str): Path of the file to be read.
-            timestamp_mode (str): Timestamp mode of the variable. Can be "dense" or "sparse". 
+            timestamp_mode (str): Timestamp mode of the variable. Can be "dense" or "sparse".
 
         Returns:
             dict: Dictionary with the file contents.
         """
-
+        if file_path is None:
+            _print_error("Error: No file path provided.")
+            return
         file_size = os.path.getsize(file_path)
         assert file_size != 0, f"Error: The size of {file_path} is 0."
 
@@ -312,9 +283,51 @@ class Logger(Watcher):
             "buffers": parsed_buffers
         }
 
-    # - utils
+    # -- ssh methods & utils --
 
-    # -- ssh copy utils
+    def connect_ssh(self):
+        """ Connects to Bela via ssh to transfer log files.
+        """
+
+        if self.sftp_client is not None:
+            self.disconnect_ssh()
+
+        self.ssh_client = paramiko.SSHClient()
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # Workaround for no authentication:
+        # https://github.com/paramiko/paramiko/issues/890#issuecomment-906893725
+        try:
+            self.ssh_client.connect(
+                self.ip, port=22, username="root", password=None)
+        except paramiko.SSHException as e:
+            self.ssh_client.get_transport().auth_none("root")
+        except Exception as e:
+            _print_error(
+                f"Error while connecting to Bela via ssh: {e} {bcolors.ENDC}")
+            return
+
+        try:
+            self.sftp_client = self.ssh_client.open_sftp()
+            # _print_ok("SSH connection and SFTP client established successfully.")
+        except Exception as e:
+            _print_error(
+                f"Error while opening SFTP client: {e} {bcolors.ENDC}")
+            self.disconnect_ssh()
+
+    def disconnect_ssh(self):
+        """ Disconnects from Bela via ssh.
+        """
+        if self.sftp_client:
+            self.sftp_client.close()
+
+    def is_logging(self):
+        """ Returns True if the logger is currently logging, false otherwise.
+
+        Returns:
+            bool: Logger status
+        """
+        return True if self._logging_mode != "OFF" else False
 
     def __copy_file_in_chunks(self, remote_path, local_path,  chunk_size=2**12):
         """ Copies a file from the remote path to the local path in chunks. This function is called by start_logging() if transfer=True.
@@ -373,7 +386,7 @@ class Logger(Watcher):
             finally:
                 await self._async_remove_item_from_list(self._active_copying_tasks, asyncio.current_task())
 
-        return asyncio.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
+        return self.loop.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
 
     def copy_file_from_bela(self, remote_path, local_path, verbose=True):
         """Copy a file from Bela onto the local machine.
@@ -384,9 +397,10 @@ class Logger(Watcher):
             verbose (bool, optional): Show info messages. Defaults to True.
         """
         self.connect_ssh()
-        asyncio.run(self._async_copy_file_from_bela(
+        local_path = self.loop.run_until_complete(self._async_copy_file_from_bela(
             remote_path, local_path, verbose))
         self.disconnect_ssh()
+        return local_path
 
     def copy_all_bin_files_in_project(self, dir="./", verbose=True):
         """ Copies all .bin files in the specified remote directory using SFTP.
@@ -402,7 +416,7 @@ class Logger(Watcher):
                 "copy", dir)
 
             # wait until all files are copied
-            asyncio.run(asyncio.gather(
+            self.loop.run_until_complete(asyncio.gather(
                 *copy_tasks, return_exceptions=True))
 
             if verbose:
@@ -422,23 +436,28 @@ class Logger(Watcher):
             local_path (str): Path to the file in the local machine (where the file is copied to)
         """
         try:
+            _local_path = None
             if os.path.exists(local_path):
-                local_path = self._generate_local_filename(local_path)
+                _local_path = self._generate_local_filename(local_path)
+            else:
+                _local_path = local_path
             transferred_event = asyncio.Event()
             def callback(transferred, to_transfer): return transferred_event.set(
             ) if transferred == to_transfer else None
-            self.sftp_client.get(remote_path, local_path, callback=callback)
-            await asyncio.wait_for(transferred_event.wait(), timeout=3)
+            self.sftp_client.get(remote_path, _local_path, callback=callback)
+            file_size = self.sftp_client.stat(remote_path).st_size
+            await asyncio.wait_for(transferred_event.wait(), timeout=file_size*1e-4)
             if verbose:
                 _print_ok(
-                    f"\rTransferring {remote_path}-->{local_path}... Done.")
-            return transferred_event.is_set()
-        except asyncio.TimeoutError:
-            _print_error("Timeout while transferring file.")
-            return False  # File copy did not complete within the timeout
+                    f"\rTransferring {remote_path}-->{_local_path}... Done.")
+            return local_path
+        except asyncio.exceptions.TimeoutError:
+            _print_error(
+                f"Error while transferring file: TimeoutError.")
+            return None
         except Exception as e:
             _print_error(f"Error while transferring file: {e}")
-            return False
+            return None
 
     def finish_copying_file(self, remote_path, local_path):  # TODO test
         """Finish copying file if it was interrupted. This function is used to copy the remaining part of a file that was interrupted during the copy process.
@@ -487,8 +506,6 @@ class Logger(Watcher):
 
         self.disconnect_ssh()
 
-    # -- ssh delete utils
-
     def delete_file_from_bela(self, remote_path, verbose=True):
         """Deletes a file from the remote path in Bela.
 
@@ -496,7 +513,8 @@ class Logger(Watcher):
             remote_path (str): Path to the remote file to be deleted. 
         """
         self.connect_ssh()
-        asyncio.run(self._async_delete_file_from_bela(remote_path, verbose))
+        self.loop.run_until_complete(
+            self._async_delete_file_from_bela(remote_path, verbose))
         self.disconnect_ssh()
 
     def delete_all_bin_files_in_project(self, verbose=True):
@@ -509,7 +527,7 @@ class Logger(Watcher):
                 "delete")
 
             # wait until all files are deleted
-            asyncio.run(asyncio.gather(
+            self.loop.run_until_complete(asyncio.gather(
                 *deletion_tasks, return_exceptions=True))
 
             if verbose:
@@ -546,8 +564,6 @@ class Logger(Watcher):
                     f"Error while deleting file in Bela: {e} ")
                 break
 
-    # -- bunk task utils
-
     def _action_on_all_bin_files_in_project(self, action, local_dir=None):
         # List all files in the remote directory
         remote_path = f'/root/Bela/projects/{self.project_name}'
@@ -559,25 +575,22 @@ class Logger(Watcher):
         # Iterate through the files and delete .bin files
         tasks = []
 
-        async def _async_action_action_on_all_bin_files_in_project():  # FIXME can we avoid this async?
-            for file_name in file_list:
-                if file_name.endswith('.bin'):
-                    remote_file_path = f"{remote_path}/{file_name}"
-                    if action == "delete":
-                        task = asyncio.create_task(
-                            self._async_delete_file_from_bela(remote_file_path))
-                    elif action == "copy":
-                        local_filename = os.path.join(local_dir, file_name)
-                        task = asyncio.create_task(
-                            self._async_copy_file_from_bela(remote_file_path, local_filename))
-                    else:
-                        raise ValueError(f"Invalid action: {action}")
-                    tasks.append(task)
-
-        asyncio.run(_async_action_action_on_all_bin_files_in_project())
+        for file_name in file_list:
+            if file_name.endswith('.bin'):
+                remote_file_path = f"{remote_path}/{file_name}"
+                if action == "delete":
+                    task = self.loop.create_task(
+                        self._async_delete_file_from_bela(remote_file_path))
+                elif action == "copy":
+                    local_filename = os.path.join(local_dir, file_name)
+                    task = self.loop.create_task(
+                        self._async_copy_file_from_bela(remote_file_path, local_filename))
+                else:
+                    raise ValueError(f"Invalid action: {action}")
+                tasks.append(task)
 
         return tasks
 
     def __del__(self):
+        super().__del__()
         self.disconnect_ssh()  # disconnect ssh
-        self.stop()  # stop websockets

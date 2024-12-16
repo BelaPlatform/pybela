@@ -1,15 +1,10 @@
 import unittest
 from pybela import Streamer
-import struct
 import numpy as np
-import asyncio
 
 streamer = Streamer()
 variables = ["myvar1", "myvar2"]
 
-
-async def wait():
-    await asyncio.sleep(0.1)
 
 # can't be merged with test.py because in the render.cpp the watcher needs to be 'ticked' when iterating the buffer, not at every audio frame!
 
@@ -27,12 +22,12 @@ class test_Sender(unittest.TestCase):
 
             for id in [0, 1]:
                 # buffers are only sent from Bela to the host once full, so it needs to be 1024 long to be sent
-                buffer_id, buffer_type, buffer_length, empty = id, 'f', 1024, 0
+                buffer_id, buffer_type, buffer_length = id, 'f', 1024
                 data_list = np.arange(1, buffer_length+1, 1)
                 streamer.send_buffer(buffer_id, buffer_type,
                                      buffer_length, data_list)
 
-            asyncio.run(wait())  # wait for the buffer to be sent
+            streamer.wait(0.1)  # wait for the buffer to be sent
 
             for var in variables:
                 assert np.array_equal(
