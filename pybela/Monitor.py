@@ -66,7 +66,7 @@ class Monitor(Streamer):
         # res = self.list()
         # return {var: next(r["value"] for r in res if r["name"] == var) for var in variables}
 
-    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt", saving_dir="/."):
+    def start_monitoring(self, variables=[], periods=[], saving_enabled=False, saving_filename="monitor.txt", saving_dir="./"):
         """
         Starts the monitoring session. The session can be stopped with stop_monitoring().
 

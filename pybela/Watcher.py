@@ -4,6 +4,7 @@ import json
 import errno
 import struct
 import os
+import nest_asyncio
 from .utils import _print_error, _print_warning, _print_ok
 
 
@@ -45,6 +46,13 @@ class Watcher:
                                    "CONTROL":  {}}
 
         self._pybela_ws_register = _pybela_ws_register
+
+        # if running in jupyter notebook, enable nest_asyncio
+        try:
+            get_ipython().__class__.__name__
+            nest_asyncio.apply()
+        except NameError:
+            pass
 
         # background event loop
         # If no loop exists, create a new one
