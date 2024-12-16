@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; pybela 1.0.2 1.0.2 documentation</title>
+  <title>&lt;no title&gt; &mdash; pybela 2.0.0 2.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b217d7a7" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1ed6394b"></script>
+      <script src="_static/documentation_options.js?v=51b770b3"></script>
       <script src="_static/doctools.js?v=9a2dae69"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -31,7 +31,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            pybela 1.0.2
+            pybela 2.0.0
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -72,7 +72,9 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.cleanup"><code class="docutils literal notranslate"><span class="pre">Watcher.cleanup()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.connect"><code class="docutils literal notranslate"><span class="pre">Watcher.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.disconnect"><code class="docutils literal notranslate"><span class="pre">Watcher.disconnect()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_buffer_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_buffer_size()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_data_byte_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_byte_size()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_data_length"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_length()</span></code></a></li>
@@ -82,15 +84,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.list"><code class="docutils literal notranslate"><span class="pre">Watcher.list()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.sample_rate"><code class="docutils literal notranslate"><span class="pre">Watcher.sample_rate</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.send_ctrl_msg"><code class="docutils literal notranslate"><span class="pre">Watcher.send_ctrl_msg()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.stop"><code class="docutils literal notranslate"><span class="pre">Watcher.stop()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.unwatched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.unwatched_vars</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.wait"><code class="docutils literal notranslate"><span class="pre">Watcher.wait()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.watched_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watched_vars</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.watcher_vars"><code class="docutils literal notranslate"><span class="pre">Watcher.watcher_vars</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#pybela.Streamer.Streamer"><code class="docutils literal notranslate"><span class="pre">Streamer</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.async_stream_n_values"><code class="docutils literal notranslate"><span class="pre">Streamer.async_stream_n_values()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.flush_queue"><code class="docutils literal notranslate"><span class="pre">Streamer.flush_queue()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.is_streaming"><code class="docutils literal notranslate"><span class="pre">Streamer.is_streaming()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.load_data_from_file"><code class="docutils literal notranslate"><span class="pre">Streamer.load_data_from_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Streamer.Streamer.monitored_vars"><code class="docutils literal notranslate"><span class="pre">Streamer.monitored_vars</span></code></a></li>
@@ -147,7 +148,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">pybela 1.0.2</a>
+          <a href="index.html">pybela 2.0.0</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -169,9 +170,21 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Watcher.</span></span><span class="sig-name descname"><span class="pre">Watcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.cleanup">
+<span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.cleanup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.cleanup" title="Link to this definition"></a></dt>
+<dd><p>Cleans up tasks. Synchronous wrapper for _async_cleanup</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.connect">
 <span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.connect" title="Link to this definition"></a></dt>
 <dd><p>Attempts to establish a WebSocket connection and prints a message indicating success or failure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.disconnect">
+<span class="sig-name descname"><span class="pre">disconnect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.disconnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.disconnect" title="Link to this definition"></a></dt>
+<dd><p>Closes websockets. Sync wrapper for _async_disconnect.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -234,7 +247,8 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_latest_timestamp">
 <span class="sig-name descname"><span class="pre">get_latest_timestamp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.get_latest_timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.get_latest_timestamp" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Get latest timestamp. Can’t be used in async functions</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.get_prop_of_var">
@@ -259,12 +273,15 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.is_connected">
 <span class="sig-name descname"><span class="pre">is_connected</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.is_connected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.is_connected" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Check if the websocket is connected
+:returns: True if connected, False otherwise
+:rtype: bool</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.list">
 <span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.list" title="Link to this definition"></a></dt>
-<dd><p>Asks the watcher for the list of variables and their properties and returns it</p>
+<dd><p>Sync wrapper for _async_list</p>
 </dd></dl>
 
 <dl class="py property">
@@ -283,16 +300,10 @@
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="pybela.Watcher.Watcher.stop">
-<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.stop" title="Link to this definition"></a></dt>
-<dd><p>Closes websockets</p>
-</dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.unwatched_vars">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unwatched_vars</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.unwatched_vars" title="Link to this definition"></a></dt>
-<dd><p>Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring)</p>
+<dd><p>Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring). Can’t be used in async functions, use _async_unwatched_vars instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>List of unwatched variables</p>
@@ -303,10 +314,16 @@
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.wait">
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_in_seconds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.wait" title="Link to this definition"></a></dt>
+<dd><p>Wait for a given amount of time. Can’t be used in async functions.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.watched_vars">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">watched_vars</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.watched_vars" title="Link to this definition"></a></dt>
-<dd><p>Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring)</p>
+<dd><p>Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring). Can’t be used in async functions, use _async_watched_vars instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>List of watched variables</p>
@@ -320,7 +337,7 @@
 <dl class="py property">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.watcher_vars">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">watcher_vars</span></span><a class="headerlink" href="#pybela.Watcher.Watcher.watcher_vars" title="Link to this definition"></a></dt>
-<dd><p>Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length)</p>
+<dd><p>Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length). Can’t be used in async functions, use _async_watcher_vars instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>List of variables in watcher and their properties</p>
@@ -341,7 +358,10 @@
 <dt class="sig sig-object py" id="pybela.Streamer.Streamer.async_stream_n_values">
 <em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">async_stream_n_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'var_stream.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_buffer_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_block_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.async_stream_n_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.async_stream_n_values" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Asynchronous version of stream_n_values(). Usage:</dt><dd><p>stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, saving_enabled, saving_filename))</p>
+<dt>Asynchronous version of stream_n_values(). Usage:</dt><dd><dl class="simple">
+<dt>stream_task = self.loop.create_task(streamer.async_stream_n_values(</dt><dd><p>variables, n_values, saving_enabled, saving_filename))</p>
+</dd>
+</dl>
 </dd>
 <dt>and retrieve the streaming buffer using:</dt><dd><p>streaming_buffers_queue = await stream_task</p>
 </dd>
@@ -367,12 +387,6 @@
 <dd class="field-odd"><p>deque</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pybela.Streamer.Streamer.flush_queue">
-<span class="sig-name descname"><span class="pre">flush_queue</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.flush_queue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.flush_queue" title="Link to this definition"></a></dt>
-<dd><p>Flushes the streaming buffers queue. The queue is emptied and the insertion counts are reset to 0.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -408,7 +422,7 @@
 <dl class="py property">
 <dt class="sig sig-object py" id="pybela.Streamer.Streamer.monitored_vars">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">monitored_vars</span></span><a class="headerlink" href="#pybela.Streamer.Streamer.monitored_vars" title="Link to this definition"></a></dt>
-<dd><p>Returns a list of monitored variables. If no variables are monitored, returns an empty list.</p>
+<dd><p>Returns a list of monitored variables. If no variables are monitored, returns an empty list. Can’t be used in async functions, use _async_monitored_vars() instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list of monitored variables</p>
@@ -421,7 +435,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Streamer.Streamer.plot_data">
-<span class="sig-name descname"><span class="pre">plot_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_vars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_update_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.plot_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.plot_data" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">plot_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_vars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_update_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollover</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.plot_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.plot_data" title="Link to this definition"></a></dt>
 <dd><p>Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -476,7 +490,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Streamer.Streamer.start_streaming">
 <span class="sig-name descname"><span class="pre">start_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'var_stream.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_buffer_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_block_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.start_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.start_streaming" title="Link to this definition"></a></dt>
-<dd><p>Starts the streaming session. The session can be stopped with stop_streaming().</p>
+<dd><p>Starts the streaming session. The session can be stopped with stop_streaming(). Can’t be used in async functions.</p>
 <p>If no variables are specified, all watcher variables are streamed. If saving_enabled is True, the streamed data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -496,7 +510,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Streamer.Streamer.stop_streaming">
 <span class="sig-name descname"><span class="pre">stop_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Streamer.html#Streamer.stop_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Streamer.Streamer.stop_streaming" title="Link to this definition"></a></dt>
-<dd><p>Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted.</p>
+<dd><p>Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted. Sync wrapper of _async_stop_streaming(), can’t be used in async functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em>, </em><em>optional</em>) – List of variables to stop streaming. Defaults to [].</p>
@@ -516,7 +530,10 @@
 <dd><p>Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size).</p>
 <p>Note: This function will block the main thread until n_values have been streamed. Since the streamed values come in blocks, the actual number of returned frames streamed may be higher than n_values, unless n_values is a multiple of the block size (streamer._streaming_block_size).</p>
 <dl class="simple">
-<dt>To avoid blocking, use the async version of this function:</dt><dd><p>stream_task = asyncio.create_task(streamer.async_stream_n_values(variables, n_values, periods, saving_enabled, saving_filename))</p>
+<dt>To avoid blocking, use the async version of this function:</dt><dd><dl class="simple">
+<dt>stream_task = self.loop.create_task(streamer.async_stream_n_values(</dt><dd><p>variables, n_values, periods, saving_enabled, saving_filename))</p>
+</dd>
+</dl>
 </dd>
 <dt>and retrieve the streaming buffer using:</dt><dd><p>streaming_buffers_queue = await stream_task</p>
 </dd>
@@ -730,7 +747,7 @@ local_path (str): Path to the file in the local machine (where the file is copie
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Logger.Logger.stop_logging">
 <span class="sig-name descname"><span class="pre">stop_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.stop_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.stop_logging" title="Link to this definition"></a></dt>
-<dd><p>Stops logging session.</p>
+<dd><p>Stops logging session. Sync wrapper for _async_stop_logging().</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to stop logging. If none is passed, logging is stopped for all variables in the watcher. Defaults to [].</p>
@@ -846,7 +863,7 @@ local_path (str): Path to the file in the local machine (where the file is copie
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Monitor.Monitor.start_monitoring">
-<span class="sig-name descname"><span class="pre">start_monitoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'monitor.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.start_monitoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.start_monitoring" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">start_monitoring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'monitor.txt'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saving_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Monitor.html#Monitor.start_monitoring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Monitor.Monitor.start_monitoring" title="Link to this definition"></a></dt>
 <dd><p>Starts the monitoring session. The session can be stopped with stop_monitoring().</p>
 <p>If no variables are specified, all watcher variables are monitored. If saving_enabled is True, the monitored data is saved to a local file. If saving_filename is None, the default filename is used with the variable name appended to its start. The filename is automatically incremented if it already exists.</p>
 <dl class="field-list simple">

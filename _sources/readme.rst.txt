@@ -254,7 +254,6 @@ To do and known issues
 
 **Long term**
 
--  ☐ **Design**: remove nest_asyncio?
 -  ☐ **Add**: example projects
 -  ☐ **Issue:** Monitor and streamer/controller can’t be used
    simultaneously –  This is due to both monitor and streamer both using
@@ -274,7 +273,6 @@ To do and known issues
    assign and the data being sent to the frontend.
 -  ☐ **Issue:** Flushed buffers are not collected after
    ``stop_streaming`` in the frontend.
--  ☐ **Bug:** ``OSError: [Errno 12] Cannot allocate memory``
 
 License
 -------
