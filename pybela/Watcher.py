@@ -488,9 +488,19 @@ class Watcher:
 
     # --- utils --- #
 
-    def wait(self, time_in_seconds):
-        """Wait for a given amount of time. Can't be used in async functions."""
-        self.loop.run_until_complete(asyncio.sleep(time_in_seconds))
+    def wait(self, time_in_seconds=0):
+        """Wait for a given amount of time. Can't be used in async functions. 
+            Args:
+                time_in_seconds (float, optional): Time to wait in seconds. If 0, it waits forever. Defaults to 0. 
+        """
+        if time_in_seconds < 0:
+            raise ValueError("Time in seconds should be greater than 0.")
+        elif time_in_seconds > 0:
+            self.loop.run_until_complete(asyncio.sleep(time_in_seconds))
+        else:
+            async def wait_forever():
+                await asyncio.Future()
+            self.loop.run_until_complete(wait_forever())
 
     async def _async_get_latest_timestamp(self):
         """Get latest timestamp. Async version of get_latest_timestamp."""
