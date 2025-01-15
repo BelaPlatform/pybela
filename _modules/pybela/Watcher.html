@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela.Watcher &mdash; pybela 2.0.0 2.0.0 documentation</title>
+  <title>pybela.Watcher &mdash; pybela 2.0.1 2.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
@@ -13,7 +13,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../../_static/documentation_options.js?v=f5cff4aa"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -30,7 +30,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            pybela 2.0.0
+            pybela 2.0.1
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -147,7 +147,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">pybela 2.0.0</a>
+          <a href="../../index.html">pybela 2.0.1</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -678,9 +678,19 @@
 
 <div class="viewcode-block" id="Watcher.wait">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.wait">[docs]</a>
-    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_in_seconds</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wait for a given amount of time. Can&#39;t be used in async functions.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">time_in_seconds</span><span class="p">))</span></div>
+    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_in_seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wait for a given amount of time. Can&#39;t be used in async functions. </span>
+<span class="sd">            Args:</span>
+<span class="sd">                time_in_seconds (float, optional): Time to wait in seconds. If 0, it waits forever. Defaults to 0. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">time_in_seconds</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Time in seconds should be greater than 0.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">time_in_seconds</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">time_in_seconds</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">def</span> <span class="nf">wait_forever</span><span class="p">():</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">wait_forever</span><span class="p">())</span></div>
 
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_get_latest_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
