@@ -7,7 +7,7 @@ jupyter-bokeh==3.0.5
 nest-asyncio==1.6.0
 notebook==7.2.2
 numpy==1.26.0
+pandas==2.2.3
 panel==0.14.4
 paramiko==3.5.0
 websockets==14.1
-pandas==2.2.3

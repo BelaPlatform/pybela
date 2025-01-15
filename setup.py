@@ -13,7 +13,7 @@ requirements = load_requirements('requirements.txt')
 
 setuptools.setup(
     name="pybela",
-    version="2.0.0",
+    version="2.0.1",
     author="Teresa Pelinski",
     author_email="teresapelinski@gmail.com",
     description="pybela allows interfacing with Bela, the embedded audio platform, using python. It offers a convenient way to stream data between Bela and python, in both directions. In addition to data streaming, pybela supports data logging, as well as variable monitoring and control functionalities.",
