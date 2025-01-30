@@ -250,8 +250,18 @@ either on Bela or your laptop.</p>
 need to add the watcher library to your Bela project. To do so, you will
 need to add the files <code class="docutils literal notranslate"><span class="pre">Watcher.h</span></code> and <code class="docutils literal notranslate"><span class="pre">Watcher.cpp</span></code> to your Bela
 project. You can do this by copying the files from the <code class="docutils literal notranslate"><span class="pre">watcher</span></code>
-repository into your Bela project. To do so, you can run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scp<span class="w"> </span>watcher/Watcher.h<span class="w"> </span>watcher/Watcher.cpp<span class="w"> </span>root@bela.local:Bela/projects/your-project/
+repository into your Bela project.</p>
+<p>First you need to clone this repository, <strong>don’t forget to add the
+``–recurse-submodules`` flag to the ``git`` command</strong> to populate the
+<code class="docutils literal notranslate"><span class="pre">watcher/</span></code> folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in laptop</span>
+git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>https://github.com/BelaPlatform/pybela.git
+</pre></div>
+</div>
+<p>Then you can copy the files to your Bela project:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># in laptop</span>
+<span class="nb">cd</span><span class="w"> </span>pybela/
+scp<span class="w"> </span>watcher/Watcher.h<span class="w"> </span>watcher/Watcher.cpp<span class="w"> </span>root@bela.local:Bela/projects/your-project/
 </pre></div>
 </div>
 </section>
@@ -272,9 +282,9 @@ python.</p></li>
 <li><p><strong>Controlling</strong>: control the value of variables in the Bela code from
 python.</p></li>
 </ul>
-<p>You can check the <strong>tutorials</strong> at
-tutorials/<code class="docutils literal notranslate"><span class="pre">for</span> <span class="pre">more</span> <span class="pre">detailed</span> <span class="pre">information</span> <span class="pre">and</span> <span class="pre">usage</span> <span class="pre">of</span> <span class="pre">each</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">modes.</span> <span class="pre">You</span> <span class="pre">can</span> <span class="pre">also</span> <span class="pre">check</span></code>test/test.py`
-for a quick overview of the library.</p>
+<p>You can check the <strong>tutorials</strong> at <code class="docutils literal notranslate"><span class="pre">tutorials/</span></code>for more detailed
+information and usage of each of the modes. You can also
+check<code class="docutils literal notranslate"><span class="pre">test/test.py</span></code> for a quick overview of the library.</p>
 </section>
 <section id="running-the-examples">
 <h2>Running the examples<a class="headerlink" href="#running-the-examples" title="Link to this heading"></a></h2>
@@ -301,7 +311,7 @@ your Bela code using the <code class="docutils literal notranslate"><span class=
 <section id="bela-side">
 <h3>Bela side<a class="headerlink" href="#bela-side" title="Link to this heading"></a></h3>
 <p>For example, if you want to access the variable <code class="docutils literal notranslate"><span class="pre">myvar</span></code> from python,
-you need to define the variable in your Bela code as follows:</p>
+you need to declare the variable in your Bela with the Watcher template:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Watcher.h&gt;</span>
 <span class="n">Watcher</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">myvar</span><span class="p">(</span><span class="s">&quot;myvar&quot;</span><span class="p">);</span>
 </pre></div>
@@ -330,9 +340,9 @@ you need to define the variable in your Bela code as follows:</p>
 </section>
 <section id="python-side">
 <h3>Python side<a class="headerlink" href="#python-side" title="Link to this heading"></a></h3>
-<p>Once the variable is defined “in the watcher”, you can stream, log and
-monitor its value from python. For example, to stream the value of
-<code class="docutils literal notranslate"><span class="pre">myvar</span></code> from python, you can do:</p>
+<p>Once the variable is declared with the Watcher template, you can stream,
+log, monitor and control its value from python. For example, to stream
+the value of <code class="docutils literal notranslate"><span class="pre">myvar</span></code> from python, you can do:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pybela</span> <span class="kn">import</span> <span class="n">Streamer</span>
 <span class="n">streamer</span> <span class="o">=</span> <span class="n">Streamer</span><span class="p">()</span>
 <span class="n">streamer</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
@@ -372,8 +382,8 @@ pipenv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> 
 </section>
 <section id="to-do-and-known-issues">
 <h1>To do and known issues<a class="headerlink" href="#to-do-and-known-issues" title="Link to this heading"></a></h1>
-<p><strong>Long term</strong></p>
 <ul class="simple">
+<li><p>☐ <strong>Fix</strong>: logger with automatic transfer too slow for large datasets</p></li>
 <li><p>☐ <strong>Add</strong>: example projects</p></li>
 <li><p>☐ <strong>Issue:</strong> Monitor and streamer/controller can’t be used
 simultaneously –  This is due to both monitor and streamer both using
