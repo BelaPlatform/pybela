@@ -76,7 +76,7 @@ You can check the commit hash by running `git rev-parse --short HEAD` either on 
 
 For pybela to be able to communicate with your Bela device, you will need to add the watcher library to your Bela project. To do so, you will need to add the files `Watcher.h` and `Watcher.cpp` to your Bela project. You can do this by copying the files from the `watcher` repository into your Bela project.
 
-First you need to clone this repository, ==don't forget to run the --recurse-submodules flag to populate the `watcher/` folder!==:
+First you need to clone this repository, **don't forget to add the `--recurse-submodules` flag to the `git` command** to populate the `watcher/` folder:
 
 ```bash
 # in laptop
