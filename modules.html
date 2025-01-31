@@ -728,13 +728,13 @@ local_path (str): Path to the file in the local machine (where the file is copie
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pybela.Logger.Logger.start_logging">
-<span class="sig-name descname"><span class="pre">start_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transfer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.start_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.start_logging" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">start_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transfer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.start_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.start_logging" title="Link to this definition"></a></dt>
 <dd><p>Starts logging session. The session can be ended by calling stop_logging().</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variables</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of variables to be logged. If no variables are passed, all variables in the watcher are logged. Defaults to [].</p></li>
-<li><p><strong>transfer</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the logged files will be transferred automatically during the logging session. Defaults to True.</p></li>
+<li><p><strong>transfer</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the logged files will be transferred automatically during the logging session. Defaults to False. #FIXME currently broken</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

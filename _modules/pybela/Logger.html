@@ -204,12 +204,12 @@
 
 <div class="viewcode-block" id="Logger.start_logging">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.start_logging">[docs]</a>
-    <span class="k">def</span> <span class="nf">start_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">start_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">transfer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Starts logging session. The session can be ended by calling stop_logging().</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variables (list of str, optional): List of variables to be logged. If no variables are passed, all variables in the watcher are logged. Defaults to [].</span>
-<span class="sd">            transfer (bool, optional): If True, the logged files will be transferred automatically during the logging session. Defaults to True.</span>
+<span class="sd">            transfer (bool, optional): If True, the logged files will be transferred automatically during the logging session. Defaults to False. #FIXME currently broken</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list of str: List of local paths to the logged files.</span>

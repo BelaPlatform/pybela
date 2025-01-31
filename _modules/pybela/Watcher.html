@@ -218,8 +218,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_pybela_ws_register</span> <span class="o">=</span> <span class="n">_pybela_ws_register</span>
 
         <span class="c1"># if running in jupyter notebook, enable nest_asyncio</span>
+        <span class="n">is_running_on_jupyter_notebook</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="n">is_running_on_jupyter_notebook</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">nest_asyncio</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running in Jupyter notebook. Enabling nest_asyncio.&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
@@ -228,8 +230,12 @@
         <span class="c1"># background event loop</span>
         <span class="c1"># If no loop exists, create a new one</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pybela_ws_register</span><span class="p">[</span><span class="s2">&quot;event-loop&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">()</span>
-            <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">is_running_on_jupyter_notebook</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">()</span>
+                <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_pybela_ws_register</span><span class="p">[</span><span class="s2">&quot;event-loop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># if loop exists, use the existing one</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pybela_ws_register</span><span class="p">[</span><span class="s2">&quot;event-loop&quot;</span><span class="p">]</span>
