@@ -48,8 +48,10 @@ class Watcher:
         self._pybela_ws_register = _pybela_ws_register
 
         # if running in jupyter notebook, enable nest_asyncio
+        is_running_on_jupyter_notebook = False
         try:
             get_ipython().__class__.__name__
+            is_running_on_jupyter_notebook = True
             nest_asyncio.apply()
             print("Running in Jupyter notebook. Enabling nest_asyncio.")
         except NameError:
@@ -58,8 +60,12 @@ class Watcher:
         # background event loop
         # If no loop exists, create a new one
         if self._pybela_ws_register["event-loop"] is None:
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
+
+            if is_running_on_jupyter_notebook:
+                self.loop = asyncio.get_event_loop()
+            else:
+                self.loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(self.loop)
             self._pybela_ws_register["event-loop"] = self.loop
         else:  # if loop exists, use the existing one
             self.loop = self._pybela_ws_register["event-loop"]
