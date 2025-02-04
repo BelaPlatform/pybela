@@ -204,7 +204,7 @@ pipenv run python -m build --sdist # builds the .tar.gz file
 ```
 
 ## To do and known issues
-
+- [ ] **Upgrade**: change dependency management from Pipenv to uv
 - [ ] **Fix**: logger with automatic transfer too slow for large datasets
 - [ ] **Add**: example projects
 - [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
