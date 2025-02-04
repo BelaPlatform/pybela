@@ -1,7 +1,0 @@
-build/
-*.pt
-*.jit
-*.bin
-*.ipynb_checkpoints/
-data/*
-.venv/*
