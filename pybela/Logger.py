@@ -32,12 +32,12 @@ class Logger(Watcher):
 
     # -- logging methods --
 
-    def start_logging(self, variables=[], transfer=False, logging_dir="./"):
+    def start_logging(self, variables=[], transfer=True, logging_dir="./"):
         """ Starts logging session. The session can be ended by calling stop_logging().
 
         Args:
             variables (list of str, optional): List of variables to be logged. If no variables are passed, all variables in the watcher are logged. Defaults to [].
-            transfer (bool, optional): If True, the logged files will be transferred automatically during the logging session. Defaults to False. #FIXME currently broken
+            transfer (bool, optional): If True, the logged files will be transferred automatically during the logging session. Defaults to False. #FIXME too slow
 
         Returns:
             list of str: List of local paths to the logged files.
