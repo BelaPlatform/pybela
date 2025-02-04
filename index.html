@@ -56,7 +56,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="readme.html#getting-started">Getting started</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="readme.html#modes-of-operation">Modes of operation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#running-the-examples">Running the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="readme.html#running-the-tutorials">Running the tutorials</a></li>
 <li class="toctree-l2"><a class="reference internal" href="readme.html#basic-usage">Basic usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="readme.html#bela-side">Bela side</a></li>
 <li class="toctree-l3"><a class="reference internal" href="readme.html#python-side">Python side</a></li>
@@ -64,6 +64,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html#example-projects">Example projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="readme.html#testing">Testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="readme.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="readme.html#to-do-and-known-issues">To do and known issues</a></li>
@@ -289,10 +290,10 @@ python.</p></li>
 information and usage of each of the modes. You can also
 check<code class="docutils literal notranslate"><span class="pre">test/test.py</span></code> for a quick overview of the library.</p>
 </section>
-<section id="running-the-examples">
-<h3>Running the examples<a class="headerlink" href="#running-the-examples" title="Link to this heading"></a></h3>
+<section id="running-the-tutorials">
+<h3>Running the tutorials<a class="headerlink" href="#running-the-tutorials" title="Link to this heading"></a></h3>
 <p>The quickest way to get started is to start a jupyter notebook server
-and run the examples. If you haven’t done it yet, install the python
+and run the tutorials. If you haven’t done it yet, install the python
 package as explained in the Installation section. If you don’t have the
 <code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code> package installed, you can install it by running
 (replace <code class="docutils literal notranslate"><span class="pre">pip</span></code> with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> if you are using a pipenv environment):</p>
@@ -359,6 +360,22 @@ the value of <code class="docutils literal notranslate"><span class="pre">myvar<
 </section>
 </section>
 </section>
+<section id="example-projects">
+<h2>Example projects<a class="headerlink" href="#example-projects" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/jorshi/pybela-drumsynth">pybela-drumsynth</a>:
+Audio-driven drum synthesis. This project takes audio from a
+microphone to control a drum synthesiser using onset detection and
+audio feature extraction. It uses pybela to capture an audio dataset
+and runs a torch model on Bela.</p></li>
+<li><p><a class="reference external" href="https://github.com/pelinski/faab-hyperparams/">faab-hyperparams</a>:
+Project that explores sonification of latent spaces of a Transformer
+Autoencoder model. This project uses pybela to capture training data,
+and to stream data to the laptop which runs a pytorch model. The
+output of the model can be sent back to Bela in real-time or sent
+through OSC to another device.</p></li>
+</ul>
+</section>
 <section id="testing">
 <h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
 <p>This library has been tested with Bela at <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch commit
@@ -386,6 +403,7 @@ pipenv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> 
 <section id="to-do-and-known-issues">
 <h2>To do and known issues<a class="headerlink" href="#to-do-and-known-issues" title="Link to this heading"></a></h2>
 <ul class="simple">
+<li><p>☐ <strong>Upgrade</strong>: change dependency management from Pipenv to uv</p></li>
 <li><p>☐ <strong>Fix</strong>: logger with automatic transfer too slow for large datasets</p></li>
 <li><p>☐ <strong>Add</strong>: example projects</p></li>
 <li><p>☐ <strong>Issue:</strong> Monitor and streamer/controller can’t be used
