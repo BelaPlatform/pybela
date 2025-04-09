@@ -16,3 +16,7 @@ docs/_build/*
 docs/readme.rst
 deptree.txt
 .venv/*
+*.log
+*.csv
+benchmark/data/*
+.pep8

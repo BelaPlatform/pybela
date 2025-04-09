@@ -2,7 +2,7 @@
 #include <Watcher.h>
 #include <cmath>
 
-Watcher<int> diffFramesElapsed("diffFramesElapsed");
+Watcher<int> auxWatcherVar("auxWatcherVar");
 
 #define VERBOSE 1 
 
@@ -22,27 +22,31 @@ uint gFramesElapsed = 0;
 
 bool binaryDataCallback(const std::string& addr, const WSServerDetails* id, const unsigned char* data, size_t size, void* arg) {
 
-    uint _framesElapsed = gFramesElapsed; 
+    uint _framesElapsed = gFramesElapsed; // copy the value of frameselapsed so that it does not vary inside the function
+
     receivedBuffersCount++;
     
     // parse received buffer
     std::memcpy(&receivedBuffer, data, receivedBufferHeaderSize);
     std::memcpy(receivedBuffer.bufferData.data(), data + receivedBufferHeaderSize, receivedBuffer.bufferLen * sizeof(int)); // data is a pointer to the beginning of the data
     
+    uint _diffFramesElapsed;
+    if (receivedBuffer.bufferData[0]==0){
+        _diffFramesElapsed = 0;
+    } else{
+        _diffFramesElapsed = _framesElapsed - receivedBuffer.bufferData[0];
+    }
+
     // assign the watched variable and tick the watcher 1024 times to fill the buffer that is sent to python
     for (size_t i = 0; i < receivedBuffer.bufferLen; ++i) {
         Bela_getDefaultWatcherManager()->tick(_framesElapsed); // tick needs to happen before assignment
-        if (receivedBuffer.bufferData[0]==0){
-            diffFramesElapsed = 0;
-        } else{
-            diffFramesElapsed = _framesElapsed - receivedBuffer.bufferData[0];
-        }
+        auxWatcherVar = _diffFramesElapsed;
     }
 
     if (VERBOSE){
-        printf("\ntotal received count:  %llu, total data size: %zu, bufferId: %d, bufferType: %s, bufferLen: %d \n", receivedBuffersCount, size, receivedBuffer.bufferId, receivedBuffer.bufferType,receivedBuffer.bufferLen);
+        printf("\ntotal received count:  %llu, total data size: %zu, bufferId: %d, bufferType: %s, bufferLen: %d\n", receivedBuffersCount, size, receivedBuffer.bufferId, receivedBuffer.bufferType,receivedBuffer.bufferLen);
 
-        printf("\n diff frames elapsed: %d, _framesElapsed: %d, receivedFramesElapsed: %zu \n", diffFramesElapsed.get(),_framesElapsed, receivedBuffer.bufferData[0]);
+        printf("\n diff frames elapsed: %d, _framesElapsed: %d, receivedFramesElapsed: %zu \n", auxWatcherVar.get(),_framesElapsed, receivedBuffer.bufferData[0]);
     }
 
     return true;
