@@ -2,7 +2,6 @@ import os
 import asyncio
 import aiofiles
 import struct
-import paramiko
 from .Watcher import Watcher
 from .utils import _print_error, _print_info, _print_ok, _print_warning
 
@@ -23,14 +22,19 @@ class Logger(Watcher):
         self._logging_vars = []
         self._logging_transfer = True
 
-        self.ssh_client = None
-        self.sftp_client = None
-
         self._active_copying_tasks = []
 
         self._mode = "LOG"
 
     # -- logging methods --
+
+    def is_logging(self):
+        """ Returns True if the logger is currently logging, false otherwise.
+
+        Returns:
+            bool: Logger status
+        """
+        return True if self._logging_mode != "OFF" else False
 
     def start_logging(self, variables=[], transfer=True, logging_dir="./"):
         """ Starts logging session. The session can be ended by calling stop_logging().
@@ -283,51 +287,8 @@ class Logger(Watcher):
             "buffers": parsed_buffers
         }
 
-    # -- ssh methods & utils --
-
-    def connect_ssh(self):
-        """ Connects to Bela via ssh to transfer log files.
-        """
-
-        if self.sftp_client is not None:
-            self.disconnect_ssh()
-
-        self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        # Workaround for no authentication:
-        # https://github.com/paramiko/paramiko/issues/890#issuecomment-906893725
-        try:
-            self.ssh_client.connect(
-                self.ip, port=22, username="root", password=None)
-        except paramiko.SSHException as e:
-            self.ssh_client.get_transport().auth_none("root")
-        except Exception as e:
-            _print_error(
-                f"Error while connecting to Bela via ssh: {e} {bcolors.ENDC}")
-            return
-
-        try:
-            self.sftp_client = self.ssh_client.open_sftp()
-            # _print_ok("SSH connection and SFTP client established successfully.")
-        except Exception as e:
-            _print_error(
-                f"Error while opening SFTP client: {e} {bcolors.ENDC}")
-            self.disconnect_ssh()
-
-    def disconnect_ssh(self):
-        """ Disconnects from Bela via ssh.
-        """
-        if self.sftp_client:
-            self.sftp_client.close()
-
-    def is_logging(self):
-        """ Returns True if the logger is currently logging, false otherwise.
-
-        Returns:
-            bool: Logger status
-        """
-        return True if self._logging_mode != "OFF" else False
+    # -- file transfer utils --
+    # expand copy_file_from_bela method in Watcher
 
     def __copy_file_in_chunks(self, remote_path, local_path,  chunk_size=2**12):
         """ Copies a file from the remote path to the local path in chunks. This function is called by start_logging() if transfer=True.
@@ -388,20 +349,6 @@ class Logger(Watcher):
 
         return self.loop.create_task(async_copy_file_in_chunks(remote_path, local_path, chunk_size))
 
-    def copy_file_from_bela(self, remote_path, local_path, verbose=True):
-        """Copy a file from Bela onto the local machine.
-
-        Args:
-            remote_path (str): Path to the remote file to be copied.
-            local_path (str): Path to the local file (where the file is copied to)
-            verbose (bool, optional): Show info messages. Defaults to True.
-        """
-        self.connect_ssh()
-        local_path = self.loop.run_until_complete(self._async_copy_file_from_bela(
-            remote_path, local_path, verbose))
-        self.disconnect_ssh()
-        return local_path
-
     def copy_all_bin_files_in_project(self, dir="./", verbose=True):
         """ Copies all .bin files in the specified remote directory using SFTP.
 
@@ -427,37 +374,6 @@ class Logger(Watcher):
                 f"Error copying .bin files in {remote_path}: {e}")
         finally:
             self.disconnect_ssh()
-
-    async def _async_copy_file_from_bela(self, remote_path, local_path, verbose=False):
-        """ Copies a file from the remote path in Bela to the local path. This can be used any time to copy files from Bela to the host. 
-
-        Args:
-            remote_path (str): Path to the file in Bela.
-            local_path (str): Path to the file in the local machine (where the file is copied to)
-        """
-        try:
-            _local_path = None
-            if os.path.exists(local_path):
-                _local_path = self._generate_local_filename(local_path)
-            else:
-                _local_path = local_path
-            transferred_event = asyncio.Event()
-            def callback(transferred, to_transfer): return transferred_event.set(
-            ) if transferred == to_transfer else None
-            self.sftp_client.get(remote_path, _local_path, callback=callback)
-            file_size = self.sftp_client.stat(remote_path).st_size
-            await asyncio.wait_for(transferred_event.wait(), timeout=file_size*1e-4)
-            if verbose:
-                _print_ok(
-                    f"\rTransferring {remote_path}-->{_local_path}... Done.")
-            return local_path
-        except asyncio.exceptions.TimeoutError:
-            _print_error(
-                f"Error while transferring file: TimeoutError.")
-            return None
-        except Exception as e:
-            _print_error(f"Error while transferring file: {e}")
-            return None
 
     def finish_copying_file(self, remote_path, local_path):  # TODO test
         """Finish copying file if it was interrupted. This function is used to copy the remaining part of a file that was interrupted during the copy process.
