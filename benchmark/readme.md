@@ -8,7 +8,11 @@ copy the Bela code onto Bela
 rsync -av benchmark/bela2python2bela-benchmark root@bela.local:Bela/projects/
 ```
 
-run the `bela2python2bela-benchmark` project in Bela from the IDE
+build the bela benchmark project passing the number of variables you want to test
+
+```bash
+make -C /root/Bela PROJECT=bela2python2bela-benchmark CPPFLAGS="-DNUM_AUX_VARIABLES=2" run
+```
 
 ```bash
 python benchmark/bela2python2bela-benchmark.py
