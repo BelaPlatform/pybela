@@ -4,8 +4,8 @@
 
 Watcher<int> diffFramesElapsed("diffFramesElapsed");
 
-unsigned int counter = 0;
-unsigned int gFramesElapsed = 0;
+#define VERBOSE 1 
+
 struct ReceivedBuffer {
     uint32_t bufferId;
     char bufferType[4];
@@ -15,41 +15,54 @@ struct ReceivedBuffer {
 };
 ReceivedBuffer receivedBuffer;
 uint receivedBufferHeaderSize;
-uint64_t totalReceivedCount;
+uint receivedBufferLen = 1024; // size of the buffer to be received from python
+uint64_t receivedBuffersCount;
 
+uint gFramesElapsed = 0;
 
 bool binaryDataCallback(const std::string& addr, const WSServerDetails* id, const unsigned char* data, size_t size, void* arg) {
 
-    totalReceivedCount++;
-
+    uint _framesElapsed = gFramesElapsed; 
+    receivedBuffersCount++;
+    
+    // parse received buffer
     std::memcpy(&receivedBuffer, data, receivedBufferHeaderSize);
-    receivedBuffer.bufferData.resize(receivedBuffer.bufferLen);
-    std::memcpy(receivedBuffer.bufferData.data(), data + receivedBufferHeaderSize, receivedBuffer.bufferLen * sizeof(float)); // data is a pointer to the beginning of the data
-
-    printf("\ntotal received count:  %llu, total data size: %zu, bufferId: %d, bufferType: %s, bufferLen: %d \n", totalReceivedCount, size, receivedBuffer.bufferId, receivedBuffer.bufferType,
-           receivedBuffer.bufferLen);
-
+    std::memcpy(receivedBuffer.bufferData.data(), data + receivedBufferHeaderSize, receivedBuffer.bufferLen * sizeof(int)); // data is a pointer to the beginning of the data
+    
+    // assign the watched variable and tick the watcher 1024 times to fill the buffer that is sent to python
     for (size_t i = 0; i < receivedBuffer.bufferLen; ++i) {
-            diffFramesElapsed = gFramesElapsed-receivedBuffer.bufferData[0];
-            Bela_getDefaultWatcherManager()->tick(gFramesElapsed);
+        Bela_getDefaultWatcherManager()->tick(_framesElapsed); // tick needs to happen before assignment
+        if (receivedBuffer.bufferData[0]==0){
+            diffFramesElapsed = 0;
+        } else{
+            diffFramesElapsed = _framesElapsed - receivedBuffer.bufferData[0];
         }
+    }
+
+    if (VERBOSE){
+        printf("\ntotal received count:  %llu, total data size: %zu, bufferId: %d, bufferType: %s, bufferLen: %d \n", receivedBuffersCount, size, receivedBuffer.bufferId, receivedBuffer.bufferType,receivedBuffer.bufferLen);
+
+        printf("\n diff frames elapsed: %d, _framesElapsed: %d, receivedFramesElapsed: %zu \n", diffFramesElapsed.get(),_framesElapsed, receivedBuffer.bufferData[0]);
+    }
 
     return true;
 }
 
 bool setup(BelaContext* context, void* userData) {
 
+    // set up Watcher Manager
     Bela_getDefaultWatcherManager()->getGui().setup(context->projectName);
     Bela_getDefaultWatcherManager()->setup(context->audioSampleRate); // set sample rate in watcher
 
-    Bela_getDefaultWatcherManager()->getGui().setBuffer('i',1024);
-
-
+    // set up Data Receiver
+    Bela_getDefaultWatcherManager()->getGui().setBuffer('i',receivedBufferLen);
     Bela_getDefaultWatcherManager()->getGui().setBinaryDataCallback(binaryDataCallback);
 
+    receivedBuffer.bufferLen = receivedBufferLen;    
     receivedBufferHeaderSize = sizeof(receivedBuffer.bufferId) + sizeof(receivedBuffer.bufferType) + sizeof(receivedBuffer.bufferLen) + sizeof(receivedBuffer.empty);
-    totalReceivedCount = 0;
-    Bela_getDefaultWatcherManager()->tick(totalReceivedCount); // init the watcher
+    receivedBuffer.bufferData.resize(receivedBufferLen);
+
+    receivedBuffersCount = 0;
 
     return true;
 }
