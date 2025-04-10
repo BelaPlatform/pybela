@@ -1,15 +1,11 @@
 from pybela import Streamer
 import numpy as np
-from datetime import datetime
 import csv
 import argparse
-import time
 
 BUFFER_LENGTH = 1024
 TIME_INTERVAL = 30
 NUM_AUX_VARIABLES = 1
-NUM_OSCS = 1
-TRANSPORT_MODE = "USB"
 
 
 async def callback(buffer, streamer):
@@ -50,16 +46,14 @@ if __name__ == "__main__":
 
     # argument parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument("--time", type=int, default=30, help="Time interval for streaming (seconds)")
-    parser.add_argument("--num_aux_vars", type=int, default=1, help="Number of variables to stream")
-    parser.add_argument("--num_oscs", type=int, default=1, help="Number of oscillators in Bela oscillator bank")
-    parser.add_argument("--transport_mode",  type=str, default="USB", help="Transport mode")
-    args = parser.parse_args()
+    parser.add_argument("--rfn", type=str, default="", help="root file name")
+    parser.add_argument("--time", type=int, default=30, help="time interval in seconds")
+    parser.add_argument("--numAuxVars", type=int, default=1, help="number of aux variables")
 
+    args = parser.parse_args()
+    root_filename = args.rfn
     TIME_INTERVAL = args.time
-    NUM_AUX_VARIABLES = args.num_aux_vars
-    NUM_OSCS = args.num_oscs
-    TRANSPORT_MODE = args.transport_mode
+    NUM_AUX_VARIABLES = args.numAuxVars
 
     streamer = Streamer()
     streamer.connect()
@@ -69,11 +63,7 @@ if __name__ == "__main__":
     diffs, frames = {var: [] for var in vars}, {var: [] for var in vars}
 
     cpu_logs_bela_path = f"/root/Bela/projects/{streamer.project_name}/cpu-logs"
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # Format: YYYYMMDD_HHMMSS
-    root_filename = f"{timestamp}-{TRANSPORT_MODE}-V{NUM_AUX_VARIABLES}-O{NUM_OSCS}"
     cpu_logs_filename = f"{root_filename}_cpu-load.log"
-
-    streamer.ssh_client.exec_command(f"mkdir -p {cpu_logs_bela_path}")
 
     #  < -- streaming starts -- >
 
@@ -81,8 +71,9 @@ if __name__ == "__main__":
 
     # start cpu monitoring
     print("Starting Bela-CPU monitoring...")
-    streamer.ssh_client.exec_command(
-        f"node /root/Bela/IDE/dist/bela-cpu.js >  {cpu_logs_bela_path}/{cpu_logs_filename} 2>&1 &")
+
+    # truncate cpu logs file
+    streamer.ssh_client.exec_command(f"echo '' > {cpu_logs_bela_path}/{cpu_logs_filename}")
 
     # watcher is ticking inside binaryDataCallback so we need to send data to get it started
     buffer_type, _zeros = 'i', np.zeros(BUFFER_LENGTH, dtype=int)
@@ -92,16 +83,9 @@ if __name__ == "__main__":
     # stream for n seconds
     streamer.wait(TIME_INTERVAL)
 
-    # kill cpu monitoring
-    print("Stopping Bela-CPU monitoring...")
-    streamer.ssh_client.exec_command("pkill -f 'node /root/Bela/IDE/dist/bela-cpu.js'")
-
     streamer.stop_streaming()
 
     #  < -- streaming finishes -- >
-
-    # cpu-logs legend: MSW, CPU usage, audio thread CPU usage
-    streamer.copy_file_from_bela(f"{cpu_logs_bela_path}/{cpu_logs_filename}", f"benchmark/data/{cpu_logs_filename}")
 
     diffs_in_ms = {}
     sr = streamer.sample_rate
