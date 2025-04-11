@@ -5,6 +5,7 @@ import errno
 import struct
 import os
 import nest_asyncio
+import paramiko
 from .utils import _print_error, _print_warning, _print_ok
 
 
@@ -31,6 +32,10 @@ class Watcher:
         self.ws_data_add = f"ws://{self.ip}:{self.port}/{self.data_add}"
         self.ws_ctrl = None
         self.ws_data = None
+
+        self.ssh_client = None
+        self.sftp_client = None
+
         self._watcher_vars = None
         self._mode = "WATCH"
 
@@ -258,6 +263,46 @@ class Watcher:
         """Closes websockets. Sync wrapper for _async_disconnect.
         """
         self.loop.run_until_complete(self._async_disconnect())
+
+    # -- ssh methods --
+
+    def connect_ssh(self):
+        """ Connects to Bela via ssh to transfer log files.
+        """
+
+        if self.sftp_client is not None:
+            self.disconnect_ssh()
+
+        self.ssh_client = paramiko.SSHClient()
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # Workaround for no authentication:
+        # https://github.com/paramiko/paramiko/issues/890#issuecomment-906893725
+        try:
+            self.ssh_client.connect(
+                self.ip, port=22, username="root", password=None)
+        except paramiko.SSHException as e:
+            self.ssh_client.get_transport().auth_none("root")
+        except Exception as e:
+            _print_error(
+                f"Error while connecting to Bela via ssh: {e}")
+            return
+
+        try:
+            self.sftp_client = self.ssh_client.open_sftp()
+            # _print_ok("SSH connection and SFTP client established successfully.")
+        except Exception as e:
+            _print_error(
+                f"Error while opening SFTP client: {e}")
+            self.disconnect_ssh()
+
+    def disconnect_ssh(self):
+        """ Disconnects from Bela via ssh.
+        """
+        if self.sftp_client:
+            self.sftp_client.close()
+
+    # -- cleanups -- #
 
     async def _async_cancel_tasks(self, tasks):
         """Cancels tasks
@@ -673,6 +718,51 @@ class Watcher:
         else:
             # return error message
             return 0
+
+    def copy_file_from_bela(self, remote_path, local_path, verbose=True):
+        """Copy a file from Bela onto the local machine.
+
+        Args:
+            remote_path (str): Path to the remote file to be copied.
+            local_path (str): Path to the local file (where the file is copied to)
+            verbose (bool, optional): Show info messages. Defaults to True.
+        """
+        self.connect_ssh()
+        local_path = self.loop.run_until_complete(self._async_copy_file_from_bela(
+            remote_path, local_path, verbose))
+        self.disconnect_ssh()
+        return local_path
+
+    async def _async_copy_file_from_bela(self, remote_path, local_path, verbose=False):
+        """ Copies a file from the remote path in Bela to the local path. This can be used any time to copy files from Bela to the host. 
+
+        Args:
+            remote_path (str): Path to the file in Bela.
+            local_path (str): Path to the file in the local machine (where the file is copied to)
+        """
+        try:
+            _local_path = None
+            if os.path.exists(local_path):
+                _local_path = self._generate_local_filename(local_path)
+            else:
+                _local_path = local_path
+            transferred_event = asyncio.Event()
+            def callback(transferred, to_transfer): return transferred_event.set(
+            ) if transferred == to_transfer else None
+            self.sftp_client.get(remote_path, _local_path, callback=callback)
+            file_size = self.sftp_client.stat(remote_path).st_size
+            await asyncio.wait_for(transferred_event.wait(), timeout=file_size*1e-4)
+            if verbose:
+                _print_ok(
+                    f"\rTransferring {remote_path}-->{_local_path}... Done.")
+            return local_path
+        except asyncio.exceptions.TimeoutError:
+            _print_error(
+                f"Error while transferring file: TimeoutError.")
+            return None
+        except Exception as e:
+            _print_error(f"Error while transferring file: {e}")
+            return None
 
     # destructor
 
