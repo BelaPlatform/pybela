@@ -2,20 +2,10 @@
 
 _tested using Bela `dev` branch commit `63c8089a`_
 
-copy the Bela code onto Bela
+To run the benchmarking routine, first connect your Bela board to your computer. Then, open a terminal in this directory and run the following command:
 
 ```bash
-rsync -av benchmark/bela2python2bela-benchmark root@bela.local:Bela/projects/
+bash run_benchmark.sh
 ```
 
-build the bela benchmark project passing the number of variables you want to test
-
-```bash
-make -C /root/Bela PROJECT=bela2python2bela-benchmark CPPFLAGS="-DNUM_AUX_VARIABLES=2" run
-```
-
-```bash
-python benchmark/bela2python2bela-benchmark.py
-```
-
-this will run the benchmark and save the cpu load logs and roundtrip latency measurements in the `benchmark/data/` folder
+This will run the benchmark for each configuration and save the results in the `data/` directory. See `data-processing.ipynb` for the data processing code, to obtain, for each configuration, average and maximum latency, jitter, and CPU usage.
