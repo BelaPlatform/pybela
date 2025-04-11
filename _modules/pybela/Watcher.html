@@ -74,7 +74,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.cleanup"><code class="docutils literal notranslate"><span class="pre">Watcher.cleanup()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.connect"><code class="docutils literal notranslate"><span class="pre">Watcher.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Watcher.connect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Watcher.copy_file_from_bela()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.disconnect"><code class="docutils literal notranslate"><span class="pre">Watcher.disconnect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Watcher.disconnect_ssh()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_buffer_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_buffer_size()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_data_byte_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_byte_size()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Watcher.Watcher.get_data_length"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_length()</span></code></a></li>
@@ -107,12 +110,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.connect_ssh()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.copy_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.copy_all_bin_files_in_project()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.copy_file_from_bela()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.delete_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.delete_all_bin_files_in_project()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.delete_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.delete_file_from_bela()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.disconnect_ssh()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.finish_copying_file"><code class="docutils literal notranslate"><span class="pre">Logger.finish_copying_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.is_logging"><code class="docutils literal notranslate"><span class="pre">Logger.is_logging()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../modules.html#pybela.Logger.Logger.read_binary_file"><code class="docutils literal notranslate"><span class="pre">Logger.read_binary_file()</span></code></a></li>
@@ -174,6 +174,7 @@
 <span class="kn">import</span> <span class="nn">struct</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">nest_asyncio</span>
+<span class="kn">import</span> <span class="nn">paramiko</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_warning</span><span class="p">,</span> <span class="n">_print_ok</span>
 
 
@@ -202,6 +203,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ws_data_add</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;ws://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_add</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_watcher_vars</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mode</span> <span class="o">=</span> <span class="s2">&quot;WATCH&quot;</span>
 
@@ -438,6 +443,52 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_disconnect</span><span class="p">())</span></div>
 
+
+    <span class="c1"># -- ssh methods --</span>
+
+<div class="viewcode-block" id="Watcher.connect_ssh">
+<a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.connect_ssh">[docs]</a>
+    <span class="k">def</span> <span class="nf">connect_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Connects to Bela via ssh to transfer log files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disconnect_ssh</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span> <span class="o">=</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">SSHClient</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">set_missing_host_key_policy</span><span class="p">(</span><span class="n">paramiko</span><span class="o">.</span><span class="n">AutoAddPolicy</span><span class="p">())</span>
+
+        <span class="c1"># Workaround for no authentication:</span>
+        <span class="c1"># https://github.com/paramiko/paramiko/issues/890#issuecomment-906893725</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;root&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">SSHException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">get_transport</span><span class="p">()</span><span class="o">.</span><span class="n">auth_none</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_print_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error while connecting to Bela via ssh: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">open_sftp</span><span class="p">()</span>
+            <span class="c1"># _print_ok(&quot;SSH connection and SFTP client established successfully.&quot;)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_print_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error while opening SFTP client: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disconnect_ssh</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Watcher.disconnect_ssh">
+<a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.disconnect_ssh">[docs]</a>
+    <span class="k">def</span> <span class="nf">disconnect_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Disconnects from Bela via ssh.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+    <span class="c1"># -- cleanups -- #</span>
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_cancel_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasks</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancels tasks</span>
@@ -880,6 +931,54 @@
             <span class="c1"># return error message</span>
             <span class="k">return</span> <span class="mi">0</span></div>
 
+
+<div class="viewcode-block" id="Watcher.copy_file_from_bela">
+<a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.copy_file_from_bela">[docs]</a>
+    <span class="k">def</span> <span class="nf">copy_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Copy a file from Bela onto the local machine.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            remote_path (str): Path to the remote file to be copied.</span>
+<span class="sd">            local_path (str): Path to the local file (where the file is copied to)</span>
+<span class="sd">            verbose (bool, optional): Show info messages. Defaults to True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect_ssh</span><span class="p">()</span>
+        <span class="n">local_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_copy_file_from_bela</span><span class="p">(</span>
+            <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disconnect_ssh</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">local_path</span></div>
+
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_copy_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Copies a file from the remote path in Bela to the local path. This can be used any time to copy files from Bela to the host. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            remote_path (str): Path to the file in Bela.</span>
+<span class="sd">            local_path (str): Path to the file in the local machine (where the file is copied to)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_local_path</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">local_path</span><span class="p">):</span>
+                <span class="n">_local_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_local_filename</span><span class="p">(</span><span class="n">local_path</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_local_path</span> <span class="o">=</span> <span class="n">local_path</span>
+            <span class="n">transferred_event</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+            <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">transferred</span><span class="p">,</span> <span class="n">to_transfer</span><span class="p">):</span> <span class="k">return</span> <span class="n">transferred_event</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="p">)</span> <span class="k">if</span> <span class="n">transferred</span> <span class="o">==</span> <span class="n">to_transfer</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">_local_path</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
+            <span class="n">file_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">remote_path</span><span class="p">)</span><span class="o">.</span><span class="n">st_size</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">transferred_event</span><span class="o">.</span><span class="n">wait</span><span class="p">(),</span> <span class="n">timeout</span><span class="o">=</span><span class="n">file_size</span><span class="o">*</span><span class="mf">1e-4</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">_print_ok</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">Transferring </span><span class="si">{</span><span class="n">remote_path</span><span class="si">}</span><span class="s2">--&gt;</span><span class="si">{</span><span class="n">_local_path</span><span class="si">}</span><span class="s2">... Done.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">local_path</span>
+        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">:</span>
+            <span class="n">_print_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error while transferring file: TimeoutError.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_print_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error while transferring file: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
     <span class="c1"># destructor</span>
 

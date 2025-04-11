@@ -75,7 +75,10 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.cleanup"><code class="docutils literal notranslate"><span class="pre">Watcher.cleanup()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.connect"><code class="docutils literal notranslate"><span class="pre">Watcher.connect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Watcher.connect_ssh()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Watcher.copy_file_from_bela()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.disconnect"><code class="docutils literal notranslate"><span class="pre">Watcher.disconnect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Watcher.disconnect_ssh()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_buffer_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_buffer_size()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_data_byte_size"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_byte_size()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Watcher.Watcher.get_data_length"><code class="docutils literal notranslate"><span class="pre">Watcher.get_data_length()</span></code></a></li>
@@ -108,12 +111,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#pybela.Logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.connect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.connect_ssh()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.copy_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.copy_all_bin_files_in_project()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.copy_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.copy_file_from_bela()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.delete_all_bin_files_in_project"><code class="docutils literal notranslate"><span class="pre">Logger.delete_all_bin_files_in_project()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.delete_file_from_bela"><code class="docutils literal notranslate"><span class="pre">Logger.delete_file_from_bela()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.disconnect_ssh"><code class="docutils literal notranslate"><span class="pre">Logger.disconnect_ssh()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.finish_copying_file"><code class="docutils literal notranslate"><span class="pre">Logger.finish_copying_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.is_logging"><code class="docutils literal notranslate"><span class="pre">Logger.is_logging()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pybela.Logger.Logger.read_binary_file"><code class="docutils literal notranslate"><span class="pre">Logger.read_binary_file()</span></code></a></li>
@@ -183,9 +183,36 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.connect_ssh">
+<span class="sig-name descname"><span class="pre">connect_ssh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.connect_ssh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.connect_ssh" title="Link to this definition"></a></dt>
+<dd><p>Connects to Bela via ssh to transfer log files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.copy_file_from_bela">
+<span class="sig-name descname"><span class="pre">copy_file_from_bela</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.copy_file_from_bela"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.copy_file_from_bela" title="Link to this definition"></a></dt>
+<dd><p>Copy a file from Bela onto the local machine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>remote_path</strong> (<em>str</em>) – Path to the remote file to be copied.</p></li>
+<li><p><strong>local_path</strong> (<em>str</em>) – Path to the local file (where the file is copied to)</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show info messages. Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pybela.Watcher.Watcher.disconnect">
 <span class="sig-name descname"><span class="pre">disconnect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.disconnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.disconnect" title="Link to this definition"></a></dt>
 <dd><p>Closes websockets. Sync wrapper for _async_disconnect.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybela.Watcher.Watcher.disconnect_ssh">
+<span class="sig-name descname"><span class="pre">disconnect_ssh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Watcher.html#Watcher.disconnect_ssh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Watcher.Watcher.disconnect_ssh" title="Link to this definition"></a></dt>
+<dd><p>Disconnects from Bela via ssh.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -607,12 +634,6 @@ int: maximum number of streaming buffers allowed in self.streaming_buffers_queue
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pybela.Logger.</span></span><span class="sig-name descname"><span class="pre">Logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'192.168.7.2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5555</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gui_control'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pybela.Watcher.Watcher" title="pybela.Watcher.Watcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watcher</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="pybela.Logger.Logger.connect_ssh">
-<span class="sig-name descname"><span class="pre">connect_ssh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.connect_ssh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.connect_ssh" title="Link to this definition"></a></dt>
-<dd><p>Connects to Bela via ssh to transfer log files.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pybela.Logger.Logger.copy_all_bin_files_in_project">
 <span class="sig-name descname"><span class="pre">copy_all_bin_files_in_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.copy_all_bin_files_in_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.copy_all_bin_files_in_project" title="Link to this definition"></a></dt>
 <dd><p>Copies all .bin files in the specified remote directory using SFTP.</p>
@@ -620,21 +641,6 @@ int: maximum number of streaming buffers allowed in self.streaming_buffers_queue
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the local directory where the files are copied to. Defaults to “./”.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show info messages. Defaults to True.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pybela.Logger.Logger.copy_file_from_bela">
-<span class="sig-name descname"><span class="pre">copy_file_from_bela</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remote_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.copy_file_from_bela"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.copy_file_from_bela" title="Link to this definition"></a></dt>
-<dd><p>Copy a file from Bela onto the local machine.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>remote_path</strong> (<em>str</em>) – Path to the remote file to be copied.</p></li>
-<li><p><strong>local_path</strong> (<em>str</em>) – Path to the local file (where the file is copied to)</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show info messages. Defaults to True.</p></li>
 </ul>
 </dd>
@@ -656,12 +662,6 @@ int: maximum number of streaming buffers allowed in self.streaming_buffers_queue
 <dd class="field-odd"><p><strong>remote_path</strong> (<em>str</em>) – Path to the remote file to be deleted.</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pybela.Logger.Logger.disconnect_ssh">
-<span class="sig-name descname"><span class="pre">disconnect_ssh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pybela/Logger.html#Logger.disconnect_ssh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pybela.Logger.Logger.disconnect_ssh" title="Link to this definition"></a></dt>
-<dd><p>Disconnects from Bela via ssh.</p>
 </dd></dl>
 
 <dl class="py method">
