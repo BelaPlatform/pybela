@@ -14,7 +14,7 @@ ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 Once the `bela-test` project is running on Bela, you can run the python tests by running:
 
 ```bash
-python test.py # or `pipenv run python test.py` if you are using a pipenv environment
+uv run python test.py
 ```
 
 You can also test the `bela-test-send` project by running:
@@ -22,9 +22,9 @@ You can also test the `bela-test-send` project by running:
 ```bash
 ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
 ```
+
 and then running the python tests with:
 
 ```bash
-python test-send.py # or `pipenv run python test-send.py` if you are using a pipenv environment
+uv run test-send.py
 ```
- 

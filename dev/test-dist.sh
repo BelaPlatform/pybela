@@ -25,10 +25,13 @@ pip install ../dist/pybela-$1-py3-none-any.whl
 printf "\n>>Copying test project files to Bela...\n"
 rsync -avL bela-test root@bela.local:Bela/projects/
 
-printf "\n>>Compile the and run the test project on Bela...\n"
-ssh root@bela.local 'make -C /root/Bela run PROJECT=bela-test' & # check if this builds
+printf "\n>>Compile the project in Bela...\n"
+ssh root@bela.local 'make -C /root/Bela PROJECT=bela-test' 
 
-sleep 2
+printf "\n>>Run the project in Bela...\n"
+ssh root@bela.local 'make -C /root/Bela run PROJECT=bela-test' & # non-blocking
+
+sleep 2 
 
 printf "\nRunning test.py..."
 python test.py

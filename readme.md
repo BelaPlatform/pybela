@@ -106,7 +106,7 @@ You can check the **tutorials** at `tutorials/`for more detailed information and
 
 ### Running the tutorials
 
-The quickest way to get started is to start a jupyter notebook server and run the tutorials. If you haven't done it yet, install the python package as explained in the Installation section. If you don't have the `jupyter notebook` package installed, you can install it by running (replace `pip` with `pipenv` if you are using a pipenv environment):
+The quickest way to get started is to start a jupyter notebook server and run the tutorials. If you haven't done it yet, install the python package as explained in the Installation section. If you don't have the `jupyter notebook` package installed, you can install it by running:
 
 ```bash
 pip install notebook
@@ -115,7 +115,7 @@ pip install notebook
 Once installed, start a jupyter notebook server by running:
 
 ```bash
-jupyter notebook # or `pipenv run jupyter notebook` if you are using a pipenv environment
+jupyter notebook
 ```
 
 This should open a window in your browser from which you can look for the `tutorials/notebooks` folder and open the examples.
