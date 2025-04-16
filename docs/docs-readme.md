@@ -5,5 +5,5 @@ Then you can build the docs with:
 ```bash
 rm -r _build
 pandoc -s ../readme.md -o readme.rst
-pipenv run sphinx-build -M html . _build
+uv run sphinx-build -M html . _build
 ```

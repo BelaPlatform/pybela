@@ -4,7 +4,7 @@ pybela allows interfacing with [Bela](https://bela.io/), the embedded audio plat
 
 Below, you can find instructions to install pybela. You can find code examples at `tutorials/` and `test/`. The docs are available at [https://belaplatform.github.io/pybela/](https://belaplatform.github.io/pybela/).
 
-pybela was developed with a machine learning use-case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial).
+pybela was developed with a machine learning use-case in mind. For a complete pipeline including data acquisition, processing, model training, and deployment (including rapid cross-compilation) check the [pybela-pytorch-xc-tutorial](https://github.com/pelinski/pybela-pytorch-xc-tutorial). You can also check out the [deep-learning-for-bela](https://github.com/pelinski/deep-learning-for-bela) resource list.
 
 ## Installation and set up
 
@@ -183,43 +183,57 @@ streamer.stop_streaming()
 
 ## Testing
 
-This library has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`.
+_This library has been tested with Bela at `dev` branch commit `69cdf75a` and watcher at `main` commit `903573a`._
 
 To run pybela's tests first copy the `bela-test` code into your Bela, compile and run it:
 
 ```bash
 rsync -rvL  test/bela-test root@bela.local:Bela/projects/
-ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
+ssh root@bela.local 'make -C /root/Bela run PROJECT=bela-test'
+```
+
+Create the python environment and activate it. Our preferred environment is `uv` but you can use your environment manager of choice and install the dependencies in `requirements.txt`.
+
+```bash
+uv venv
+source .venv/bin/activate
 ```
 
 you can run the python tests by running:
 
 ```bash
-python test/test.py # or `pipenv run python test/test.py` if you are using a pipenv environment
+uv run python test/test.py
 ```
 
 ## Building
 
-You can build pybela using pipenv:
+You can build pybela using `uv`:
 
 ```bash
-pipenv install -d # installs all dependencies including dev dependencies
-pipenv lock && pipenv sync # updates packages hashes
-pipenv run python -m build --sdist # builds the .tar.gz file
+uv build
+```
+
+To test the build, connect your Bela to the computer. The following script will test the packaged build by running the `twine` tests, creating a new temporal virtual environment, installing the library from the dist files, and running the pybela test routine. This will take a few minutes.
+
+```bash
+sh dev/test-dist.sh
+```
+
+You can also test the docs with:
+
+```bash
+sh dev/test-docs.sh
 ```
 
 ## To do and known issues
 
-- [ ] **Upgrade**: change dependency management from Pipenv to uv
 - [ ] **Fix**: logger with automatic transfer too slow for large datasets
-- [ ] **Add**: example projects
 - [ ] **Issue:** Monitor and streamer/controller can't be used simultaneously –  This is due to both monitor and streamer both using the same websocket connection and message format. This could be fixed by having a different message format for the monitor and the streamer (e.g., adding a header to the message)
 - [ ] **Issue:** The plotting routine does not work when variables are updated at different rates.
 - [ ] **Issue**: The plotting routine does not work for the monitor (it only works for the streamer)
 - [ ] **Code refactor:** There are two routines for generating filenames (for Streamer and for Logger). This should be unified.
 - [ ] **Possible feature:** Flexible backend buffer size for streaming: if the assign rate of variables is too slow, the buffers might not be filled and hence not sent (since the data flushed is not collected in the frontend), and there will be long delays between the variable assign and the data being sent to the frontend.
 - [ ] **Issue:** Flushed buffers are not collected after `stop_streaming` in the frontend.
-<!-- - [ ] **Bug:** `OSError: [Errno 12] Cannot allocate memory` -->
 
 ## License
 

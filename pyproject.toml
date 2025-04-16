@@ -1,0 +1,61 @@
+[project]
+name = "pybela"
+version = "2.0.3"
+authors = [
+  { name="Teresa Pelinski", email="teresapelinski@gmail.com" }
+]
+description = "pybela allows interfacing with the Bela embedded audio platform using python. It offers a convenient way to stream data between Bela and python, in both directions. In addition to data streaming, pybela supports data logging, as well as variable monitoring and control functionalities."
+readme = "readme.md"
+requires-python = ">=3.9"
+dependencies = [
+    "aiofiles==24.1.0",
+    "bitarray==3.0.0",
+    "bokeh==2.4.3",
+    "ipykernel==6.29.5",
+    "jupyter==1.1.1",
+    "jupyter-bokeh==3.0.5",
+    "matplotlib>=3.9.4",
+    "nest-asyncio==1.6.0",
+    "notebook==7.2.2",
+    "numpy==1.26.0",
+    "pandas==2.2.3",
+    "panel==0.14.4",
+    "paramiko==3.5.0",
+    "websockets==14.1",
+]
+license = "LGPL-3.0"
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+  ]
+keywords = ["Bela", "physical computing", "data", "audio", "python", "embedded systems", "real-time", "monitoring", "control", "streaming", "sensor"]
+
+[project.urls]
+Homepage = "https://github.com/BelaPlatform/pybela"
+Documentation = "https://belaplatform.github.io/pybela/"
+
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2.2.post1",
+    "pip-chill>=1.0.3",
+    "pipdeptree>=2.26.0",
+    "scipy>=1.13.1",
+    "sphinx==7.4.7",
+    "sphinx-rtd-theme==3.0.2",
+    "toml>=0.10.2",
+    "twine>=6.1.0",
+    "uvloop>=0.21.0",
+]
+
+[project.scripts]
+test = "test:run_tests"
+test-send = "test:run_test_send"
+
+[build-system]
+requires = ["setuptools", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pybela*"]
+exclude = ["dev", "watcher", "tutorials"]
