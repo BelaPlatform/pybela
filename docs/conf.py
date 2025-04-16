@@ -8,21 +8,20 @@
 
 import os
 import sys
-import re
+import toml
+
 sys.path.insert(0, os.path.abspath('../pybela'))
 
 author = 'Teresa Pelinski'
-copyright = '2024'
-def get_version_from_setup_py():
-    version_pattern = re.compile(r"version=['\"]([^'\"]+)['\"]")
-    with open('../setup.py', 'r') as f:
-        setup_py_content = f.read()
-    match = version_pattern.search(setup_py_content)
-    if match:
-        return match.group(1)
-    raise RuntimeError("Unable to find version string in setup.py")
+copyright = '2025'
 
-release = get_version_from_setup_py()
+def get_version_from_pyproject_toml():
+    with open('../pyproject.toml', 'r') as f:
+        pyproject_data = toml.load(f)
+        print(pyproject_data)
+    return pyproject_data['project']['version']
+
+release = get_version_from_pyproject_toml()
 project = f'pybela {release}'
 
 # -- General configuration ---------------------------------------------------
