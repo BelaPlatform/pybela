@@ -35,18 +35,17 @@ Homepage = "https://github.com/BelaPlatform/pybela"
 Documentation = "https://belaplatform.github.io/pybela/"
 
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "build>=1.2.2.post1",
-    "pip-chill>=1.0.3",
-    "pipdeptree>=2.26.0",
-    "scipy>=1.13.1",
-    "sphinx==7.4.7",
-    "sphinx-rtd-theme==3.0.2",
-    "toml>=0.10.2",
-    "twine>=6.1.0",
-    "uvloop>=0.21.0",
+        "build>=1.2.2.post1",
+        "pip-chill>=1.0.3",
+        "pipdeptree>=2.26.0",
+        "sphinx==7.4.7",
+        "sphinx-rtd-theme==3.0.2",
+        "toml>=0.10.2",
+        "twine>=6.1.0",
 ]
+
 
 [project.scripts]
 test = "test:run_tests"
