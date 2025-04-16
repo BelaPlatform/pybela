@@ -36,7 +36,11 @@ class test_Sender(unittest.TestCase):
             streamer.stop_streaming()
 
 
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+def run_test_send():
     suite = unittest.TestSuite()
     suite.addTest(test_Sender('test_send_buffer'))
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(suite)
+
+if __name__ == '__main__':
+    run_test_send()

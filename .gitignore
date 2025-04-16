@@ -1,7 +1,5 @@
 .DS_Store
-notes.md
 .ipynb_checkpoints
-dev-code/*
 */test-env/*
 *.err
 .vscode/
@@ -20,3 +18,5 @@ deptree.txt
 *.csv
 benchmark/data/*
 .pep8
+*.tex
+dev.*

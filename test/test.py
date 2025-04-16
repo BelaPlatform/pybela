@@ -427,7 +427,7 @@ def remove_file(file_path):
         os.remove(file_path)
 
 
-if __name__ == '__main__':
+def run_tests():
     # run all tests
     # unittest.main(verbosity=2)
 
@@ -464,3 +464,6 @@ if __name__ == '__main__':
         # suite.addTest(test_Streamer('test_on_block_callback'))
         runner = unittest.TextTestRunner(verbosity=2)
         runner.run(suite)
+
+if __name__ == '__main__':
+    run_tests()
