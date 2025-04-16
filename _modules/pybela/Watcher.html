@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela.Watcher &mdash; pybela 2.0.2 2.0.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+  <title>pybela.Watcher &mdash; pybela 2.0.3 2.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c2377ec0"></script>
+      <script src="../../_static/documentation_options.js?v=664ffad9"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -30,7 +30,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            pybela 2.0.2
+            pybela 2.0.3
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -148,7 +148,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">pybela 2.0.2</a>
+          <a href="../../index.html">pybela 2.0.3</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -167,22 +167,22 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pybela.Watcher</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">import</span> <span class="nn">websockets</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">errno</span>
-<span class="kn">import</span> <span class="nn">struct</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">nest_asyncio</span>
-<span class="kn">import</span> <span class="nn">paramiko</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_warning</span><span class="p">,</span> <span class="n">_print_ok</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">websockets</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">errno</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nest_asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">paramiko</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_warning</span><span class="p">,</span> <span class="n">_print_ok</span>
 
 
 <div class="viewcode-block" id="Watcher">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher">[docs]</a>
-<span class="k">class</span> <span class="nc">Watcher</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Watcher</span><span class="p">:</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Watcher class - manages websockets and abstracts communication with the Bela watcher</span>
 
 <span class="sd">            Args:</span>
@@ -265,11 +265,11 @@
     <span class="c1"># properties</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sample_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_rate</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">watcher_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">watcher_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns variables in watcher with their properties (name, type, timestamp_mode, log_filename, data_length). Can&#39;t be used in async functions, use _async_watcher_vars instead.</span>
 
 <span class="sd">        Returns:</span>
@@ -281,7 +281,7 @@
                 <span class="n">_list</span><span class="p">[</span><span class="s2">&quot;watchers&quot;</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_watcher_vars</span>   <span class="c1"># updates every time start is called</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_watcher_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_watcher_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronous version of watcher_vars</span>
 
 <span class="sd">        Returns:</span>
@@ -294,7 +294,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_watcher_vars</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">watched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">watched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a list of the variables in the watcher that are being watched (i.e., whose data is being sent over websockets for streaming or monitoring). Can&#39;t be used in async functions, use _async_watched_vars instead.</span>
 
 <span class="sd">        Returns:</span>
@@ -303,7 +303,7 @@
         <span class="n">_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered_watcher_vars</span><span class="p">(</span><span class="n">_list</span><span class="p">[</span><span class="s2">&quot;watchers&quot;</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">var</span><span class="p">[</span><span class="s2">&quot;watched&quot;</span><span class="p">])</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_watched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_watched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Async version of watched_vars</span>
 
 <span class="sd">        Returns:</span>
@@ -313,7 +313,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered_watcher_vars</span><span class="p">(</span><span class="n">_list</span><span class="p">[</span><span class="s2">&quot;watchers&quot;</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">var</span><span class="p">[</span><span class="s2">&quot;watched&quot;</span><span class="p">])</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">unwatched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unwatched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a list of the variables in the watcher that are not being watched (i.e., whose data is NOT being sent over websockets for streaming or monitoring). Can&#39;t be used in async functions, use _async_unwatched_vars instead.</span>
 
 <span class="sd">        Returns:</span>
@@ -322,7 +322,7 @@
         <span class="n">_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered_watcher_vars</span><span class="p">(</span><span class="n">_list</span><span class="p">[</span><span class="s2">&quot;watchers&quot;</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="ow">not</span> <span class="n">var</span><span class="p">[</span><span class="s2">&quot;watched&quot;</span><span class="p">])</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_unwatched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_unwatched_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Async version of unwatched_vars</span>
 
 <span class="sd">        Returns:</span>
@@ -335,14 +335,14 @@
 
 <div class="viewcode-block" id="Watcher.connect">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.connect">[docs]</a>
-    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Attempts to establish a WebSocket connection and prints a message indicating success or failure.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_connected</span><span class="p">():</span>
             <span class="k">return</span> <span class="s2">&quot;Already connected&quot;</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_connect</span><span class="p">():</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_connect</span><span class="p">():</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="c1"># Close any open ctrl websocket open for the same mode (STREAM, LOG, MONITOR, WATCH)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pybela_ws_register</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl_add</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pybela_ws_register</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mode</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl_add</span><span class="p">]</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -419,7 +419,7 @@
 
 <div class="viewcode-block" id="Watcher.is_connected">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.is_connected">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_connected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_connected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the websocket is connected</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            bool: True if connected, False otherwise</span>
@@ -428,7 +428,7 @@
         <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Disconnects the websockets. Closes the websockets and cancels the keepalive task.&quot;&quot;&quot;</span>
         <span class="c1"># close websockets</span>
         <span class="k">for</span> <span class="n">ws</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span><span class="p">]:</span>
@@ -438,7 +438,7 @@
 
 <div class="viewcode-block" id="Watcher.disconnect">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.disconnect">[docs]</a>
-    <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Closes websockets. Sync wrapper for _async_disconnect.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_disconnect</span><span class="p">())</span></div>
@@ -448,7 +448,7 @@
 
 <div class="viewcode-block" id="Watcher.connect_ssh">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.connect_ssh">[docs]</a>
-    <span class="k">def</span> <span class="nf">connect_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">connect_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Connects to Bela via ssh to transfer log files.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -481,7 +481,7 @@
 
 <div class="viewcode-block" id="Watcher.disconnect_ssh">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.disconnect_ssh">[docs]</a>
-    <span class="k">def</span> <span class="nf">disconnect_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">disconnect_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Disconnects from Bela via ssh.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="p">:</span>
@@ -490,7 +490,7 @@
 
     <span class="c1"># -- cleanups -- #</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_cancel_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasks</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_cancel_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasks</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancels tasks</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cancel_tasks</span> <span class="o">=</span> <span class="p">[]</span>
@@ -500,7 +500,7 @@
                 <span class="n">cancel_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">cancel_tasks</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Cleans up tasks</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctrl_listener_task</span><span class="p">,</span>
@@ -514,7 +514,7 @@
 
 <div class="viewcode-block" id="Watcher.cleanup">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.cleanup">[docs]</a>
-    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Cleans up tasks. Synchronous wrapper for _async_cleanup</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_cleanup</span><span class="p">())</span></div>
@@ -522,7 +522,7 @@
 
     <span class="c1"># --- message sending methods --- #</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_send_data_msg_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send_data_msg_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Send data message to websocket. Runs as long as websocket is open.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -530,7 +530,7 @@
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_data</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_to_send_data_msg_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_send_ctrl_msg_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send_ctrl_msg_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Send control message to websocket. Runs as long as websocket is open.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -539,7 +539,7 @@
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws_ctrl</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_to_send_ctrl_msg_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws_address</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws_address</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Send message to websocket</span>
 
 <span class="sd">        Args:</span>
@@ -556,7 +556,7 @@
             <span class="n">_handle_connection_exception</span><span class="p">(</span><span class="n">ws_address</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="s2">&quot;sending message&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">_send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws_address</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_send_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws_address</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Send message to websocket. Sync wrapper for _async_send_msg. Can be used in synchronous functions.</span>
 
 <span class="sd">        Args:</span>
@@ -565,7 +565,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_send_msg</span><span class="p">(</span><span class="n">ws_address</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_send_ctrl_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_send_ctrl_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Send control message. Async version of send_ctrl_msg.</span>
 
 <span class="sd">        Args:</span>
@@ -575,7 +575,7 @@
 
 <div class="viewcode-block" id="Watcher.send_ctrl_msg">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.send_ctrl_msg">[docs]</a>
-    <span class="k">def</span> <span class="nf">send_ctrl_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_ctrl_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Send control message</span>
 
 <span class="sd">        Args:</span>
@@ -586,7 +586,7 @@
 
     <span class="c1">##  -- list -- ##</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Asks the watcher for the list of variables and their properties and returns it.</span>
 
 <span class="sd">        Returns:</span>
@@ -600,7 +600,7 @@
 
 <div class="viewcode-block" id="Watcher.list">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.list">[docs]</a>
-    <span class="k">def</span> <span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Sync wrapper for _async_list</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_async_list</span><span class="p">())</span></div>
@@ -608,7 +608,7 @@
 
     <span class="c1"># -- listener methods -- #</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_start_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">ws_address</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_start_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">ws_address</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Start listener for websocket</span>
 
 <span class="sd">        Args:</span>
@@ -638,7 +638,7 @@
 
     <span class="c1"># -- data processing methods -- #</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_process_data_msg_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_process_data_msg_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Process data message.</span>
 
 <span class="sd">        Args:</span>
@@ -650,7 +650,7 @@
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data_msg</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_received_data_msg_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_process_data_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_process_data_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Process data message. This method is overwritten by the streamer.</span>
 
 <span class="sd">        Args:</span>
@@ -658,7 +658,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="nf">_process_ctrl_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_ctrl_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Process control message</span>
 
 <span class="sd">        Args:</span>
@@ -670,7 +670,7 @@
         <span class="k">if</span> <span class="s2">&quot;watcher&quot;</span> <span class="ow">in</span> <span class="n">_msg</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s2">&quot;sampleRate&quot;</span> <span class="ow">in</span> <span class="n">_msg</span><span class="p">[</span><span class="s2">&quot;watcher&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_list_response_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">_msg</span><span class="p">[</span><span class="s2">&quot;watcher&quot;</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">_parse_binary_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary_data</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">,</span> <span class="n">_type</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_binary_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary_data</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">,</span> <span class="n">_type</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Binary data parser. This method is used both by the streamer and the logger to parse the binary data buffers.</span>
 
 <span class="sd">        Args:</span>
@@ -736,7 +736,7 @@
 
 <div class="viewcode-block" id="Watcher.wait">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.wait">[docs]</a>
-    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_in_seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_in_seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Wait for a given amount of time. Can&#39;t be used in async functions. </span>
 <span class="sd">            Args:</span>
 <span class="sd">                time_in_seconds (float, optional): Time to wait in seconds. If 0, it waits forever. Defaults to 0. </span>
@@ -746,24 +746,24 @@
         <span class="k">elif</span> <span class="n">time_in_seconds</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">time_in_seconds</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">async</span> <span class="k">def</span> <span class="nf">wait_forever</span><span class="p">():</span>
+            <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wait_forever</span><span class="p">():</span>
                 <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">wait_forever</span><span class="p">())</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_get_latest_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_get_latest_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get latest timestamp. Async version of get_latest_timestamp.&quot;&quot;&quot;</span>
         <span class="n">_list</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_list</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">_list</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="Watcher.get_latest_timestamp">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.get_latest_timestamp">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_latest_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_latest_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get latest timestamp. Can&#39;t be used in async functions&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="p">()[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_remove_item_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_list</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_remove_item_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_list</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove item from list. Used to remove listeners from the list of listeners.</span>
 
 <span class="sd">        Args:</span>
@@ -772,7 +772,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_list</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_filtered_watcher_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watchers</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_filtered_watcher_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">watchers</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter variables in watcher depending on condition given by filter_func</span>
 
 <span class="sd">        Args:</span>
@@ -792,7 +792,7 @@
         <span class="p">}</span>
             <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">watchers</span> <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">var</span><span class="p">)]</span>
 
-    <span class="k">def</span> <span class="nf">_var_arg_checker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_var_arg_checker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Checks if variables passed to a function are passed as names in a list. It also checks if the variables requested are in the watcher. If none are passed, returns all variables in watcher.</span>
 
 <span class="sd">        Args:</span>
@@ -814,7 +814,7 @@
 
         <span class="k">return</span> <span class="n">variables</span>
 
-    <span class="k">def</span> <span class="nf">_generate_local_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_path</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_local_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate local filename. If the file already exists, add a number at the end of the filename.</span>
 
 <span class="sd">        Args:</span>
@@ -835,7 +835,7 @@
 
 <div class="viewcode-block" id="Watcher.get_prop_of_var">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.get_prop_of_var">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_prop_of_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_prop_of_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get property of variable. Properties: name, type, timestamp_mode, log_filename, data_length</span>
 
 <span class="sd">        Args:</span>
@@ -851,7 +851,7 @@
 
 <div class="viewcode-block" id="Watcher.get_data_byte_size">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.get_data_byte_size">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_data_byte_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_data_byte_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the byte size of the data type</span>
 
 <span class="sd">        Args:</span>
@@ -872,7 +872,7 @@
 
 <div class="viewcode-block" id="Watcher.get_data_length">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.get_data_length">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_data_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_data_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Data length in the buffer</span>
 
 <span class="sd">        Args:</span>
@@ -908,7 +908,7 @@
 
 <div class="viewcode-block" id="Watcher.get_buffer_size">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.get_buffer_size">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_buffer_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_buffer_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_type</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the buffer size in bytes for buffers stored in a log file. This is the size of the buffer that is sent over websockets.</span>
 
 <span class="sd">        Args:</span>
@@ -934,7 +934,7 @@
 
 <div class="viewcode-block" id="Watcher.copy_file_from_bela">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.copy_file_from_bela">[docs]</a>
-    <span class="k">def</span> <span class="nf">copy_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Copy a file from Bela onto the local machine.</span>
 
 <span class="sd">        Args:</span>
@@ -949,7 +949,7 @@
         <span class="k">return</span> <span class="n">local_path</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_copy_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_copy_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Copies a file from the remote path in Bela to the local path. This can be used any time to copy files from Bela to the host. </span>
 
 <span class="sd">        Args:</span>
@@ -963,7 +963,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_local_path</span> <span class="o">=</span> <span class="n">local_path</span>
             <span class="n">transferred_event</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
-            <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">transferred</span><span class="p">,</span> <span class="n">to_transfer</span><span class="p">):</span> <span class="k">return</span> <span class="n">transferred_event</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">(</span><span class="n">transferred</span><span class="p">,</span> <span class="n">to_transfer</span><span class="p">):</span> <span class="k">return</span> <span class="n">transferred_event</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">)</span> <span class="k">if</span> <span class="n">transferred</span> <span class="o">==</span> <span class="n">to_transfer</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">_local_path</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">)</span>
             <span class="n">file_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">remote_path</span><span class="p">)</span><span class="o">.</span><span class="n">st_size</span>
@@ -982,12 +982,12 @@
 
     <span class="c1"># destructor</span>
 
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>  <span class="c1"># __del__ can&#39;t run asynchronous code, so cleanup() should be called manually</span></div>
 
 
 
-<span class="k">def</span> <span class="nf">_handle_connection_exception</span><span class="p">(</span><span class="n">ws_address</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_handle_connection_exception</span><span class="p">(</span><span class="n">ws_address</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
     <span class="n">bela_msg</span> <span class="o">=</span> <span class="s2">&quot;Make sure Bela is connected to the same network as your computer, that the IP address is correct, and that there is a project running on Bela.&quot;</span>
     <span class="n">_print_error</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;WebSocket exception while connecting to </span><span class="si">{</span><span class="n">ws_address</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exception</span><span class="si">}</span><span class="s2">.  </span><span class="si">{</span><span class="n">bela_msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1012,7 +1012,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024.</p>
+    <p>&#169; Copyright 2025.</p>
   </div>
 
    

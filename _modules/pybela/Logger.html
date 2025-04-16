@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela.Logger &mdash; pybela 2.0.2 2.0.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+  <title>pybela.Logger &mdash; pybela 2.0.3 2.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c2377ec0"></script>
+      <script src="../../_static/documentation_options.js?v=664ffad9"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -30,7 +30,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            pybela 2.0.2
+            pybela 2.0.3
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -148,7 +148,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">pybela 2.0.2</a>
+          <a href="../../index.html">pybela 2.0.3</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -167,18 +167,18 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pybela.Logger</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">import</span> <span class="nn">aiofiles</span>
-<span class="kn">import</span> <span class="nn">struct</span>
-<span class="kn">from</span> <span class="nn">.Watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_info</span><span class="p">,</span> <span class="n">_print_ok</span><span class="p">,</span> <span class="n">_print_warning</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">aiofiles</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.Watcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Watcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_info</span><span class="p">,</span> <span class="n">_print_ok</span><span class="p">,</span> <span class="n">_print_warning</span>
 
 
 <div class="viewcode-block" id="Logger">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger">[docs]</a>
-<span class="k">class</span> <span class="nc">Logger</span><span class="p">(</span><span class="n">Watcher</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Logger</span><span class="p">(</span><span class="n">Watcher</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Logger class</span>
 
 <span class="sd">            Args:</span>
@@ -201,7 +201,7 @@
 
 <div class="viewcode-block" id="Logger.is_logging">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.is_logging">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Returns True if the logger is currently logging, false otherwise.</span>
 
 <span class="sd">        Returns:</span>
@@ -212,7 +212,7 @@
 
 <div class="viewcode-block" id="Logger.start_logging">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.start_logging">[docs]</a>
-    <span class="k">def</span> <span class="nf">start_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Starts logging session. The session can be ended by calling stop_logging().</span>
 
 <span class="sd">        Args:</span>
@@ -246,7 +246,7 @@
 
 <div class="viewcode-block" id="Logger.schedule_logging">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.schedule_logging">[docs]</a>
-    <span class="k">def</span> <span class="nf">schedule_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">timestamps</span><span class="o">=</span><span class="p">[],</span> <span class="n">durations</span><span class="o">=</span><span class="p">[],</span> <span class="n">transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">timestamps</span><span class="o">=</span><span class="p">[],</span> <span class="n">durations</span><span class="o">=</span><span class="p">[],</span> <span class="n">transfer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Schedule logging session. The session starts at the specified timestamps and lasts for the specified durations. If the timestamp is in the past, the logging will start immediately. The session can be ended by calling stop_logging().</span>
 
 <span class="sd">        Args:</span>
@@ -266,7 +266,7 @@
         <span class="n">remote_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__async_logging_common_routine</span><span class="p">(</span>
             <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;SCHEDULED&quot;</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">durations</span><span class="o">=</span><span class="n">durations</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="n">logging_dir</span><span class="p">))</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_schedule_logging</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">durations</span><span class="p">,</span> <span class="n">transfer</span><span class="p">,</span> <span class="n">logging_dir</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_schedule_logging</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">timestamps</span><span class="p">,</span> <span class="n">durations</span><span class="p">,</span> <span class="n">transfer</span><span class="p">,</span> <span class="n">logging_dir</span><span class="p">):</span>
             <span class="c1"># checks types and if no variables are specified, stream all watcher variables (default)</span>
             <span class="n">latest_timestamp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_get_latest_timestamp</span><span class="p">()</span>
 
@@ -274,7 +274,7 @@
             <span class="k">if</span> <span class="n">transfer</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connect_ssh</span><span class="p">()</span>  <span class="c1"># start ssh connection</span>
 
-                <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_check_if_file_exists_and_start_copying</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+                <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_check_if_file_exists_and_start_copying</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
 
                     <span class="n">diff_stamps</span> <span class="o">=</span> <span class="n">timestamp</span> <span class="o">-</span> <span class="n">latest_timestamp</span>
                     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -338,7 +338,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">_async_schedule_logging</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">durations</span><span class="o">=</span><span class="n">durations</span><span class="p">,</span> <span class="n">transfer</span><span class="o">=</span><span class="n">transfer</span><span class="p">,</span> <span class="n">logging_dir</span><span class="o">=</span><span class="n">logging_dir</span><span class="p">))</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">__async_logging_common_routine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="p">[],</span> <span class="n">durations</span><span class="o">=</span><span class="p">[],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__async_logging_common_routine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">timestamps</span><span class="o">=</span><span class="p">[],</span> <span class="n">durations</span><span class="o">=</span><span class="p">[],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">logging_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
         <span class="c1"># checks types and if no variables are specified, stream all watcher variables (default)</span>
         <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_arg_checker</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
 
@@ -367,7 +367,7 @@
 
         <span class="k">return</span> <span class="n">remote_paths</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_stop_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_stop_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Stops logging session.</span>
 
 <span class="sd">        Args:</span>
@@ -390,7 +390,7 @@
 
 <div class="viewcode-block" id="Logger.stop_logging">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.stop_logging">[docs]</a>
-    <span class="k">def</span> <span class="nf">stop_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Stops logging session. Sync wrapper for _async_stop_logging().</span>
 
 <span class="sd">        Args:</span>
@@ -404,7 +404,7 @@
 
 <div class="viewcode-block" id="Logger.read_binary_file">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.read_binary_file">[docs]</a>
-    <span class="k">def</span> <span class="nf">read_binary_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_binary_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">timestamp_mode</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Reads a binary file generated by the logger and returns a dictionary with the file contents.</span>
 
 <span class="sd">        Args:</span>
@@ -420,7 +420,7 @@
         <span class="n">file_size</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">file_size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Error: The size of </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> is 0.&quot;</span>
 
-        <span class="k">def</span> <span class="nf">_parse_null_terminated_string</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_parse_null_terminated_string</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
             <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
             <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="n">char</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
@@ -476,7 +476,7 @@
     <span class="c1"># -- file transfer utils --</span>
     <span class="c1"># expand copy_file_from_bela method in Watcher</span>
 
-    <span class="k">def</span> <span class="nf">__copy_file_in_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span>  <span class="n">chunk_size</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">12</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__copy_file_in_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span>  <span class="n">chunk_size</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">12</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Copies a file from the remote path to the local path in chunks. This function is called by start_logging() if transfer=True.</span>
 
 <span class="sd">        Args:</span>
@@ -488,7 +488,7 @@
 <span class="sd">            asyncio.Task: Task that copies the file in chunks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">async_copy_file_in_chunks</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">12</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_copy_file_in_chunks</span><span class="p">(</span><span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">12</span><span class="p">):</span>
 
             <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="c1"># Wait for a second before checking again</span>
@@ -537,7 +537,7 @@
 
 <div class="viewcode-block" id="Logger.copy_all_bin_files_in_project">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.copy_all_bin_files_in_project">[docs]</a>
-    <span class="k">def</span> <span class="nf">copy_all_bin_files_in_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_all_bin_files_in_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Copies all .bin files in the specified remote directory using SFTP.</span>
 
 <span class="sd">        Args:</span>
@@ -566,7 +566,7 @@
 
 <div class="viewcode-block" id="Logger.finish_copying_file">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.finish_copying_file">[docs]</a>
-    <span class="k">def</span> <span class="nf">finish_copying_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">):</span>  <span class="c1"># TODO test</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finish_copying_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">local_path</span><span class="p">):</span>  <span class="c1"># TODO test</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Finish copying file if it was interrupted. This function is used to copy the remaining part of a file that was interrupted during the copy process.</span>
 
 <span class="sd">        Args:</span>
@@ -616,7 +616,7 @@
 
 <div class="viewcode-block" id="Logger.delete_file_from_bela">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.delete_file_from_bela">[docs]</a>
-    <span class="k">def</span> <span class="nf">delete_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deletes a file from the remote path in Bela.</span>
 
 <span class="sd">        Args:</span>
@@ -630,7 +630,7 @@
 
 <div class="viewcode-block" id="Logger.delete_all_bin_files_in_project">
 <a class="viewcode-back" href="../../modules.html#pybela.Logger.Logger.delete_all_bin_files_in_project">[docs]</a>
-    <span class="k">def</span> <span class="nf">delete_all_bin_files_in_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_all_bin_files_in_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Deletes all .bin files in the specified remote directory using SFTP.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">remote_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/root/Bela/projects/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_name</span><span class="si">}</span><span class="s1">&#39;</span>
@@ -653,7 +653,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">disconnect_ssh</span><span class="p">()</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_delete_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_delete_file_from_bela</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="c1"># this function doesn&#39;t return until the file has been deleted</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">remote_path</span><span class="p">)</span>  <span class="c1"># check if file exists</span>
@@ -678,7 +678,7 @@
                     <span class="sa">f</span><span class="s2">&quot;Error while deleting file in Bela: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
                 <span class="k">break</span>
 
-    <span class="k">def</span> <span class="nf">_action_on_all_bin_files_in_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">local_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_action_on_all_bin_files_in_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">local_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># List all files in the remote directory</span>
         <span class="n">remote_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;/root/Bela/projects/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_name</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="n">file_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">remote_path</span><span class="p">)</span>
@@ -705,7 +705,7 @@
 
         <span class="k">return</span> <span class="n">tasks</span>
 
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__del__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">disconnect_ssh</span><span class="p">()</span>  <span class="c1"># disconnect ssh</span></div>
 
@@ -718,7 +718,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024.</p>
+    <p>&#169; Copyright 2025.</p>
   </div>
 
    

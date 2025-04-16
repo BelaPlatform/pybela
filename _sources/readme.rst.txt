@@ -13,6 +13,9 @@ pybela was developed with a machine learning use-case in mind. For a
 complete pipeline including data acquisition, processing, model
 training, and deployment (including rapid cross-compilation) check the
 `pybela-pytorch-xc-tutorial <https://github.com/pelinski/pybela-pytorch-xc-tutorial>`__.
+You can also check out the
+`deep-learning-for-bela <https://github.com/pelinski/deep-learning-for-bela>`__
+resource list.
 
 Installation and set up
 -----------------------
@@ -151,8 +154,7 @@ Running the tutorials
 The quickest way to get started is to start a jupyter notebook server
 and run the tutorials. If you haven’t done it yet, install the python
 package as explained in the Installation section. If you don’t have the
-``jupyter notebook`` package installed, you can install it by running
-(replace ``pip`` with ``pipenv`` if you are using a pipenv environment):
+``jupyter notebook`` package installed, you can install it by running:
 
 .. code:: bash
 
@@ -162,7 +164,7 @@ Once installed, start a jupyter notebook server by running:
 
 .. code:: bash
 
-   jupyter notebook # or `pipenv run jupyter notebook` if you are using a pipenv environment
+   jupyter notebook
 
 This should open a window in your browser from which you can look for
 the ``tutorials/notebooks`` folder and open the examples.
@@ -249,8 +251,8 @@ Example projects
 Testing
 -------
 
-This library has been tested with Bela at ``dev`` branch commit
-``69cdf75a`` and watcher at ``main`` commit ``903573a``.
+*This library has been tested with Bela at ``dev`` branch commit
+``69cdf75a`` and watcher at ``main`` commit ``903573a``.*
 
 To run pybela’s tests first copy the ``bela-test`` code into your Bela,
 compile and run it:
@@ -258,31 +260,52 @@ compile and run it:
 .. code:: bash
 
    rsync -rvL  test/bela-test root@bela.local:Bela/projects/
-   ssh root@bela.local "make -C Bela stop Bela PROJECT=bela-test run"
+   ssh root@bela.local 'make -C /root/Bela run PROJECT=bela-test'
+
+Create the python environment and activate it. Our preferred environment
+is ``uv`` but you can use your environment manager of choice and install
+the dependencies in ``requirements.txt``.
+
+.. code:: bash
+
+   uv venv
+   source .venv/bin/activate
 
 you can run the python tests by running:
 
 .. code:: bash
 
-   python test/test.py # or `pipenv run python test/test.py` if you are using a pipenv environment
+   uv run python test/test.py
 
 Building
 --------
 
-You can build pybela using pipenv:
+You can build pybela using ``uv``:
 
 .. code:: bash
 
-   pipenv install -d # installs all dependencies including dev dependencies
-   pipenv lock && pipenv sync # updates packages hashes
-   pipenv run python -m build --sdist # builds the .tar.gz file
+   uv build
+
+To test the build, connect your Bela to the computer. The following
+script will test the packaged build by running the ``twine`` tests,
+creating a new temporal virtual environment, installing the library from
+the dist files, and running the pybela test routine. This will take a
+few minutes.
+
+.. code:: bash
+
+   sh dev/test-dist.sh
+
+You can also test the docs with:
+
+.. code:: bash
+
+   sh dev/test-docs.sh
 
 To do and known issues
 ----------------------
 
--  ☐ **Upgrade**: change dependency management from Pipenv to uv
 -  ☐ **Fix**: logger with automatic transfer too slow for large datasets
--  ☐ **Add**: example projects
 -  ☐ **Issue:** Monitor and streamer/controller can’t be used
    simultaneously –  This is due to both monitor and streamer both using
    the same websocket connection and message format. This could be fixed

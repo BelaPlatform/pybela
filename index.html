@@ -6,15 +6,15 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela docs &mdash; pybela 2.0.2 2.0.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+  <title>pybela docs &mdash; pybela 2.0.3 2.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b217d7a7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=c2377ec0"></script>
+      <script src="_static/documentation_options.js?v=664ffad9"></script>
       <script src="_static/doctools.js?v=9a2dae69"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -32,7 +32,7 @@
           
           
           <a href="#" class="icon icon-home">
-            pybela 2.0.2
+            pybela 2.0.3
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -150,7 +150,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">pybela 2.0.2</a>
+          <a href="#">pybela 2.0.3</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -181,7 +181,10 @@ examples at <code class="docutils literal notranslate"><span class="pre">tutoria
 <p>pybela was developed with a machine learning use-case in mind. For a
 complete pipeline including data acquisition, processing, model
 training, and deployment (including rapid cross-compilation) check the
-<a class="reference external" href="https://github.com/pelinski/pybela-pytorch-xc-tutorial">pybela-pytorch-xc-tutorial</a>.</p>
+<a class="reference external" href="https://github.com/pelinski/pybela-pytorch-xc-tutorial">pybela-pytorch-xc-tutorial</a>.
+You can also check out the
+<a class="reference external" href="https://github.com/pelinski/deep-learning-for-bela">deep-learning-for-bela</a>
+resource list.</p>
 <section id="installation-and-set-up">
 <h2>Installation and set up<a class="headerlink" href="#installation-and-set-up" title="Link to this heading"></a></h2>
 <p>You will need to (1) install the python package in your laptop, (2) set
@@ -295,13 +298,12 @@ check<code class="docutils literal notranslate"><span class="pre">test/test.py</
 <p>The quickest way to get started is to start a jupyter notebook server
 and run the tutorials. If you haven’t done it yet, install the python
 package as explained in the Installation section. If you don’t have the
-<code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code> package installed, you can install it by running
-(replace <code class="docutils literal notranslate"><span class="pre">pip</span></code> with <code class="docutils literal notranslate"><span class="pre">pipenv</span></code> if you are using a pipenv environment):</p>
+<code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code> package installed, you can install it by running:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>notebook
 </pre></div>
 </div>
 <p>Once installed, start a jupyter notebook server by running:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>jupyter<span class="w"> </span>notebook<span class="w"> </span><span class="c1"># or `pipenv run jupyter notebook` if you are using a pipenv environment</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>jupyter<span class="w"> </span>notebook
 </pre></div>
 </div>
 <p>This should open a window in your browser from which you can look for
@@ -347,7 +349,7 @@ you need to declare the variable in your Bela with the Watcher template:</p>
 <p>Once the variable is declared with the Watcher template, you can stream,
 log, monitor and control its value from python. For example, to stream
 the value of <code class="docutils literal notranslate"><span class="pre">myvar</span></code> from python, you can do:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pybela</span> <span class="kn">import</span> <span class="n">Streamer</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybela</span><span class="w"> </span><span class="kn">import</span> <span class="n">Streamer</span>
 <span class="n">streamer</span> <span class="o">=</span> <span class="n">Streamer</span><span class="p">()</span>
 <span class="n">streamer</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 <span class="n">streamer</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">(</span><span class="s2">&quot;myvar&quot;</span><span class="p">)</span>
@@ -378,34 +380,49 @@ through OSC to another device.</p></li>
 </section>
 <section id="testing">
 <h2>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h2>
-<p>This library has been tested with Bela at <code class="docutils literal notranslate"><span class="pre">dev</span></code> branch commit
-<code class="docutils literal notranslate"><span class="pre">69cdf75a</span></code> and watcher at <code class="docutils literal notranslate"><span class="pre">main</span></code> commit <code class="docutils literal notranslate"><span class="pre">903573a</span></code>.</p>
+<p><em>This library has been tested with Bela at ``dev`` branch commit
+``69cdf75a`` and watcher at ``main`` commit ``903573a``.</em></p>
 <p>To run pybela’s tests first copy the <code class="docutils literal notranslate"><span class="pre">bela-test</span></code> code into your Bela,
 compile and run it:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>rsync<span class="w"> </span>-rvL<span class="w">  </span>test/bela-test<span class="w"> </span>root@bela.local:Bela/projects/
-ssh<span class="w"> </span>root@bela.local<span class="w"> </span><span class="s2">&quot;make -C Bela stop Bela PROJECT=bela-test run&quot;</span>
+ssh<span class="w"> </span>root@bela.local<span class="w"> </span><span class="s1">&#39;make -C /root/Bela run PROJECT=bela-test&#39;</span>
+</pre></div>
+</div>
+<p>Create the python environment and activate it. Our preferred environment
+is <code class="docutils literal notranslate"><span class="pre">uv</span></code> but you can use your environment manager of choice and install
+the dependencies in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 </pre></div>
 </div>
 <p>you can run the python tests by running:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>test/test.py<span class="w"> </span><span class="c1"># or `pipenv run python test/test.py` if you are using a pipenv environment</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>test/test.py
 </pre></div>
 </div>
 </section>
 <section id="building">
 <h2>Building<a class="headerlink" href="#building" title="Link to this heading"></a></h2>
-<p>You can build pybela using pipenv:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pipenv<span class="w"> </span>install<span class="w"> </span>-d<span class="w"> </span><span class="c1"># installs all dependencies including dev dependencies</span>
-pipenv<span class="w"> </span>lock<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pipenv<span class="w"> </span>sync<span class="w"> </span><span class="c1"># updates packages hashes</span>
-pipenv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--sdist<span class="w"> </span><span class="c1"># builds the .tar.gz file</span>
+<p>You can build pybela using <code class="docutils literal notranslate"><span class="pre">uv</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>build
+</pre></div>
+</div>
+<p>To test the build, connect your Bela to the computer. The following
+script will test the packaged build by running the <code class="docutils literal notranslate"><span class="pre">twine</span></code> tests,
+creating a new temporal virtual environment, installing the library from
+the dist files, and running the pybela test routine. This will take a
+few minutes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>dev/test-dist.sh
+</pre></div>
+</div>
+<p>You can also test the docs with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>dev/test-docs.sh
 </pre></div>
 </div>
 </section>
 <section id="to-do-and-known-issues">
 <h2>To do and known issues<a class="headerlink" href="#to-do-and-known-issues" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>☐ <strong>Upgrade</strong>: change dependency management from Pipenv to uv</p></li>
 <li><p>☐ <strong>Fix</strong>: logger with automatic transfer too slow for large datasets</p></li>
-<li><p>☐ <strong>Add</strong>: example projects</p></li>
 <li><p>☐ <strong>Issue:</strong> Monitor and streamer/controller can’t be used
 simultaneously –  This is due to both monitor and streamer both using
 the same websocket connection and message format. This could be fixed
@@ -446,7 +463,7 @@ License (LGPL 3.0), available
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024.</p>
+    <p>&#169; Copyright 2025.</p>
   </div>
 
    

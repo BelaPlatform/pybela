@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela.Controller &mdash; pybela 2.0.2 2.0.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+  <title>pybela.Controller &mdash; pybela 2.0.3 2.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c2377ec0"></script>
+      <script src="../../_static/documentation_options.js?v=664ffad9"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -30,7 +30,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            pybela 2.0.2
+            pybela 2.0.3
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -148,7 +148,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">pybela 2.0.2</a>
+          <a href="../../index.html">pybela 2.0.3</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -167,15 +167,15 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pybela.Controller</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">from</span> <span class="nn">.Watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_print_info</span><span class="p">,</span> <span class="n">_print_warning</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.Watcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Watcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_print_info</span><span class="p">,</span> <span class="n">_print_warning</span>
 
 
 <div class="viewcode-block" id="Controller">
 <a class="viewcode-back" href="../../modules.html#pybela.Controller.Controller">[docs]</a>
-<span class="k">class</span> <span class="nc">Controller</span><span class="p">(</span><span class="n">Watcher</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Controller</span><span class="p">(</span><span class="n">Watcher</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Controller class</span>
 <span class="sd">        Note: All values set with the controller class will be only visible through the &quot;get_value()&quot; method, or the &quot;value&quot; field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.</span>
 
@@ -191,7 +191,7 @@
 
 <div class="viewcode-block" id="Controller.start_controlling">
 <a class="viewcode-back" href="../../modules.html#pybela.Controller.Controller.start_controlling">[docs]</a>
-    <span class="k">def</span> <span class="nf">start_controlling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_controlling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Starts controlling given variables. This function will block until all requested variables are set to &#39;controlled&#39; in the list. </span>
 <span class="sd">        Note: All values set with the controller class will be only visible through the &quot;get_value()&quot; method, or the &quot;value&quot; field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected.</span>
 
@@ -204,7 +204,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">send_ctrl_msg</span><span class="p">(</span>
             <span class="p">{</span><span class="s2">&quot;watcher&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;cmd&quot;</span><span class="p">:</span> <span class="s2">&quot;control&quot;</span><span class="p">,</span> <span class="s2">&quot;watchers&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="p">}]})</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">async_wait_for_control_mode_to_be_set</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_wait_for_control_mode_to_be_set</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">):</span>
             <span class="c1"># wait for variables to be set as &#39;controlled&#39; in list</span>
             <span class="n">_controlled_status</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_get_controlled_status</span><span class="p">(</span>
                 <span class="n">variables</span><span class="p">)</span>  <span class="c1"># avoid multiple calls to list</span>
@@ -220,7 +220,7 @@
 
 <div class="viewcode-block" id="Controller.stop_controlling">
 <a class="viewcode-back" href="../../modules.html#pybela.Controller.Controller.stop_controlling">[docs]</a>
-    <span class="k">def</span> <span class="nf">stop_controlling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop_controlling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Stops controlling given variables. This function will block until all requested variables are set to &#39;uncontrolled&#39; in the list. </span>
 <span class="sd">        Note: All values set with the controller class will be only visible through the &quot;get_value()&quot; method, or the &quot;value&quot; field in the list() function.</span>
 
@@ -233,7 +233,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">send_ctrl_msg</span><span class="p">(</span>
             <span class="p">{</span><span class="s2">&quot;watcher&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;cmd&quot;</span><span class="p">:</span> <span class="s2">&quot;uncontrol&quot;</span><span class="p">,</span> <span class="s2">&quot;watchers&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="p">}]})</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">async_wait_for_control_mode_to_be_set</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_wait_for_control_mode_to_be_set</span><span class="p">(</span><span class="n">variables</span><span class="o">=</span><span class="n">variables</span><span class="p">):</span>
             <span class="c1"># wait for variables to be set as &#39;uncontrolled&#39; in list</span>
             <span class="n">_controlled_status</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_get_controlled_status</span><span class="p">(</span>
                 <span class="n">variables</span><span class="p">)</span>  <span class="c1"># avoid multiple calls to list</span>
@@ -248,7 +248,7 @@
 
 <div class="viewcode-block" id="Controller.send_value">
 <a class="viewcode-back" href="../../modules.html#pybela.Controller.Controller.send_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">send_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Send a value to the given variables. </span>
 <span class="sd">        Note: All values set with this function will be only visible through the &quot;get_value()&quot; method, or the &quot;value&quot; field in the list() function. Values streamed with the streamer, logger or monitor classes will not be affected. </span>
 
@@ -278,7 +278,7 @@
             <span class="p">{</span><span class="s2">&quot;watcher&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;cmd&quot;</span><span class="p">:</span> <span class="s2">&quot;set&quot;</span><span class="p">,</span> <span class="s2">&quot;watchers&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="p">,</span> <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">values</span><span class="p">}]})</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_get_controlled_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_get_controlled_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Async version of get_controller_status&quot;&quot;&quot;</span>
         <span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_var_arg_checker</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
         <span class="n">_list</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_list</span><span class="p">()</span>
@@ -286,7 +286,7 @@
 
 <div class="viewcode-block" id="Controller.get_controlled_status">
 <a class="viewcode-back" href="../../modules.html#pybela.Controller.Controller.get_controlled_status">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_controlled_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_controlled_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets the controlled status (controlled or uncontrolled) of the variables</span>
 
 <span class="sd">        Args:</span>
@@ -301,7 +301,7 @@
 
 <div class="viewcode-block" id="Controller.get_value">
 <a class="viewcode-back" href="../../modules.html#pybela.Controller.Controller.get_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Gets the value of the variables</span>
 
 <span class="sd">        Args:</span>
@@ -323,7 +323,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024.</p>
+    <p>&#169; Copyright 2025.</p>
   </div>
 
    

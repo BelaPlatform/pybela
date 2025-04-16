@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pybela.Streamer &mdash; pybela 2.0.2 2.0.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+  <title>pybela.Streamer &mdash; pybela 2.0.3 2.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=b217d7a7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c2377ec0"></script>
+      <script src="../../_static/documentation_options.js?v=664ffad9"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -30,7 +30,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            pybela 2.0.2
+            pybela 2.0.3
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -148,7 +148,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">pybela 2.0.2</a>
+          <a href="../../index.html">pybela 2.0.3</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -167,33 +167,33 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pybela.Streamer</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">asyncio.base_subprocess</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">glob</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">import</span> <span class="nn">aiofiles</span>  <span class="c1"># async file i/o</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>  <span class="c1"># circular buffers</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">struct</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio.base_subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">aiofiles</span>  <span class="c1"># async file i/o</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>  <span class="c1"># circular buffers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cycle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
 
-<span class="kn">import</span> <span class="nn">bokeh.plotting</span>
-<span class="kn">import</span> <span class="nn">bokeh.io</span>
-<span class="kn">import</span> <span class="nn">bokeh.driving</span>
-<span class="kn">from</span> <span class="nn">bokeh.resources</span> <span class="kn">import</span> <span class="n">INLINE</span>
-<span class="kn">from</span> <span class="nn">.Watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_print_info</span><span class="p">,</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_warning</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bokeh.plotting</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bokeh.io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bokeh.driving</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">INLINE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.Watcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Watcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_print_info</span><span class="p">,</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_warning</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
 <div class="viewcode-block" id="Streamer">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer">[docs]</a>
-<span class="k">class</span> <span class="nc">Streamer</span><span class="p">(</span><span class="n">Watcher</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Streamer</span><span class="p">(</span><span class="n">Watcher</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="s2">&quot;192.168.7.2&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">,</span> <span class="n">data_add</span><span class="o">=</span><span class="s2">&quot;gui_data&quot;</span><span class="p">,</span> <span class="n">control_add</span><span class="o">=</span><span class="s2">&quot;gui_control&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Streamer class</span>
 
 <span class="sd">            Args:</span>
@@ -239,7 +239,7 @@
     <span class="c1"># -- properties --</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">monitored_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">monitored_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Returns a list of monitored variables. If no variables are monitored, returns an empty list. Can&#39;t be used in async functions, use _async_monitored_vars() instead.</span>
 
 <span class="sd">        Returns:</span>
@@ -253,7 +253,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_monitored_vars</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monitored_vars</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_monitored_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_monitored_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Async version of monitored_vars. Returns a list of monitored variables. If no variables are monitored, returns an empty list.</span>
 
 <span class="sd">        Returns:</span>
@@ -268,7 +268,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monitored_vars</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">streaming_buffers_queue_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">streaming_buffers_queue_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            int: maximum number of streaming buffers allowed in self.streaming_buffers_queue</span>
@@ -276,7 +276,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue_length</span>
 
     <span class="nd">@streaming_buffers_queue_length</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">streaming_buffers_queue_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">streaming_buffers_queue_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the maximum number of streaming buffers allowed in self.streaming_buffers_queue. Warning: setting the streaming buffer value will result in deleting the current streaming buffer queue.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># TODO resize in terms of number of datapoints instead of number of buffers?</span>
@@ -285,7 +285,7 @@
             <span class="n">maxlen</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue_length</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher_vars</span><span class="p">}</span>  <span class="c1"># resize streaming buffer</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">streaming_buffers_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">streaming_buffers_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a dict where each key corresponds to a variable and each item to the variable&#39;s buffer queue. The queue has maximum length determined by streamer.streaming_buffers_queue_length. Each item of the queue is a received buffer of the form {&quot;frame: int, &quot;data&quot;: {&quot;var1&quot;: [val1, val2, ...], &quot;var2&quot;: [val1, val2, ...], ...} }</span>
 
 <span class="sd">        Returns:</span>
@@ -295,7 +295,7 @@
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streaming_buffers_queue</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">streaming_buffers_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">streaming_buffers_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a dict where each key corresponds to a variable and each value to a flat list of the streamed values. Does not return timestamps of each datapoint since that depends on how often the variables are reassigned in the Bela code.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: Dict of flat lists of streamed values.</span>
@@ -310,7 +310,7 @@
 
     <span class="c1"># -- streaming methods --</span>
 
-    <span class="k">def</span> <span class="nf">__streaming_common_routine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__streaming_common_routine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streaming</span><span class="p">():</span>
             <span class="n">_print_warning</span><span class="p">(</span><span class="s2">&quot;Stopping previous streaming session...&quot;</span><span class="p">)</span>
@@ -337,7 +337,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_saving_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_filename</span><span class="p">(</span>
             <span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">saving_enabled</span> <span class="k">else</span> <span class="kc">None</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">async_callback_workers</span><span class="p">():</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_callback_workers</span><span class="p">():</span>
 
             <span class="k">if</span> <span class="n">on_block_callback</span> <span class="ow">and</span> <span class="n">on_buffer_callback</span><span class="p">:</span>
                 <span class="n">_print_error</span><span class="p">(</span>
@@ -360,7 +360,7 @@
 
 <div class="viewcode-block" id="Streamer.start_streaming">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.start_streaming">[docs]</a>
-    <span class="k">def</span> <span class="nf">start_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Starts the streaming session. The session can be stopped with stop_streaming(). Can&#39;t be used in async functions.</span>
 
@@ -411,7 +411,7 @@
                 <span class="n">_print_info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Peeking at variables </span><span class="si">{</span><span class="n">variables</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_stop_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_stop_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted.</span>
 
 <span class="sd">        Args:</span>
@@ -454,7 +454,7 @@
 
 <div class="viewcode-block" id="Streamer.stop_streaming">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.stop_streaming">[docs]</a>
-    <span class="k">def</span> <span class="nf">stop_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Stops the current streaming session for the given variables. If no variables are passed, the streaming of all variables is interrupted. Sync wrapper of _async_stop_streaming(), can&#39;t be used in async functions.</span>
 
@@ -470,7 +470,7 @@
 
 <div class="viewcode-block" id="Streamer.schedule_streaming">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.schedule_streaming">[docs]</a>
-    <span class="k">def</span> <span class="nf">schedule_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">timestamps</span><span class="o">=</span><span class="p">[],</span> <span class="n">durations</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">timestamps</span><span class="o">=</span><span class="p">[],</span> <span class="n">durations</span><span class="o">=</span><span class="p">[],</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Schedule streaming of variables. The streaming session can be stopped with stop_streaming().</span>
 
 <span class="sd">        Args:</span>
@@ -494,7 +494,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">send_ctrl_msg</span><span class="p">(</span>
             <span class="p">{</span><span class="s2">&quot;watcher&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;cmd&quot;</span><span class="p">:</span> <span class="s2">&quot;watch&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamps&quot;</span><span class="p">:</span> <span class="n">timestamps</span><span class="p">,</span> <span class="s2">&quot;durations&quot;</span><span class="p">:</span> <span class="n">durations</span><span class="p">,</span> <span class="s2">&quot;watchers&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="p">}]})</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">async_check_if_variables_have_been_streamed_and_stop</span><span class="p">():</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_check_if_variables_have_been_streamed_and_stop</span><span class="p">():</span>
             <span class="c1"># poll to see when variables start streaming and when they stop</span>
             <span class="n">started_streaming_vars</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">finished_streaming_vars</span> <span class="o">=</span> <span class="p">[]</span>
@@ -521,7 +521,7 @@
 
 <div class="viewcode-block" id="Streamer.stream_n_values">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.stream_n_values">[docs]</a>
-    <span class="k">def</span> <span class="nf">stream_n_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">n_values</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stream_n_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">n_values</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Streams a given number of values. Since the data comes in buffers of a predefined size, always an extra number of frames will be streamed (unless the number of frames is a multiple of the buffer size).</span>
 
@@ -553,7 +553,7 @@
 
 <div class="viewcode-block" id="Streamer.async_stream_n_values">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.async_stream_n_values">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">async_stream_n_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">n_values</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_stream_n_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="o">=</span><span class="p">[],</span> <span class="n">periods</span><span class="o">=</span><span class="p">[],</span> <span class="n">n_values</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">saving_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">saving_filename</span><span class="o">=</span><span class="s2">&quot;var_stream.txt&quot;</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_args</span><span class="o">=</span><span class="p">()):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Asynchronous version of stream_n_values(). Usage:</span>
 <span class="sd">            stream_task = self.loop.create_task(streamer.async_stream_n_values(</span>
@@ -631,7 +631,7 @@
 
     <span class="c1"># -- data processing method --</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_process_data_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_process_data_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Process data message received from Bela. This function is called by the websocket listener when a data message is received.</span>
 
 <span class="sd">        Args:</span>
@@ -732,7 +732,7 @@
 
     <span class="c1"># -- callback methods --</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">__async_on_buffer_callback_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="p">,</span> <span class="n">callback_args</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__async_on_buffer_callback_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_buffer_callback</span><span class="p">,</span> <span class="n">callback_args</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_buffer_callback_is_active</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streaming</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processed_data_msg_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processed_data_msg_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
@@ -758,7 +758,7 @@
 
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0001</span><span class="p">)</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">__async_on_block_callback_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="p">,</span> <span class="n">callback_args</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__async_on_block_callback_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_block_callback</span><span class="p">,</span> <span class="n">callback_args</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_block_callback_is_active</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streaming</span><span class="p">():</span>
             <span class="n">msgs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
@@ -793,7 +793,7 @@
 
 <div class="viewcode-block" id="Streamer.send_buffer">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.send_buffer">[docs]</a>
-    <span class="k">def</span> <span class="nf">send_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_id</span><span class="p">,</span> <span class="n">buffer_type</span><span class="p">,</span> <span class="n">buffer_length</span><span class="p">,</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_id</span><span class="p">,</span> <span class="n">buffer_type</span><span class="p">,</span> <span class="n">buffer_length</span><span class="p">,</span> <span class="n">data_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sends a buffer to Bela. The buffer is packed into binary format and sent over the websocket.</span>
 
@@ -818,7 +818,7 @@
 
     <span class="c1"># -- plotting --</span>
 
-    <span class="k">def</span> <span class="nf">_bokeh_plot_data_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bokeh_plot_data_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                              <span class="n">data</span><span class="p">,</span>
                              <span class="n">x_var</span><span class="p">,</span>
                              <span class="n">y_vars</span><span class="p">,</span>
@@ -836,7 +836,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># TODO add variable checkers</span>
 
-        <span class="k">def</span> <span class="nf">_app</span><span class="p">(</span><span class="n">doc</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_app</span><span class="p">(</span><span class="n">doc</span><span class="p">):</span>
             <span class="c1"># Instantiate figures</span>
             <span class="n">p</span> <span class="o">=</span> <span class="n">bokeh</span><span class="o">.</span><span class="n">plotting</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span>
                 <span class="n">frame_width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
@@ -866,7 +866,7 @@
                        <span class="n">y</span><span class="o">=</span><span class="n">y_var</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="n">colors</span><span class="p">),</span> <span class="n">legend_label</span><span class="o">=</span><span class="n">y_var</span><span class="p">)</span>
 
             <span class="nd">@bokeh</span><span class="o">.</span><span class="n">driving</span><span class="o">.</span><span class="n">linear</span><span class="p">()</span>
-            <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
                 <span class="c1"># Update plot by streaming in data</span>
                 <span class="n">new_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timestamps&quot;</span><span class="p">:</span> <span class="p">[</span>
                     <span class="n">data</span><span class="p">[</span><span class="n">x_var</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]]</span><span class="k">if</span> <span class="s2">&quot;timestamp&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">x_var</span><span class="p">]</span> <span class="k">else</span> <span class="n">data</span><span class="p">[</span><span class="n">x_var</span><span class="p">][</span><span class="s2">&quot;timestamps&quot;</span><span class="p">]}</span>
@@ -881,7 +881,7 @@
 
 <div class="viewcode-block" id="Streamer.plot_data">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.plot_data">[docs]</a>
-    <span class="k">def</span> <span class="nf">plot_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_var</span><span class="p">,</span> <span class="n">y_vars</span><span class="p">,</span> <span class="n">y_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_update_delay</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">rollover</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_var</span><span class="p">,</span> <span class="n">y_vars</span><span class="p">,</span> <span class="n">y_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_update_delay</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">rollover</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.</span>
 
 <span class="sd">        Args:</span>
@@ -904,7 +904,7 @@
 
         <span class="c1"># check buffer lengths are the same</span>
         <span class="c1"># wait until streaming buffers have been populated</span>
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">wait_for_streaming_buffers_to_arrive</span><span class="p">():</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wait_for_streaming_buffers_to_arrive</span><span class="p">():</span>
             <span class="k">while</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="p">{</span>
                     <span class="n">var</span><span class="p">:</span> <span class="n">_buffer</span> <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">_buffer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_streamed_buffer</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">y_vars</span><span class="p">}</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
                 <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
@@ -914,7 +914,7 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">&quot;PlottingError: plotting buffers of different length is not supported yet. Try using the same timestamp mode and type for your variables...&quot;</span><span class="p">)</span>
 
-        <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_plot_data</span><span class="p">(</span><span class="n">x_var</span><span class="p">,</span> <span class="n">y_vars</span><span class="p">,</span> <span class="n">y_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_update_delay</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">rollover</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_plot_data</span><span class="p">(</span><span class="n">x_var</span><span class="p">,</span> <span class="n">y_vars</span><span class="p">,</span> <span class="n">y_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_update_delay</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">rollover</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
             <span class="n">bokeh</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">(</span><span class="n">INLINE</span><span class="p">)</span>
             <span class="n">bokeh</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bokeh_plot_data_app</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span>
                 <span class="n">var</span><span class="p">:</span> <span class="n">_buffer</span> <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">_buffer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_streamed_buffer</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">y_vars</span><span class="p">},</span> <span class="n">x_var</span><span class="o">=</span><span class="n">x_var</span><span class="p">,</span>
@@ -928,7 +928,7 @@
 
 <div class="viewcode-block" id="Streamer.is_streaming">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.is_streaming">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_streaming</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns True if the streamer is currently streaming, False otherwise.</span>
 
 <span class="sd">        Returns:</span>
@@ -939,7 +939,7 @@
 
 <div class="viewcode-block" id="Streamer.load_data_from_file">
 <a class="viewcode-back" href="../../modules.html#pybela.Streamer.Streamer.load_data_from_file">[docs]</a>
-    <span class="k">def</span> <span class="nf">load_data_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_data_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads data from a file saved through the saving_enabled function in start_streaming() or stream_n_values(). The file should contain a list of dicts, each dict containing a variable name and a list of values. The list of dicts should be separated by newlines.</span>
 <span class="sd">        Args:</span>
@@ -966,7 +966,7 @@
         <span class="k">return</span> <span class="n">data</span></div>
 
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_save_data_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_save_data_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Saves data to file asynchronously. This function is called by _process_data_msg() when a buffer is received and saving is enabled.</span>
 
 <span class="sd">        Args:</span>
@@ -991,7 +991,7 @@
         <span class="c1"># finally:</span>
         <span class="c1">#     await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())</span>
 
-    <span class="k">def</span> <span class="nf">_generate_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled.</span>
 
 <span class="sd">        Args:</span>
@@ -1014,7 +1014,7 @@
 
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename_wo_ext</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">idx</span><span class="si">}{</span><span class="n">filename_ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_remove_item_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_list</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_remove_item_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_list</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.</span>
 
 <span class="sd">        Args:</span>
@@ -1023,7 +1023,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_list</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_check_periods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">periods</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_periods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">periods</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks the periods format and values. If periods is an int, it is converted to a list of the same length as variables. If periods is an empty list, it is converted to a list of 1000s. If periods is a list, it is checked that it has the same length as variables and that all values are integers.</span>
 
 <span class="sd">        Args:</span>
@@ -1053,7 +1053,7 @@
 
         <span class="k">return</span> <span class="n">periods</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_async_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Cancels existing tasks</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_async_disconnect</span><span class="p">()</span>
@@ -1071,7 +1071,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024.</p>
+    <p>&#169; Copyright 2025.</p>
   </div>
 
    
