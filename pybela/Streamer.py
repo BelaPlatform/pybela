@@ -1,4 +1,3 @@
-import asyncio.base_subprocess
 import json
 import copy
 import os
@@ -635,7 +634,8 @@ class Streamer(Watcher):
                              y_vars,
                              y_range=None,
                              rollover=None,
-                             plot_update_delay=90):
+                             plot_update_delay=90,
+                             use_x_time=False):
         """Return a function defining a Bokeh app for streaming. The app is called in plot_data().
         Args:
             data (dict): Dict containing the data to be plotted. The dict should have the following structure: {"var1": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, "var2": {"data": [val1, val2, ...], "timestamps": [ts1, ts2, ...]}, ...}
@@ -644,6 +644,7 @@ class Streamer(Watcher):
             y_range (tuple, optional): Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
             rollover (int, optional): Number of data points to keep on the plot. Defaults to None.
             plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 90.
+            use_x_time (bool, optional): If True, the x axis will be plotted using time instead of timestamps of the x_var. Defaults to False.
         """
         # TODO add variable checkers
 
@@ -675,12 +676,21 @@ class Streamer(Watcher):
             for y_var in y_vars:
                 p.line(source=source, x="timestamps",
                        y=y_var, line_color=next(colors), legend_label=y_var)
+                
+            # Set the x axis label
+            x_axis_label = "timestamps" if not use_x_time else "time (s)"
+            p.xaxis.axis_label = x_axis_label
+                
+            t_0 = (data[x_var]["timestamp"]if "timestamp" in data[x_var] else data[x_var]["timestamps"][0])/self.sample_rate
 
             @bokeh.driving.linear()
             def update(step):
                 # Update plot by streaming in data
                 new_data = {"timestamps": [
                     data[x_var]["timestamp"]]if "timestamp" in data[x_var] else data[x_var]["timestamps"]}
+                if use_x_time:
+                    new_data["timestamps"] = [
+                    ts/self.sample_rate - t_0 for ts in new_data["timestamps"]]
                 for y_var in y_vars:
                     new_data[y_var] = data[y_var]["data"] if isinstance(
                         data[y_var]["data"], list) else [data[y_var]["data"]]
@@ -690,7 +700,7 @@ class Streamer(Watcher):
             doc.add_periodic_callback(update, plot_update_delay)
         return _app
 
-    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=1000):
+    def plot_data(self, x_var, y_vars, y_range=None, plot_update_delay=100, rollover=100000, use_x_time=True):
         """ Plots a bokeh figure with the streamed data. The plot is updated every plot_update_delay ms. The plot is interactive and can be zoomed in/out, panned, etc. The plot is shown in the notebook.
 
         Args:
@@ -698,7 +708,8 @@ class Streamer(Watcher):
             y_vars (list of str): List of variables to be plotted on the y axis
             y_range (float, float):  Tuple containing the y axis range. Defaults to None. If none is given, the y axis range is automatically resized to fit the data.
             plot_update_delay (int, optional): Delay between plot updates in ms. Defaults to 100.
-            rollover (int, optional): Number of data points to keep on the plot. Defaults to 1000.
+            rollover (int, optional): Number of data points to keep on the plot. Defaults to 100000.
+            use_x_time (bool, optional): If True, the x axis will be plotted using time instead of timestamps of the x_var. Defaults to True.
         """
 
         if self._mode == "MONITOR":
@@ -727,7 +738,7 @@ class Streamer(Watcher):
             bokeh.io.output_notebook(INLINE)
             bokeh.io.show(self._bokeh_plot_data_app(data={
                 var: _buffer for var, _buffer in self.last_streamed_buffer.items() if var in y_vars}, x_var=x_var,
-                y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover))
+                y_vars=y_vars, y_range=y_range, plot_update_delay=plot_update_delay, rollover=rollover, use_x_time=use_x_time))
 
         self.loop.run_until_complete(_async_plot_data(
             x_var, y_vars, y_range, plot_update_delay, rollover))
