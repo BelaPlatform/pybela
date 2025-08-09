@@ -632,6 +632,61 @@ class Watcher:
 
         return new_local_path
 
+    def _generate_unique_filename(self, filename, directory="./", use_streamer_pattern=False):
+        """Generate unique filename by avoiding collisions with existing files.
+        
+        This unified method replaces both _generate_local_filename and Streamer._generate_filename.
+        It handles collision avoidance for both simple incremental naming and streamer session-based naming.
+        
+        Args:
+            filename (str): Base filename
+            directory (str, optional): Directory path. Defaults to "./".
+            use_streamer_pattern (bool, optional): If True, uses Streamer's session-based pattern that accounts
+                                                   for variable-prefixed files. Defaults to False.
+            
+        Returns:
+            str: Full path to unique filename
+            
+        Examples:
+            _generate_unique_filename("data.txt", "./") -> "./data.txt" or "./data_1.txt"
+            _generate_unique_filename("stream.txt", "./", True) -> "./stream.txt" or "./stream__1.txt"
+        """
+        import os
+        import glob
+        
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            
+        filename_wo_ext, filename_ext = os.path.splitext(filename)
+        full_base_path = os.path.join(directory, filename)
+        
+        if use_streamer_pattern:
+            # Streamer pattern: Handle session-based conflicts, accounting for variable-prefixed files
+            # Look for files that match the pattern *filename.ext (including variable-prefixed versions)
+            matching_files = [os.path.splitext(file)[0].split("__")[0] for file in 
+                             glob.glob(os.path.join(directory, f"*{filename_wo_ext}*{filename_ext}"))]
+            
+            if not matching_files:
+                return full_base_path
+            
+            # Count files with the same base pattern to determine next session index
+            idx = max([matching_files.count(item) for item in set(matching_files)])
+            return os.path.join(directory, f"{filename_wo_ext}__{idx}{filename_ext}")
+            
+        else:
+            # Simple pattern: Direct file-by-file collision avoidance
+            if not os.path.exists(full_base_path):
+                return full_base_path
+                
+            counter = 1
+            while True:
+                new_path = os.path.join(directory, f"{filename_wo_ext}_{counter}{filename_ext}")
+                if not os.path.exists(new_path):
+                    from .utils import _print_warning
+                    _print_warning(f"{full_base_path} already exists. Renaming file to {new_path}")
+                    return new_path
+                counter += 1
+
     def get_prop_of_var(self, var_name, prop):
         """Get property of variable. Properties: name, type, timestamp_mode, log_filename, data_length
 
@@ -743,7 +798,8 @@ class Watcher:
         try:
             _local_path = None
             if os.path.exists(local_path):
-                _local_path = self._generate_local_filename(local_path)
+                _local_path = self._generate_unique_filename(
+                    os.path.basename(local_path), os.path.dirname(local_path))
             else:
                 _local_path = local_path
             transferred_event = asyncio.Event()
