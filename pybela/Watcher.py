@@ -4,6 +4,7 @@ import json
 import errno
 import struct
 import os
+import glob
 import nest_asyncio
 import paramiko
 from .utils import _print_error, _print_warning, _print_ok
@@ -651,9 +652,6 @@ class Watcher:
             _generate_unique_filename("data.txt", "./") -> "./data.txt" or "./data_1.txt"
             _generate_unique_filename("stream.txt", "./", True) -> "./stream.txt" or "./stream__1.txt"
         """
-        import os
-        import glob
-
         if not os.path.exists(directory):
             os.makedirs(directory)
 
