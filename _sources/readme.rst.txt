@@ -315,6 +315,8 @@ To do and known issues
    updated at different rates.
 -  ☐ **Issue**: The plotting routine does not work for the monitor (it
    only works for the streamer)
+-  ☐ **Code refactor:** There are two routines for generating filenames
+   (for Streamer and for Logger). This should be unified.
 -  ☐ **Possible feature:** Flexible backend buffer size for streaming:
    if the assign rate of variables is too slow, the buffers might not be
    filled and hence not sent (since the data flushed is not collected in

@@ -173,7 +173,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">errno</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">nest_asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">paramiko</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_print_error</span><span class="p">,</span> <span class="n">_print_warning</span><span class="p">,</span> <span class="n">_print_ok</span>
@@ -834,58 +833,6 @@
 
         <span class="k">return</span> <span class="n">new_local_path</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_unique_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">use_streamer_pattern</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate unique filename by avoiding collisions with existing files.</span>
-
-<span class="sd">        This unified method replaces both _generate_local_filename and Streamer._generate_filename.</span>
-<span class="sd">        It handles collision avoidance for both simple incremental naming and streamer session-based naming.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            filename (str): Base filename</span>
-<span class="sd">            directory (str, optional): Directory path. Defaults to &quot;./&quot;.</span>
-<span class="sd">            use_streamer_pattern (bool, optional): If True, uses Streamer&#39;s session-based pattern that accounts</span>
-<span class="sd">                                                   for variable-prefixed files. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            str: Full path to unique filename</span>
-
-<span class="sd">        Examples:</span>
-<span class="sd">            _generate_unique_filename(&quot;data.txt&quot;, &quot;./&quot;) -&gt; &quot;./data.txt&quot; or &quot;./data_1.txt&quot;</span>
-<span class="sd">            _generate_unique_filename(&quot;stream.txt&quot;, &quot;./&quot;, True) -&gt; &quot;./stream.txt&quot; or &quot;./stream__1.txt&quot;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-
-        <span class="n">filename_wo_ext</span><span class="p">,</span> <span class="n">filename_ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="n">full_base_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">use_streamer_pattern</span><span class="p">:</span>
-            <span class="c1"># Streamer pattern: Handle session-based conflicts, accounting for variable-prefixed files</span>
-            <span class="c1"># Look for files that match the pattern *filename.ext (including variable-prefixed versions)</span>
-            <span class="n">matching_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span>
-                              <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">filename_wo_ext</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">filename_ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))]</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matching_files</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">full_base_path</span>
-
-            <span class="c1"># Count files with the same base pattern to determine next session index</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">matching_files</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">matching_files</span><span class="p">)])</span>
-            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename_wo_ext</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">idx</span><span class="si">}{</span><span class="n">filename_ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Simple pattern: Direct file-by-file collision avoidance</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">full_base_path</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">full_base_path</span>
-
-            <span class="n">counter</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="n">new_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename_wo_ext</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">counter</span><span class="si">}{</span><span class="n">filename_ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">new_path</span><span class="p">):</span>
-                    <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_print_warning</span>
-                    <span class="n">_print_warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">full_base_path</span><span class="si">}</span><span class="s2"> already exists. Renaming file to </span><span class="si">{</span><span class="n">new_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">new_path</span>
-                <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
-
 <div class="viewcode-block" id="Watcher.get_prop_of_var">
 <a class="viewcode-back" href="../../modules.html#pybela.Watcher.Watcher.get_prop_of_var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_prop_of_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">prop</span><span class="p">):</span>
@@ -1012,8 +959,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">_local_path</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">local_path</span><span class="p">):</span>
-                <span class="n">_local_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_filename</span><span class="p">(</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">local_path</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
+                <span class="n">_local_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_local_filename</span><span class="p">(</span><span class="n">local_path</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">_local_path</span> <span class="o">=</span> <span class="n">local_path</span>
             <span class="n">transferred_event</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
@@ -1025,7 +971,7 @@
             <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
                 <span class="n">_print_ok</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">Transferring </span><span class="si">{</span><span class="n">remote_path</span><span class="si">}</span><span class="s2">--&gt;</span><span class="si">{</span><span class="n">_local_path</span><span class="si">}</span><span class="s2">... Done.&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_local_path</span>
+            <span class="k">return</span> <span class="n">local_path</span>
         <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">:</span>
             <span class="n">_print_error</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Error while transferring file: TimeoutError.&quot;</span><span class="p">)</span>
