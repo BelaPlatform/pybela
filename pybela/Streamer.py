@@ -166,6 +166,9 @@ class Streamer(Watcher):
         self._saving_filename = self._generate_unique_filename(
             saving_filename, saving_dir, use_streamer_pattern=True) if saving_enabled else None
 
+        if self._saving_enabled:
+            _print_info(f"Streamed data will be saved to {self._saving_filename}")
+
         async def async_callback_workers():
 
             if on_block_callback and on_buffer_callback:
@@ -792,7 +795,6 @@ class Streamer(Watcher):
 
         # finally:
         #     await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
-
 
     async def _async_remove_item_from_list(self, _list, task):
         """ Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.
