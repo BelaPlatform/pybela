@@ -222,7 +222,7 @@
 
         <span class="c1"># -- save --</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_saving_enabled</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_saving_filename</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_saving_base_filename</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_saving_task</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_active_saving_tasks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_saving_file_locks</span> <span class="o">=</span> <span class="p">{}</span>
@@ -334,8 +334,11 @@
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_saving_enabled</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">saving_enabled</span> <span class="k">else</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_saving_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_filename</span><span class="p">(</span>
-            <span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">saving_enabled</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_saving_base_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_filename</span><span class="p">(</span>
+            <span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="p">,</span> <span class="n">use_streamer_pattern</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">saving_enabled</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_saving_enabled</span><span class="p">:</span>
+            <span class="n">_print_info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Streamed data will be saved to &lt;var_name&gt;_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_saving_base_filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_callback_workers</span><span class="p">():</span>
 
@@ -423,7 +426,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_saving_enabled</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_saving_enabled</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_saving_filename</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_saving_base_filename</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="c1"># await all active saving tasks</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_active_saving_tasks</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_active_saving_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -696,7 +699,7 @@
                 <span class="c1"># save data to file if saving is enabled</span>
                 <span class="k">if</span> <span class="n">_saving_enabled</span><span class="p">:</span>
                     <span class="n">_saving_var_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_saving_filename</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_saving_filename</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_saving_base_filename</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_saving_base_filename</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="c1"># save the data asynchronously</span>
                     <span class="n">saving_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_save_data_to_file</span><span class="p">(</span><span class="n">_saving_var_filename</span><span class="p">,</span> <span class="n">parsed_buffer</span><span class="p">))</span>
@@ -990,29 +993,6 @@
 
         <span class="c1"># finally:</span>
         <span class="c1">#     await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">saving_filename</span><span class="p">,</span> <span class="n">saving_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            saving_filename (str): Root filename</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            str: Generated filename</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">filename_wo_ext</span><span class="p">,</span> <span class="n">filename_ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">saving_filename</span><span class="p">)</span>
-        <span class="c1"># files that follow naming convention, returns list of varname_filename (no __idx.ext)</span>
-        <span class="n">matching_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
-            <span class="s2">&quot;__&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">filename_wo_ext</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">filename_ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))]</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">matching_files</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">,</span> <span class="n">saving_filename</span><span class="p">)</span>
-
-        <span class="c1"># counts files with the same varname_filename</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">matching_files</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">matching_files</span><span class="p">)])</span>
-
-        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">saving_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename_wo_ext</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">idx</span><span class="si">}{</span><span class="n">filename_ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_async_remove_item_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_list</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.</span>

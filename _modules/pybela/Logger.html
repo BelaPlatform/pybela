@@ -234,8 +234,8 @@
                     <span class="n">logging_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">remote_paths</span><span class="p">[</span><span class="n">var</span><span class="p">]))</span>
 
                 <span class="c1"># if file already exists, throw a warning and add number at the end of the filename</span>
-                <span class="n">local_paths</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_local_filename</span><span class="p">(</span>
-                    <span class="n">local_path</span><span class="p">)</span>
+                <span class="n">local_paths</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_filename</span><span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">local_path</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
 
                 <span class="n">copying_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__copy_file_in_chunks</span><span class="p">(</span>
                     <span class="n">remote_paths</span><span class="p">[</span><span class="n">var</span><span class="p">],</span> <span class="n">local_paths</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
@@ -300,8 +300,8 @@
                         <span class="n">logging_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">remote_paths</span><span class="p">[</span><span class="n">var</span><span class="p">]))</span>
 
                     <span class="c1"># if file already exists, throw a warning and add number at the end of the filename</span>
-                    <span class="n">local_paths</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_local_filename</span><span class="p">(</span>
-                        <span class="n">local_path</span><span class="p">)</span>
+                    <span class="n">local_paths</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_unique_filename</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">local_path</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
 
                     <span class="n">copying_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__copy_file_in_chunks</span><span class="p">(</span>
                         <span class="n">remote_paths</span><span class="p">[</span><span class="n">var</span><span class="p">],</span> <span class="n">local_paths</span><span class="p">[</span><span class="n">var</span><span class="p">])</span>
