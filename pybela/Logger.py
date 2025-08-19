@@ -58,8 +58,8 @@ class Logger(Watcher):
                     logging_dir, os.path.basename(remote_paths[var]))
 
                 # if file already exists, throw a warning and add number at the end of the filename
-                local_paths[var] = self._generate_local_filename(
-                    local_path)
+                local_paths[var] = self._generate_unique_filename(
+                    os.path.basename(local_path), os.path.dirname(local_path))
 
                 copying_task = self.__copy_file_in_chunks(
                     remote_paths[var], local_paths[var])
@@ -121,8 +121,8 @@ class Logger(Watcher):
                         logging_dir, os.path.basename(remote_paths[var]))
 
                     # if file already exists, throw a warning and add number at the end of the filename
-                    local_paths[var] = self._generate_local_filename(
-                        local_path)
+                    local_paths[var] = self._generate_unique_filename(
+                        os.path.basename(local_path), os.path.dirname(local_path))
 
                     copying_task = self.__copy_file_in_chunks(
                         remote_paths[var], local_paths[var])

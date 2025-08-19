@@ -51,7 +51,7 @@ class Streamer(Watcher):
 
         # -- save --
         self._saving_enabled = False
-        self._saving_filename = None
+        self._saving_base_filename = None
         self._saving_task = None
         self._active_saving_tasks = []
         self._saving_file_locks = {}
@@ -163,8 +163,11 @@ class Streamer(Watcher):
             os.makedirs(saving_dir)
 
         self._saving_enabled = True if saving_enabled else False
-        self._saving_filename = self._generate_filename(
-            saving_filename, saving_dir) if saving_enabled else None
+        self._saving_base_filename = self._generate_unique_filename(
+            saving_filename, saving_dir, use_streamer_pattern=True) if saving_enabled else None
+
+        if self._saving_enabled:
+            _print_info(f"Streamed data will be saved to <var_name>_{self._saving_base_filename}")
 
         async def async_callback_workers():
 
@@ -249,7 +252,7 @@ class Streamer(Watcher):
 
         if self._saving_enabled:
             self._saving_enabled = False
-            self._saving_filename = None
+            self._saving_base_filename = None
             # await all active saving tasks
             await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
             self._active_saving_tasks.clear()
@@ -270,7 +273,47 @@ class Streamer(Watcher):
             if not _previous_streaming_mode == "PEEK":
                 _print_info(f"Stopped monitoring variables {variables}...")
 
-        self._processed_data_msg_queue = asyncio.Queue()  # clear processed data queue
+        # collect any remaining flushed buffers before clearing the queue
+        # this assures users don't lose final data chunks when stopping streaming
+        try:
+            remaining_messages = []
+            # safely drain the queue without blocking
+            while not self._processed_data_msg_queue.empty():
+                try:
+                    msg = self._processed_data_msg_queue.get_nowait()
+                    remaining_messages.append(msg)
+                    self._processed_data_msg_queue.task_done()
+                except asyncio.QueueEmpty:
+                    # queue became empty during iteration, which is fine
+                    break
+                except Exception:
+                    # any other error, stop processing but don't fail
+                    break
+            
+            # process remaining messages by adding them to streaming buffers
+            # this preserves the data for user access via streaming_buffers_queue
+            for msg in remaining_messages:
+                try:
+                    var_name = msg.get("name")
+                    buffer_data = msg.get("buffer")
+                    # only process if we have valid data and the variable exists in our buffers
+                    if (var_name and buffer_data is not None and 
+                        hasattr(self, 'streaming_buffers_queue') and
+                        self.streaming_buffers_queue and 
+                        var_name in self.streaming_buffers_queue):
+                        self.streaming_buffers_queue[var_name].append(buffer_data)
+                except Exception:
+                    # if individual message processing fails, continue with others
+                    # this ensures one bad message doesn't break the entire cleanup
+                    continue
+                    
+        except Exception:
+            # if the entire buffer collection process fails, don't break stop_streaming
+            # fall back to original behavior (queue clearing without collection)
+            pass
+            
+        # always clear the queue, regardless of collection success/failure
+        self._processed_data_msg_queue = asyncio.Queue()
         self._on_buffer_callback_is_active = False
         if self._on_buffer_callback_worker_task:
             self._on_buffer_callback_worker_task.cancel()
@@ -510,7 +553,7 @@ class Streamer(Watcher):
                 # save data to file if saving is enabled
                 if _saving_enabled:
                     _saving_var_filename = os.path.join(os.path.dirname(
-                        self._saving_filename), f"{var_name}_{os.path.basename(self._saving_filename)}")
+                        self._saving_base_filename), f"{var_name}_{os.path.basename(self._saving_base_filename)}")
                     # save the data asynchronously
                     saving_task = self.loop.create_task(
                         self._save_data_to_file(_saving_var_filename, parsed_buffer))
@@ -792,29 +835,6 @@ class Streamer(Watcher):
 
         # finally:
         #     await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
-
-    def _generate_filename(self, saving_filename, saving_dir="./"):
-        """ Generates a filename for saving data by adding the variable name and a number at the end in case the filename already exists to avoid overwriting saved data. Pattern: varname_filename__idx.ext.  This function is called by start_streaming() and stream_n_values() when saving is enabled.
-
-        Args:
-            saving_filename (str): Root filename
-
-        Returns:
-            str: Generated filename
-        """
-
-        filename_wo_ext, filename_ext = os.path.splitext(saving_filename)
-        # files that follow naming convention, returns list of varname_filename (no __idx.ext)
-        matching_files = [os.path.splitext(file)[0].split(
-            "__")[0] for file in glob.glob(os.path.join(saving_dir, f"*{filename_wo_ext}*{filename_ext}"))]
-
-        if not matching_files:
-            return os.path.join(saving_dir, saving_filename)
-
-        # counts files with the same varname_filename
-        idx = max([matching_files.count(item) for item in set(matching_files)])
-
-        return os.path.join(saving_dir, f"{filename_wo_ext}__{idx}{filename_ext}")
 
     async def _async_remove_item_from_list(self, _list, task):
         """ Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.

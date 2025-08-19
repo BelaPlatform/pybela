@@ -7,11 +7,13 @@ from pybela import Watcher, Streamer, Logger, Monitor, Controller
 
 # all tests should be run with Bela connected and the bela-test project (in test/bela-test) running on the board
 
+ip = "192.168.7.2"
+
 
 class test_Watcher(unittest.TestCase):
 
     def setUp(self):
-        self.watcher = Watcher()
+        self.watcher = Watcher(ip=ip)
         self.watcher.connect()
 
     def tearDown(self):
@@ -33,7 +35,7 @@ class test_Watcher(unittest.TestCase):
 class test_Streamer(unittest.TestCase):
 
     def setUp(self):
-        self.streamer = Streamer()
+        self.streamer = Streamer(ip=ip)
         self.streamer.connect()
         self.streaming_vars = [
             "myvar",  # dense double
@@ -191,7 +193,7 @@ class test_Streamer(unittest.TestCase):
 class test_Logger(unittest.TestCase):
 
     def setUp(self):
-        self.logger = Logger()
+        self.logger = Logger(ip=ip)
         self.logger.connect()
 
         self.logging_vars = [
@@ -259,8 +261,8 @@ class test_Logger(unittest.TestCase):
         local_paths = {}
         for var in file_paths["remote_paths"]:
             filename = os.path.basename(file_paths["remote_paths"][var])
-            local_paths[var] = self.logger.copy_file_from_bela(remote_path=file_paths["remote_paths"][var],
-                                                               local_path=filename)
+            local_paths[var] = self.logger.copy_file_from_bela(
+                remote_path=file_paths["remote_paths"][var], local_path=os.path.join(self.logging_dir, filename))
 
         # test logged data
         self._test_logged_data(self.logger, self.logging_vars, local_paths)
@@ -307,7 +309,7 @@ class test_Monitor(unittest.TestCase):
         self.saving_filename = "test_monitor_save.txt"
         self.saving_dir = "./test"
 
-        self.monitor = Monitor()
+        self.monitor = Monitor(ip=ip)
         self.monitor.connect()
 
     def tearDown(self):
@@ -383,7 +385,7 @@ class test_Controller(unittest.TestCase):
     def setUp(self):
         self.controlled_vars = ["myvar", "myvar2", "myvar3", "myvar4"]
 
-        self.controller = Controller()
+        self.controller = Controller(ip=ip)
         self.controller.connect()
 
     def tearDown(self):
@@ -464,6 +466,7 @@ def run_tests():
         # suite.addTest(test_Streamer('test_on_block_callback'))
         runner = unittest.TextTestRunner(verbosity=2)
         runner.run(suite)
+
 
 if __name__ == '__main__':
     run_tests()
