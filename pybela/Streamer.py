@@ -51,7 +51,7 @@ class Streamer(Watcher):
 
         # -- save --
         self._saving_enabled = False
-        self._saving_filename = None
+        self._saving_base_filename = None
         self._saving_task = None
         self._active_saving_tasks = []
         self._saving_file_locks = {}
@@ -163,8 +163,11 @@ class Streamer(Watcher):
             os.makedirs(saving_dir)
 
         self._saving_enabled = True if saving_enabled else False
-        self._saving_filename = self._generate_unique_filename(
+        self._saving_base_filename = self._generate_unique_filename(
             saving_filename, saving_dir, use_streamer_pattern=True) if saving_enabled else None
+
+        if self._saving_enabled:
+            _print_info(f"Streamed data will be saved to <var_name>_{self._saving_base_filename}")
 
         async def async_callback_workers():
 
@@ -249,7 +252,7 @@ class Streamer(Watcher):
 
         if self._saving_enabled:
             self._saving_enabled = False
-            self._saving_filename = None
+            self._saving_base_filename = None
             # await all active saving tasks
             await asyncio.gather(*self._active_saving_tasks, return_exceptions=True)
             self._active_saving_tasks.clear()
@@ -550,7 +553,7 @@ class Streamer(Watcher):
                 # save data to file if saving is enabled
                 if _saving_enabled:
                     _saving_var_filename = os.path.join(os.path.dirname(
-                        self._saving_filename), f"{var_name}_{os.path.basename(self._saving_filename)}")
+                        self._saving_base_filename), f"{var_name}_{os.path.basename(self._saving_base_filename)}")
                     # save the data asynchronously
                     saving_task = self.loop.create_task(
                         self._save_data_to_file(_saving_var_filename, parsed_buffer))
@@ -832,7 +835,6 @@ class Streamer(Watcher):
 
         # finally:
         #     await self._async_remove_item_from_list(self._active_saving_tasks, asyncio.current_task())
-
 
     async def _async_remove_item_from_list(self, _list, task):
         """ Removes a task from a list of tasks asynchronously. This function is called by _save_data_to_file() when a task is finished.
